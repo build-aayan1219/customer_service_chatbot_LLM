@@ -1,34 +1,36 @@
 import os
 
 from dotenv import load_dotenv
+
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_community.document_loaders import CSVLoader
+from langchain_core.prompts import ChatPromptTemplate
 
-
-# Load environment variables
 load_dotenv()
 
-# Google Gemini
+# ---------------- GEMINI ----------------
+
 llm = ChatGoogleGenerativeAI(
     model="gemini-3.6-flash",
     google_api_key=os.getenv("GOOGLE_API_KEY"),
     temperature=0.1
 )
 
-# Embedding model
+# ---------------- EMBEDDINGS ----------------
+
 embeddings = HuggingFaceEmbeddings(
     model_name="sentence-transformers/all-MiniLM-L6-v2"
 )
 
-# Location of FAISS database
+# ---------------- VECTOR DATABASE ----------------
+
 vectordb_file_path = "faiss_index"
 
 
 def create_vector_db():
 
-    # Load FAQ dataset
     loader = CSVLoader(
         file_path="dataset/dataset.csv",
         source_column="prompt"
@@ -36,71 +38,66 @@ def create_vector_db():
 
     data = loader.load()
 
-    # Create vector database
     vectordb = FAISS.from_documents(
-        documents=data,
-        embedding=embeddings
+        data,
+        embeddings
     )
 
-    # Save vector database
     vectordb.save_local(vectordb_file_path)
 
+    return vectordb
 
-def get_answer(question):
 
-    # Load the FAISS database
+# ---------------- QA CHAIN ----------------
+
+def get_qa_chain():
+
     vectordb = FAISS.load_local(
         vectordb_file_path,
         embeddings,
         allow_dangerous_deserialization=True
     )
 
-    # Find more relevant FAQ entries
-    docs = vectordb.similarity_search(
-        question,
-        k=5
+    retriever = vectordb.as_retriever(
+        search_kwargs={"k": 3}
     )
 
-    # Prepare context
-    context = "\n\n".join(
-        doc.page_content for doc in docs
-    )
+    prompt = ChatPromptTemplate.from_template("""
+You are a helpful customer service assistant.
 
-    # Prompt Gemini
-    prompt = f"""
-You are a customer service chatbot for an e-learning company.
+Answer the question using ONLY the information provided in the context.
 
-Answer the user's question using ONLY the information
-available in the context below.
+If the answer is not present in the context, say:
+"I don't know based on the available information."
 
-IMPORTANT:
-- Give a direct and helpful answer.
-- Use the information from the context.
-- Do not invent information.
-- If the context does not contain the answer, say:
-  "I don't know based on the available information."
+Do not make up information.
 
-CONTEXT:
+Context:
 {context}
 
-QUESTION:
+Question:
 {question}
+""")
 
-ANSWER:
-"""
+    def ask_question(question):
 
-    # Get response from Gemini
-    response = llm.invoke(prompt)
+        documents = retriever.invoke(question)
 
-    # Handle Gemini response
-    if isinstance(response.content, list):
+        context = "\n\n".join(
+            document.page_content
+            for document in documents
+        )
 
-        answer = ""
+        messages = prompt.invoke({
+            "context": context,
+            "question": question
+        })
 
-        for item in response.content:
-            if isinstance(item, dict):
-                answer += item.get("text", "")
+        response = llm.invoke(messages)
 
-        return answer.strip()
+        return {
+            "result": response.content,
+            "source_documents": documents
+        }
 
-    return str(response.content).strip()
+    return ask_question
