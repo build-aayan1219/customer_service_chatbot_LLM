@@ -1,0 +1,8 @@
+@"
+venv/
+.env
+__pycache__/
+*.pyc
+faiss_index/
+.streamlit/
+"@ | Out-File -Encoding utf8 .gitignore
