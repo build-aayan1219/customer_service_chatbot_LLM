@@ -10,22 +10,19 @@ from langchain_core.prompts import ChatPromptTemplate
 
 load_dotenv()
 
-# ---------------- GEMINI ----------------
-
+# Gemini model
 llm = ChatGoogleGenerativeAI(
     model="gemini-3.6-flash",
     google_api_key=os.getenv("GOOGLE_API_KEY"),
     temperature=0.1
 )
 
-# ---------------- EMBEDDINGS ----------------
-
+# Embedding model
 embeddings = HuggingFaceEmbeddings(
     model_name="sentence-transformers/all-MiniLM-L6-v2"
 )
 
-# ---------------- VECTOR DATABASE ----------------
-
+# FAISS database location
 vectordb_file_path = "faiss_index"
 
 
@@ -47,8 +44,6 @@ def create_vector_db():
 
     return vectordb
 
-
-# ---------------- QA CHAIN ----------------
 
 def get_qa_chain():
 
@@ -95,9 +90,31 @@ Question:
 
         response = llm.invoke(messages)
 
+        # Extract only the actual text from Gemini
+        answer = response.content
+
+        if isinstance(answer, list):
+            text_parts = []
+
+            for item in answer:
+                if isinstance(item, dict):
+                    if "text" in item:
+                        text_parts.append(item["text"])
+
+            answer = "".join(text_parts)
+
+        # Make sure the final answer is a string
+        answer = str(answer).strip()
+
         return {
-            "result": response.content,
+            "result": answer,
             "source_documents": documents
         }
 
     return ask_question
+
+
+if __name__ == "__main__":
+    create_vector_db()
+    chain = get_qa_chain()
+    print(chain("hello?"))
