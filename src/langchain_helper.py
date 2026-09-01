@@ -1,4 +1,7 @@
 import os
+
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
+
 from pathlib import Path
 from functools import lru_cache
 
