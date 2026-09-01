@@ -1,8 +1,23 @@
-@"
+# Virtual environment
 venv/
+.venv/
+
+# Environment variables
 .env
+
+# Python cache
 __pycache__/
 *.pyc
+
+# FAISS generated files
 faiss_index/
+
+# Streamlit
 .streamlit/
-"@ | Out-File -Encoding utf8 .gitignore
+
+# IDE
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db

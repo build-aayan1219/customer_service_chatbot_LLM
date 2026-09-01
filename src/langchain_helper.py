@@ -1,4 +1,6 @@
 import os
+from pathlib import Path
+from functools import lru_cache
 
 from dotenv import load_dotenv
 
@@ -8,28 +10,45 @@ from langchain_community.vectorstores import FAISS
 from langchain_community.document_loaders import CSVLoader
 from langchain_core.prompts import ChatPromptTemplate
 
+
+# ---------------- ENVIRONMENT ----------------
+
 load_dotenv()
 
-# Gemini model
-llm = ChatGoogleGenerativeAI(
-    model="gemini-3.6-flash",
-    google_api_key=os.getenv("GOOGLE_API_KEY"),
-    temperature=0.1
-)
+BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Embedding model
-embeddings = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
-)
+DATASET_PATH = BASE_DIR / "dataset" / "dataset.csv"
+VECTORDB_PATH = BASE_DIR / "faiss_index"
 
-# FAISS database location
-vectordb_file_path = "faiss_index"
 
+# ---------------- GEMINI ----------------
+
+@lru_cache(maxsize=1)
+def get_llm():
+
+    return ChatGoogleGenerativeAI(
+        model="gemini-3.6-flash",
+        google_api_key=os.getenv("GOOGLE_API_KEY"),
+        temperature=0.1
+    )
+
+
+# ---------------- EMBEDDINGS ----------------
+
+@lru_cache(maxsize=1)
+def get_embeddings():
+
+    return HuggingFaceEmbeddings(
+        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    )
+
+
+# ---------------- CREATE KNOWLEDGE BASE ----------------
 
 def create_vector_db():
 
     loader = CSVLoader(
-        file_path="dataset/dataset.csv",
+        file_path=str(DATASET_PATH),
         source_column="prompt"
     )
 
@@ -37,21 +56,34 @@ def create_vector_db():
 
     vectordb = FAISS.from_documents(
         data,
-        embeddings
+        get_embeddings()
     )
 
-    vectordb.save_local(vectordb_file_path)
+    vectordb.save_local(str(VECTORDB_PATH))
+
+    # Clear old cached database
+    load_vector_db.cache_clear()
 
     return vectordb
 
 
-def get_qa_chain():
+# ---------------- LOAD FAISS DATABASE ----------------
 
-    vectordb = FAISS.load_local(
-        vectordb_file_path,
-        embeddings,
+@lru_cache(maxsize=1)
+def load_vector_db():
+
+    return FAISS.load_local(
+        str(VECTORDB_PATH),
+        get_embeddings(),
         allow_dangerous_deserialization=True
     )
+
+
+# ---------------- QA CHAIN ----------------
+
+def get_qa_chain():
+
+    vectordb = load_vector_db()
 
     retriever = vectordb.as_retriever(
         search_kwargs={"k": 3}
@@ -88,22 +120,22 @@ Question:
             "question": question
         })
 
-        response = llm.invoke(messages)
+        response = get_llm().invoke(messages)
 
-        # Extract only the actual text from Gemini
+        # Extract only actual text
         answer = response.content
 
         if isinstance(answer, list):
+
             text_parts = []
 
             for item in answer:
-                if isinstance(item, dict):
-                    if "text" in item:
-                        text_parts.append(item["text"])
+
+                if isinstance(item, dict) and "text" in item:
+                    text_parts.append(item["text"])
 
             answer = "".join(text_parts)
 
-        # Make sure the final answer is a string
         answer = str(answer).strip()
 
         return {
@@ -114,7 +146,12 @@ Question:
     return ask_question
 
 
+# ---------------- TEST ----------------
+
 if __name__ == "__main__":
+
     create_vector_db()
+
     chain = get_qa_chain()
-    print(chain("hello?"))
+
+    print(chain("Do you provide internships?"))
