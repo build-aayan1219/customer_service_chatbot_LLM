@@ -1,7 +1,9 @@
 import streamlit as st
+import logging
+from langchain_helper import get_qa_chain, create_vector_db
 
-from langchain_helper import get_qa_chain
-
+# Set up logging
+logger = logging.getLogger(__name__)
 
 # --------------------------------------------------
 # PAGE CONFIG
@@ -89,6 +91,83 @@ if "sources" not in st.session_state:
 
 
 # --------------------------------------------------
+# HELPER FUNCTION - PROCESS QUESTION
+# --------------------------------------------------
+
+def process_question(question_text: str):
+    """
+    Process any question and handle all logic.
+    Used for both suggested questions and chat input.
+    """
+    
+    logger.info(f"Processing question: {question_text[:50]}...")
+    
+    st.session_state.messages.append({
+        "role": "user",
+        "content": question_text
+    })
+    
+    try:
+        with st.spinner("Thinking..."):
+            chain = get_qa_chain()
+            response = chain(question_text)
+        
+        answer = response["result"]
+        sources = response.get("source_documents", [])
+        
+        logger.info(f"Got answer with {len(sources)} sources")
+        
+        st.markdown(answer)
+        
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": answer
+        })
+        
+        st.session_state.sources.append(sources)
+        
+        # Show sources
+        if sources:
+            with st.expander("📚 View Source Information"):
+                for source in sources:
+                    content = source.page_content
+                    lines = content.split("\n")
+                    
+                    question = ""
+                    answer_text = ""
+                    
+                    for line in lines:
+                        if line.lower().startswith("prompt:"):
+                            question = line.split(":", 1)[1].strip()
+                        elif line.lower().startswith("response:"):
+                            answer_text = line.split(":", 1)[1].strip()
+                    
+                    if question:
+                        st.markdown(f"**Question:** {question}")
+                    if answer_text:
+                        st.markdown(f"**Answer:** {answer_text}")
+                    st.markdown("---")
+        
+        st.rerun()
+    
+    except Exception as e:
+        error_message = str(e)
+        logger.error(f"Error processing question: {error_message}", exc_info=True)
+        
+        if "429" in error_message or "RESOURCE_EXHAUSTED" in error_message:
+            st.warning(
+                "⚠️ **AI service temporarily unavailable**\n\n"
+                "The Gemini API usage limit has been reached. "
+                "Please try again later."
+            )
+        else:
+            st.error(
+                "❌ **Unable to process your question**\n\n"
+                "Please try again."
+            )
+
+
+# --------------------------------------------------
 # SIDEBAR
 # --------------------------------------------------
 
@@ -100,16 +179,18 @@ with st.sidebar:
 
     if st.button("🔄 Create / Update Knowledge Base", use_container_width=True):
 
-        try:
-            from langchain_helper import create_vector_db
+        logger.info("User clicked: Create Knowledge Base")
 
+        try:
             with st.spinner("Updating knowledge base..."):
                 create_vector_db()
 
+            logger.info("✓ Knowledge base created successfully")
             st.success("Knowledge base updated successfully!")
 
         except Exception as e:
             error_message = str(e)
+            logger.error(f"Error creating KB: {error_message}", exc_info=True)
 
             if "429" in error_message or "RESOURCE_EXHAUSTED" in error_message:
                 st.warning(
@@ -198,234 +279,21 @@ if not st.session_state.messages:
 
 st.markdown("### 💡 Try asking")
 
+questions = [
+    {"emoji": "🎓", "text": "Do you provide internships?", "col": 0},
+    {"emoji": "💳", "text": "Do you offer EMI?", "col": 1},
+    {"emoji": "💻", "text": "Can I use Power BI on Mac?", "col": 0},
+    {"emoji": "📊", "text": "Tableau vs Power BI?", "col": 1},
+]
+
 col1, col2 = st.columns(2)
-
-with col1:
-
-    if st.button(
-        "🎓 Do you provide internships?",
-        use_container_width=True
-    ):
-
-        user_question = "Do you provide internships?"
-
-        st.session_state.messages.append(
-            {
-                "role": "user",
-                "content": user_question
-            }
-        )
-
-        try:
-
-            with st.spinner("Thinking..."):
-
-                chain = get_qa_chain()
-                response = chain(user_question)
-
-            answer = response["result"]
-            sources = response.get("source_documents", [])
-
-            st.session_state.messages.append(
-                {
-                    "role": "assistant",
-                    "content": answer
-                }
-            )
-
-            st.session_state.sources.append(sources)
-
-            st.rerun()
-
-        except Exception as e:
-
-            error_message = str(e)
-
-            if "429" in error_message or "RESOURCE_EXHAUSTED" in error_message:
-
-                st.warning(
-                    "⚠️ **AI service temporarily unavailable**\n\n"
-                    "The Gemini API usage limit has been reached. "
-                    "Please try again later."
-                )
-
-            else:
-
-                st.error(
-                    "❌ **Unable to process your question**\n\n"
-                    "Please try again."
-                )
-
-
-with col2:
-
-    if st.button(
-        "💳 Do you offer EMI?",
-        use_container_width=True
-    ):
-
-        user_question = "Do you offer EMI?"
-
-        st.session_state.messages.append(
-            {
-                "role": "user",
-                "content": user_question
-            }
-        )
-
-        try:
-
-            with st.spinner("Thinking..."):
-
-                chain = get_qa_chain()
-                response = chain(user_question)
-
-            answer = response["result"]
-            sources = response.get("source_documents", [])
-
-            st.session_state.messages.append(
-                {
-                    "role": "assistant",
-                    "content": answer
-                }
-            )
-
-            st.session_state.sources.append(sources)
-
-            st.rerun()
-
-        except Exception as e:
-
-            error_message = str(e)
-
-            if "429" in error_message or "RESOURCE_EXHAUSTED" in error_message:
-
-                st.warning(
-                    "⚠️ **AI service temporarily unavailable**\n\n"
-                    "The Gemini API usage limit has been reached. "
-                    "Please try again later."
-                )
-
-            else:
-
-                st.error(
-                    "❌ **Unable to process your question**\n\n"
-                    "Please try again."
-                )
-
-
-with col1:
-
-    if st.button(
-        "💻 Can I use Power BI on Mac?",
-        use_container_width=True
-    ):
-
-        user_question = "Can I use Power BI on Mac?"
-
-        st.session_state.messages.append(
-            {
-                "role": "user",
-                "content": user_question
-            }
-        )
-
-        try:
-
-            with st.spinner("Thinking..."):
-
-                chain = get_qa_chain()
-                response = chain(user_question)
-
-            answer = response["result"]
-            sources = response.get("source_documents", [])
-
-            st.session_state.messages.append(
-                {
-                    "role": "assistant",
-                    "content": answer
-                }
-            )
-
-            st.session_state.sources.append(sources)
-
-            st.rerun()
-
-        except Exception as e:
-
-            error_message = str(e)
-
-            if "429" in error_message or "RESOURCE_EXHAUSTED" in error_message:
-
-                st.warning(
-                    "⚠️ **AI service temporarily unavailable**\n\n"
-                    "The Gemini API usage limit has been reached. "
-                    "Please try again later."
-                )
-
-            else:
-
-                st.error(
-                    "❌ **Unable to process your question**\n\n"
-                    "Please try again."
-                )
-
-
-with col2:
-
-    if st.button(
-        "📊 Tableau vs Power BI?",
-        use_container_width=True
-    ):
-
-        user_question = "Tableau vs Power BI?"
-
-        st.session_state.messages.append(
-            {
-                "role": "user",
-                "content": user_question
-            }
-        )
-
-        try:
-
-            with st.spinner("Thinking..."):
-
-                chain = get_qa_chain()
-                response = chain(user_question)
-
-            answer = response["result"]
-            sources = response.get("source_documents", [])
-
-            st.session_state.messages.append(
-                {
-                    "role": "assistant",
-                    "content": answer
-                }
-            )
-
-            st.session_state.sources.append(sources)
-
-            st.rerun()
-
-        except Exception as e:
-
-            error_message = str(e)
-
-            if "429" in error_message or "RESOURCE_EXHAUSTED" in error_message:
-
-                st.warning(
-                    "⚠️ **AI service temporarily unavailable**\n\n"
-                    "The Gemini API usage limit has been reached. "
-                    "Please try again later."
-                )
-
-            else:
-
-                st.error(
-                    "❌ **Unable to process your question**\n\n"
-                    "Please try again."
-                )
+cols = [col1, col2]
+
+for q in questions:
+    with cols[q["col"]]:
+        if st.button(f"{q['emoji']} {q['text']}", use_container_width=True):
+            logger.info(f"User clicked suggested question: {q['text']}")
+            process_question(q["text"])
 
 
 # --------------------------------------------------
@@ -486,101 +354,15 @@ for index, message in enumerate(st.session_state.messages):
 # CHAT INPUT
 # --------------------------------------------------
 
-user_question = st.chat_input(
-    "Ask me anything about our services..."
-)
-
+user_question = st.chat_input("Ask me anything about our services...")
 
 if user_question:
-
-    st.session_state.messages.append(
-        {
-            "role": "user",
-            "content": user_question
-        }
-    )
 
     with st.chat_message("user"):
         st.markdown(user_question)
 
     with st.chat_message("assistant"):
-
-        try:
-
-            with st.spinner("Thinking..."):
-
-                chain = get_qa_chain()
-                response = chain(user_question)
-
-            answer = response["result"]
-            sources = response.get("source_documents", [])
-
-            st.markdown(answer)
-
-            st.session_state.messages.append(
-                {
-                    "role": "assistant",
-                    "content": answer
-                }
-            )
-
-            st.session_state.sources.append(sources)
-
-            if sources:
-
-                with st.expander("📚 View Source Information"):
-
-                    for source in sources:
-
-                        content = source.page_content
-
-                        lines = content.split("\n")
-
-                        question = ""
-                        answer_text = ""
-
-                        for line in lines:
-
-                            if line.lower().startswith("prompt:"):
-                                question = line.split(
-                                    ":", 1
-                                )[1].strip()
-
-                            elif line.lower().startswith("response:"):
-                                answer_text = line.split(
-                                    ":", 1
-                                )[1].strip()
-
-                        if question:
-                            st.markdown(
-                                f"**Question:** {question}"
-                            )
-
-                        if answer_text:
-                            st.markdown(
-                                f"**Answer:** {answer_text}"
-                            )
-
-                        st.markdown("---")
-
-        except Exception as e:
-
-            error_message = str(e)
-
-            if "429" in error_message or "RESOURCE_EXHAUSTED" in error_message:
-
-                st.warning(
-                    "⚠️ **AI service temporarily unavailable**\n\n"
-                    "The Gemini API usage limit has been reached. "
-                    "Please try again later."
-                )
-
-            else:
-
-                st.error(
-                    "❌ **Unable to process your question**\n\n"
-                    "Please try again."
-                )
+        process_question(user_question)
 
 
 # --------------------------------------------------
