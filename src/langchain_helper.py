@@ -10,7 +10,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_huggingface import HuggingFaceEmbeddings
 
-from src.config import (
+from config import (
     DATASET_CONFIG,
     EMBEDDINGS_CONFIG,
     LLM_CONFIG,
@@ -19,18 +19,10 @@ from src.config import (
 )
 
 
-# ============================================================================
-# ENVIRONMENT
-# ============================================================================
-
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 load_dotenv()
 
-
-# ============================================================================
-# PATHS
-# ============================================================================
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -39,17 +31,13 @@ VECTORDB_PATH = BASE_DIR / "faiss_index"
 LOG_FILE_PATH = BASE_DIR / LOGGING_CONFIG["log_file"]
 
 
-# ============================================================================
-# LOGGING
-# ============================================================================
-
 logging.basicConfig(
     level=getattr(logging, LOGGING_CONFIG["level"]),
     format=LOGGING_CONFIG["format"],
     handlers=[
         logging.FileHandler(
             LOG_FILE_PATH,
-            encoding="utf-8"
+            encoding="utf-8",
         ),
         logging.StreamHandler(),
     ],
@@ -61,28 +49,23 @@ logger.info("Dataset path: %s", DATASET_PATH)
 logger.info("Vector DB path: %s", VECTORDB_PATH)
 
 
-# ============================================================================
-# GEMINI
-# ============================================================================
-
 @lru_cache(maxsize=1)
 def get_llm():
-    """Create and cache the Gemini LLM."""
+    """Create and cache the Gemini language model."""
+
+    logger.info("Initializing Google Gemini LLM...")
 
     api_key = os.getenv("GOOGLE_API_KEY")
 
     if not api_key:
         raise ValueError(
-            "GOOGLE_API_KEY is not set. "
+            "GOOGLE_API_KEY is not configured. "
             "Add it to the .env file or Streamlit secrets."
         )
-
-    logger.info("Initializing Google Gemini LLM...")
 
     llm = ChatGoogleGenerativeAI(
         model=LLM_CONFIG["model"],
         google_api_key=api_key,
-        temperature=LLM_CONFIG["temperature"],
         max_tokens=LLM_CONFIG["max_tokens"],
     )
 
@@ -91,13 +74,9 @@ def get_llm():
     return llm
 
 
-# ============================================================================
-# EMBEDDINGS
-# ============================================================================
-
 @lru_cache(maxsize=1)
 def get_embeddings():
-    """Create and cache the HuggingFace embeddings model."""
+    """Create and cache the HuggingFace embedding model."""
 
     logger.info("Loading HuggingFace embeddings model...")
 
@@ -110,88 +89,65 @@ def get_embeddings():
     return embeddings
 
 
-# ============================================================================
-# CREATE VECTOR DATABASE
-# ============================================================================
-
 def create_vector_db():
     """Create a FAISS vector database from the CSV dataset."""
 
-    try:
-        logger.info("=" * 60)
-        logger.info("Starting vector database creation")
-        logger.info("=" * 60)
+    logger.info("=" * 60)
+    logger.info("Starting vector database creation")
+    logger.info("=" * 60)
 
-        if not DATASET_PATH.exists():
-            raise FileNotFoundError(
-                f"Dataset not found at: {DATASET_PATH}"
-            )
-
-        logger.info("Loading dataset from: %s", DATASET_PATH)
-
-        loader = CSVLoader(
-            file_path=str(DATASET_PATH),
-            source_column=DATASET_CONFIG["csv_column"],
+    if not DATASET_PATH.exists():
+        raise FileNotFoundError(
+            f"Dataset not found at {DATASET_PATH}"
         )
 
-        documents = loader.load()
+    logger.info(
+        "Loading dataset from: %s",
+        DATASET_PATH,
+    )
 
-        if not documents:
-            raise ValueError("The dataset contains no documents.")
+    loader = CSVLoader(
+        file_path=str(DATASET_PATH),
+        source_column=DATASET_CONFIG["csv_column"],
+    )
 
-        logger.info(
-            "Loaded %s documents from CSV",
-            len(documents),
-        )
+    documents = loader.load()
 
-        embeddings = get_embeddings()
+    logger.info(
+        "Loaded %d documents from CSV",
+        len(documents),
+    )
 
-        logger.info("Creating FAISS vector database...")
+    embeddings = get_embeddings()
 
-        vectordb = FAISS.from_documents(
-            documents,
-            embeddings,
-        )
+    logger.info("Creating FAISS vector database...")
 
-        logger.info(
-            "FAISS index created with %s vectors",
-            vectordb.index.ntotal,
-        )
+    vectordb = FAISS.from_documents(
+        documents,
+        embeddings,
+    )
 
-        VECTORDB_PATH.mkdir(
-            parents=True,
-            exist_ok=True,
-        )
+    logger.info(
+        "FAISS index created with %d vectors",
+        vectordb.index.ntotal,
+    )
 
-        logger.info(
-            "Saving FAISS index to: %s",
-            VECTORDB_PATH,
-        )
+    logger.info(
+        "Saving FAISS index to: %s",
+        VECTORDB_PATH,
+    )
 
-        vectordb.save_local(str(VECTORDB_PATH))
+    vectordb.save_local(str(VECTORDB_PATH))
 
-        logger.info("FAISS index saved successfully")
+    logger.info("FAISS index saved successfully")
 
-        load_vector_db.cache_clear()
+    load_vector_db.cache_clear()
 
-        logger.info("Vector DB cache cleared")
-        logger.info("Vector database creation completed")
-        logger.info("=" * 60)
+    logger.info("Vector DB cache cleared")
+    logger.info("Vector database creation completed")
 
-        return vectordb
+    return vectordb
 
-    except Exception as e:
-        logger.error(
-            "Error creating vector database: %s",
-            e,
-            exc_info=True,
-        )
-        raise
-
-
-# ============================================================================
-# LOAD VECTOR DATABASE
-# ============================================================================
 
 @lru_cache(maxsize=1)
 def load_vector_db():
@@ -201,7 +157,7 @@ def load_vector_db():
 
     if not VECTORDB_PATH.exists():
         raise FileNotFoundError(
-            f"Vector database not found at: {VECTORDB_PATH}. "
+            f"Vector database not found at {VECTORDB_PATH}. "
             "Please create it first."
         )
 
@@ -212,133 +168,211 @@ def load_vector_db():
     )
 
     logger.info(
-        "Loaded FAISS index with %s vectors",
+        "Loaded FAISS index with %d vectors",
         vectordb.index.ntotal,
     )
 
     return vectordb
 
 
-# ============================================================================
-# QA CHAIN
-# ============================================================================
-
 def get_qa_chain():
-    """Create the RAG question-answering function."""
+    """Create the RAG question-answering functions."""
 
-    try:
-        logger.info("Creating QA chain...")
+    vectordb = load_vector_db()
 
-        vectordb = load_vector_db()
+    retriever = vectordb.as_retriever(
+        search_kwargs={
+            "k": RETRIEVER_CONFIG["k"],
+        }
+    )
 
-        retriever = vectordb.as_retriever(
-            search_kwargs={
-                "k": RETRIEVER_CONFIG["k"]
-            }
-        )
+    logger.info(
+        "QA chain ready with retriever k=%d",
+        RETRIEVER_CONFIG["k"],
+    )
 
-        prompt = ChatPromptTemplate.from_template(
-            """
+    prompt = ChatPromptTemplate.from_template(
+        """
 You are a helpful customer service assistant.
 
-Answer the question using ONLY the information provided in the context.
+Answer the current question using ONLY the information
+provided in the knowledge-base context.
 
-If the answer is not present in the context, say:
+You may use the previous conversation to understand
+what the user is referring to.
+
+Do not use the previous conversation as a source of facts.
+The knowledge-base context is the only source of factual information.
+
+If the answer is not present in the knowledge-base context,
+say exactly:
+
 "I don't know based on the available information."
 
 Do not make up information.
 
-Context:
+Previous conversation:
+{history}
+
+Knowledge-base context:
 {context}
 
-Question:
+Current question:
 {question}
 """
+    )
+
+    def prepare_request(question, chat_history=None):
+        """Prepare the RAG prompt and retrieved documents."""
+
+        question = question.strip()
+
+        if not question:
+            raise ValueError("Question cannot be empty.")
+
+        chat_history = chat_history or []
+
+        history_messages = chat_history[-6:]
+
+        history_text = "\n".join(
+            f"{message['role'].capitalize()}: "
+            f"{message['content']}"
+            for message in history_messages
+            if message.get("content")
+        )
+
+        retrieval_query = question
+
+        if history_text:
+            retrieval_query = (
+                "Previous conversation:\n"
+                f"{history_text}\n\n"
+                "Current question:\n"
+                f"{question}"
+            )
+
+        logger.info(
+            "Processing question: %s",
+            question[:80],
+        )
+
+        documents = retriever.invoke(
+            retrieval_query
         )
 
         logger.info(
-            "QA chain ready with retriever k=%s",
-            RETRIEVER_CONFIG["k"],
+            "Retrieved %d documents",
+            len(documents),
         )
 
-        def ask_question(question: str):
-            """Answer a question using the RAG pipeline."""
+        context = "\n\n".join(
+            document.page_content
+            for document in documents
+        )
 
-            if not question or not question.strip():
-                raise ValueError("Question cannot be empty.")
+        logger.info(
+            "Context size: %d characters",
+            len(context),
+        )
 
-            question = question.strip()
-
-            logger.info(
-                "Processing question: %s",
-                question[:60],
-            )
-
-            documents = retriever.invoke(question)
-
-            logger.info(
-                "Retrieved %s documents",
-                len(documents),
-            )
-
-            context = "\n\n".join(
-                document.page_content
-                for document in documents
-            )
-
-            logger.info(
-                "Context size: %s characters",
-                len(context),
-            )
-
-            messages = prompt.invoke(
-                {
-                    "context": context,
-                    "question": question,
-                }
-            )
-
-            logger.info("Generating response with Gemini...")
-
-            response = get_llm().invoke(messages)
-
-            answer = response.content
-
-            if isinstance(answer, list):
-                text_parts = []
-
-                for item in answer:
-                    if isinstance(item, dict) and "text" in item:
-                        text_parts.append(item["text"])
-
-                answer = "".join(text_parts)
-
-            answer = str(answer).strip()
-
-            logger.info(
-                "Answer generated: %s characters",
-                len(answer),
-            )
-
-            return {
-                "result": answer,
-                "source_documents": documents,
+        messages = prompt.invoke(
+            {
+                "history": (
+                    history_text
+                    if history_text
+                    else "No previous conversation."
+                ),
+                "context": context,
+                "question": question,
             }
-
-        return ask_question
-
-    except Exception as e:
-        logger.error(
-            "Error creating QA chain: %s",
-            e,
-            exc_info=True,
         )
-        raise
 
+        return messages, documents
 
-# ============================================================================
-# TEST
-# ============================================================================
+    def ask_question(question, chat_history=None):
+        """Answer a question using normal non-streaming RAG."""
+
+        messages, documents = prepare_request(
+            question,
+            chat_history,
+        )
+
+        logger.info(
+            "Generating response with Gemini..."
+        )
+
+        response = get_llm().invoke(messages)
+
+        answer = response.content
+
+        if isinstance(answer, list):
+            text_parts = []
+
+            for item in answer:
+                if isinstance(item, dict) and "text" in item:
+                    text_parts.append(item["text"])
+
+            answer = "".join(text_parts)
+
+        answer = str(answer).strip()
+
+        logger.info(
+            "Answer generated: %d characters",
+            len(answer),
+        )
+
+        return {
+            "result": answer,
+            "source_documents": documents,
+        }
+
+    def ask_question_stream(question, chat_history=None):
+        """Stream a RAG response from Gemini."""
+
+        messages, documents = prepare_request(
+            question,
+            chat_history,
+        )
+
+        logger.info(
+            "Starting streaming response with Gemini..."
+        )
+
+        for chunk in get_llm().stream(messages):
+
+            content = chunk.content
+
+            if isinstance(content, str):
+
+                if content:
+                    yield {
+                        "type": "token",
+                        "content": content,
+                    }
+
+            elif isinstance(content, list):
+
+                for item in content:
+
+                    if isinstance(item, dict):
+
+                        text = item.get("text", "")
+
+                        if text:
+                            yield {
+                                "type": "token",
+                                "content": text,
+                            }
+
+        logger.info("Streaming response completed")
+
+        yield {
+            "type": "sources",
+            "source_documents": documents,
+        }
+
+    return ask_question, ask_question_stream
+
 
 if __name__ == "__main__":
 
@@ -347,24 +381,39 @@ if __name__ == "__main__":
     logger.info("=" * 60)
 
     try:
-        logger.info("Step 1: Creating vector database")
+
+        logger.info(
+            "Step 1: Creating vector database"
+        )
 
         create_vector_db()
 
-        logger.info("Step 2: Creating QA chain")
+        logger.info(
+            "Step 2: Creating QA chain"
+        )
 
-        chain = get_qa_chain()
+        chain, stream_chain = get_qa_chain()
 
-        logger.info("Step 3: Testing sample question")
+        logger.info(
+            "Step 3: Testing sample question"
+        )
 
         test_question = "Do you provide internships?"
 
         result = chain(test_question)
 
-        logger.info("Question: %s", test_question)
-        logger.info("Answer: %s", result["result"])
         logger.info(
-            "Sources: %s",
+            "Question: %s",
+            test_question,
+        )
+
+        logger.info(
+            "Answer: %s",
+            result["result"],
+        )
+
+        logger.info(
+            "Sources: %d",
             len(result["source_documents"]),
         )
 
@@ -372,9 +421,10 @@ if __name__ == "__main__":
         logger.info("TEST PASSED")
         logger.info("=" * 60)
 
-    except Exception as e:
+    except Exception as error:
+
         logger.error(
             "TEST FAILED: %s",
-            e,
+            error,
             exc_info=True,
         )

@@ -1,23 +1,29 @@
 import logging
 
 import streamlit as st
+import streamlit.components.v1 as components
 
-from langchain_helper import create_vector_db, get_qa_chain
+from chat_manager import (
+    add_message,
+    create_chat,
+    delete_chat,
+    find_chat,
+    rename_chat,
+)
+
 from config import (
+    ERROR_MESSAGES,
     PAGE_CONFIG,
+    SESSION_STATE_KEYS,
     SUGGESTED_QUESTIONS,
+    SUCCESS_MESSAGES,
     WELCOME_MESSAGE,
     WELCOME_SUBTEXT,
-    ERROR_MESSAGES,
-    SUCCESS_MESSAGES,
-    SESSION_STATE_KEYS,
 )
-from chat_manager import (
-    create_chat,
-    add_message,
-    find_chat,
-    delete_chat,
-    rename_chat,
+
+from langchain_helper import (
+    create_vector_db,
+    get_qa_chain,
 )
 
 
@@ -38,6 +44,7 @@ st.set_page_config(**PAGE_CONFIG)
 st.markdown(
     """
     <style>
+
     .main {
         padding-top: 1rem;
     }
@@ -79,12 +86,6 @@ st.markdown(
         margin-top: 0.5rem;
     }
 
-    .chat-title {
-        font-size: 0.95rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-    }
-
     .footer {
         text-align: center;
         color: #888;
@@ -92,6 +93,7 @@ st.markdown(
         margin-top: 3rem;
         padding-top: 1rem;
     }
+
     </style>
     """,
     unsafe_allow_html=True,
@@ -105,14 +107,28 @@ st.markdown(
 if "chats" not in st.session_state:
     st.session_state.chats = []
 
+
 if "current_chat_id" not in st.session_state:
-    chat = create_chat()
-    st.session_state.chats.append(chat)
-    st.session_state.current_chat_id = chat["id"]
+
+    new_chat = create_chat()
+
+    st.session_state.chats.append(
+        new_chat
+    )
+
+    st.session_state.current_chat_id = (
+        new_chat["id"]
+    )
+
 
 for key in SESSION_STATE_KEYS:
+
     if key not in st.session_state:
         st.session_state[key] = []
+
+
+if "feedback" not in st.session_state:
+    st.session_state.feedback = {}
 
 
 # ============================================================================
@@ -120,6 +136,8 @@ for key in SESSION_STATE_KEYS:
 # ============================================================================
 
 def get_current_chat():
+    """Return the currently selected conversation."""
+
     return find_chat(
         st.session_state.chats,
         st.session_state.current_chat_id,
@@ -127,16 +145,26 @@ def get_current_chat():
 
 
 def start_new_chat():
+    """Create and select a new conversation."""
+
     chat = create_chat()
 
-    st.session_state.chats.insert(0, chat)
-    st.session_state.current_chat_id = chat["id"]
+    st.session_state.chats.insert(
+        0,
+        chat,
+    )
+
+    st.session_state.current_chat_id = (
+        chat["id"]
+    )
 
     st.session_state.messages = []
     st.session_state.sources = []
 
 
 def select_chat(chat_id):
+    """Select an existing conversation."""
+
     st.session_state.current_chat_id = chat_id
 
     chat = find_chat(
@@ -145,7 +173,11 @@ def select_chat(chat_id):
     )
 
     if chat:
-        st.session_state.messages = chat["messages"]
+
+        st.session_state.messages = (
+            chat["messages"]
+        )
+
         st.session_state.sources = [
             message.get("sources", [])
             for message in chat["messages"]
@@ -154,9 +186,12 @@ def select_chat(chat_id):
 
 
 def clear_current_chat():
+    """Clear messages from the current conversation."""
+
     chat = get_current_chat()
 
     if chat:
+
         chat["messages"] = []
         chat["title"] = "New Chat"
 
@@ -165,18 +200,28 @@ def clear_current_chat():
 
 
 def remove_chat(chat_id):
+    """Delete a conversation."""
+
     st.session_state.chats = delete_chat(
         st.session_state.chats,
         chat_id,
     )
 
     if not st.session_state.chats:
+
         chat = create_chat()
-        st.session_state.chats.append(chat)
 
-    st.session_state.current_chat_id = st.session_state.chats[0]["id"]
+        st.session_state.chats.append(
+            chat
+        )
 
-    select_chat(st.session_state.current_chat_id)
+    st.session_state.current_chat_id = (
+        st.session_state.chats[0]["id"]
+    )
+
+    select_chat(
+        st.session_state.current_chat_id
+    )
 
 
 # ============================================================================
@@ -184,34 +229,227 @@ def remove_chat(chat_id):
 # ============================================================================
 
 def extract_source_information(source):
+    """Extract question and answer from a source document."""
+
     question = ""
     answer = ""
 
     for line in source.page_content.split("\n"):
+
         if line.lower().startswith("prompt:"):
-            question = line.split(":", 1)[1].strip()
+
+            question = line.split(
+                ":",
+                1,
+            )[1].strip()
 
         elif line.lower().startswith("response:"):
-            answer = line.split(":", 1)[1].strip()
+
+            answer = line.split(
+                ":",
+                1,
+            )[1].strip()
 
     return question, answer
 
 
 def render_sources(sources):
+    """Display retrieved knowledge-base sources."""
+
     if not sources:
         return
 
-    with st.expander("📚 View Source Information"):
+    with st.expander(
+        "📚 View Source Information"
+    ):
+
         for source in sources:
-            question, answer = extract_source_information(source)
+
+            question, answer = (
+                extract_source_information(
+                    source
+                )
+            )
 
             if question:
-                st.markdown(f"**Question:** {question}")
+
+                st.markdown(
+                    f"**Question:** {question}"
+                )
 
             if answer:
-                st.markdown(f"**Answer:** {answer}")
+
+                st.markdown(
+                    f"**Answer:** {answer}"
+                )
 
             st.markdown("---")
+
+
+# ============================================================================
+# COPY BUTTON
+# ============================================================================
+
+def render_copy_button(message_id, content):
+    """Render a compact browser-based copy button."""
+
+    safe_content = (
+        content
+        .replace("\\", "\\\\")
+        .replace("`", "\\`")
+        .replace("${", "\\${")
+        .replace("</script>", "<\\/script>")
+    )
+
+    components.html(
+        f"""
+        <button
+            onclick="
+                navigator.clipboard.writeText(`{safe_content}`);
+                this.innerText = '✓ Copied';
+                setTimeout(() => {{
+                    this.innerText = '📋 Copy';
+                }}, 1500);
+            "
+            style="
+                width: 100%;
+                height: 32px;
+                border: 1px solid rgba(128,128,128,0.35);
+                border-radius: 7px;
+                background: transparent;
+                cursor: pointer;
+                font-size: 13px;
+                white-space: nowrap;
+                padding: 0 8px;
+            "
+        >
+            📋 Copy
+        </button>
+        """,
+        height=36,
+        scrolling=False,
+    )
+
+
+# ============================================================================
+# FEEDBACK
+# ============================================================================
+
+def give_feedback(message_id, value):
+    """Store user feedback for an assistant response."""
+
+    st.session_state.feedback[message_id] = value
+
+    logger.info(
+        "Feedback recorded: %s -> %s",
+        message_id,
+        value,
+    )
+
+
+# ============================================================================
+# REGENERATE RESPONSE
+# ============================================================================
+
+def regenerate_response(message_index):
+    """Regenerate an existing assistant response."""
+
+    chat = get_current_chat()
+
+    if not chat:
+        return
+
+    if message_index <= 0:
+        return
+
+    assistant_message = chat["messages"][message_index]
+
+    if assistant_message["role"] != "assistant":
+        return
+
+    user_message = None
+    user_index = None
+
+    for index in range(
+        message_index - 1,
+        -1,
+        -1,
+    ):
+
+        if chat["messages"][index]["role"] == "user":
+
+            user_message = chat["messages"][index]
+            user_index = index
+
+            break
+
+    if user_message is None:
+        return
+
+    previous_messages = (
+        chat["messages"][:user_index]
+    )
+
+    try:
+
+        _, stream_chain = get_qa_chain()
+
+        full_answer = ""
+        sources = []
+
+        response_area = st.empty()
+
+        with st.spinner(
+            "Regenerating response..."
+        ):
+
+            stream = stream_chain(
+                user_message["content"],
+                chat_history=previous_messages,
+            )
+
+            for event in stream:
+
+                if event["type"] == "token":
+
+                    full_answer += event["content"]
+
+                    response_area.markdown(
+                        full_answer + "▌"
+                    )
+
+                elif event["type"] == "sources":
+
+                    sources = event.get(
+                        "source_documents",
+                        [],
+                    )
+
+        response_area.markdown(
+            full_answer
+        )
+
+        assistant_message["content"] = (
+            full_answer
+        )
+
+        assistant_message["sources"] = (
+            sources
+        )
+
+        st.session_state.messages = (
+            chat["messages"]
+        )
+
+        logger.info(
+            "Response regenerated successfully"
+        )
+
+        st.rerun()
+
+    except Exception as error:
+
+        display_error(error)
 
 
 # ============================================================================
@@ -219,6 +457,8 @@ def render_sources(sources):
 # ============================================================================
 
 def display_error(error):
+    """Display a user-friendly error message."""
+
     error_message = str(error)
 
     logger.error(
@@ -231,19 +471,26 @@ def display_error(error):
         "429" in error_message
         or "RESOURCE_EXHAUSTED" in error_message
     ):
-        st.warning(ERROR_MESSAGES["api_rate_limit"])
+
+        st.warning(
+            ERROR_MESSAGES["api_rate_limit"]
+        )
 
     elif (
         "503" in error_message
         or "UNAVAILABLE" in error_message
     ):
+
         st.warning(
             "⚠️ Gemini is temporarily unavailable. "
             "Please try again in a moment."
         )
 
     else:
-        st.error(ERROR_MESSAGES["generic_error"])
+
+        st.error(
+            ERROR_MESSAGES["generic_error"]
+        )
 
 
 # ============================================================================
@@ -251,6 +498,8 @@ def display_error(error):
 # ============================================================================
 
 def process_question(question):
+    """Process a user question using streaming RAG."""
+
     question = question.strip()
 
     if not question:
@@ -259,12 +508,18 @@ def process_question(question):
     chat = get_current_chat()
 
     if not chat:
+
         start_new_chat()
+
         chat = get_current_chat()
 
     logger.info(
         "Processing question: %s",
         question[:80],
+    )
+
+    previous_messages = (
+        chat["messages"].copy()
     )
 
     add_message(
@@ -273,24 +528,60 @@ def process_question(question):
         question,
     )
 
-    st.session_state.messages = chat["messages"]
+    st.session_state.messages = (
+        chat["messages"]
+    )
 
     try:
-        with st.spinner("Thinking..."):
-            chain = get_qa_chain()
-            response = chain(question)
 
-        answer = response["result"]
-        sources = response.get("source_documents", [])
+        _, stream_chain = get_qa_chain()
+
+        response_area = st.empty()
+
+        full_answer = ""
+        sources = []
+
+        with st.spinner(
+            "Searching knowledge base..."
+        ):
+
+            stream = stream_chain(
+                question,
+                chat_history=previous_messages,
+            )
+
+            for event in stream:
+
+                if event["type"] == "token":
+
+                    full_answer += event["content"]
+
+                    response_area.markdown(
+                        full_answer + "▌"
+                    )
+
+                elif event["type"] == "sources":
+
+                    sources = event.get(
+                        "source_documents",
+                        [],
+                    )
+
+        response_area.markdown(
+            full_answer
+        )
 
         add_message(
             chat,
             "assistant",
-            answer,
+            full_answer,
             sources,
         )
 
-        st.session_state.messages = chat["messages"]
+        st.session_state.messages = (
+            chat["messages"]
+        )
+
         st.session_state.sources = [
             message.get("sources", [])
             for message in chat["messages"]
@@ -303,6 +594,7 @@ def process_question(question):
         )
 
     except Exception as error:
+
         display_error(error)
 
 
@@ -318,7 +610,9 @@ with st.sidebar:
         "➕ New Chat",
         use_container_width=True,
     ):
+
         start_new_chat()
+
         st.rerun()
 
     st.markdown("---")
@@ -326,7 +620,10 @@ with st.sidebar:
     st.markdown("### 💬 Chat History")
 
     if not st.session_state.chats:
-        st.caption("No conversations yet.")
+
+        st.caption(
+            "No conversations yet."
+        )
 
     for chat in st.session_state.chats:
 
@@ -338,6 +635,7 @@ with st.sidebar:
         label = chat["title"]
 
         if is_current:
+
             label = f"👉 {label}"
 
         if st.button(
@@ -345,7 +643,11 @@ with st.sidebar:
             key=f"chat_{chat['id']}",
             use_container_width=True,
         ):
-            select_chat(chat["id"])
+
+            select_chat(
+                chat["id"]
+            )
+
             st.rerun()
 
     st.markdown("---")
@@ -354,7 +656,9 @@ with st.sidebar:
 
     if current_chat:
 
-        st.markdown("### ⚙️ Chat Settings")
+        st.markdown(
+            "### ⚙️ Chat Settings"
+        )
 
         rename_value = st.text_input(
             "Rename conversation",
@@ -366,24 +670,32 @@ with st.sidebar:
             "✏️ Rename Chat",
             use_container_width=True,
         ):
+
             rename_chat(
                 current_chat,
                 rename_value,
             )
+
             st.rerun()
 
         if st.button(
             "🗑️ Delete Chat",
             use_container_width=True,
         ):
-            remove_chat(current_chat["id"])
+
+            remove_chat(
+                current_chat["id"]
+            )
+
             st.rerun()
 
         if st.button(
             "🧹 Clear Messages",
             use_container_width=True,
         ):
+
             clear_current_chat()
+
             st.rerun()
 
     st.markdown("---")
@@ -394,10 +706,17 @@ with st.sidebar:
         "🔄 Create / Update Knowledge Base",
         use_container_width=True,
     ):
-        logger.info("User requested knowledge base update")
+
+        logger.info(
+            "User requested knowledge base update"
+        )
 
         try:
-            with st.spinner("Updating knowledge base..."):
+
+            with st.spinner(
+                "Updating knowledge base..."
+            ):
+
                 create_vector_db()
 
             st.success(
@@ -405,9 +724,12 @@ with st.sidebar:
             )
 
         except Exception as error:
+
             display_error(error)
 
-    st.success("🟢 Knowledge Base Ready")
+    st.success(
+        "🟢 Knowledge Base Ready"
+    )
 
     st.markdown("---")
 
@@ -475,12 +797,8 @@ if not messages:
         f"""
         <div class="welcome">
             <div class="welcome-icon">💬</div>
-            <div class="welcome-title">
-                {WELCOME_MESSAGE}
-            </div>
-            <div class="welcome-text">
-                {WELCOME_SUBTEXT}
-            </div>
+            <div class="welcome-title">{WELCOME_MESSAGE}</div>
+            <p class="welcome-text">{WELCOME_SUBTEXT}</p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -490,7 +808,10 @@ if not messages:
 
     col1, col2 = st.columns(2)
 
-    columns = [col1, col2]
+    columns = [
+        col1,
+        col2,
+    ]
 
     for question in SUGGESTED_QUESTIONS:
 
@@ -500,9 +821,11 @@ if not messages:
                 f"{question['emoji']} {question['text']}",
                 use_container_width=True,
             ):
+
                 process_question(
                     question["text"]
                 )
+
                 st.rerun()
 
 
@@ -510,7 +833,7 @@ if not messages:
 # MESSAGE DISPLAY
 # ============================================================================
 
-for message in messages:
+for message_index, message in enumerate(messages):
 
     with st.chat_message(message["role"]):
 
@@ -520,8 +843,93 @@ for message in messages:
 
         if message["role"] == "assistant":
 
+            message_id = (
+                f"{current_chat['id']}_{message_index}"
+            )
+
+            st.markdown(
+                "<div style='height: 2px'></div>",
+                unsafe_allow_html=True,
+            )
+
+            action_col1, action_col2, action_col3, action_col4, action_space = (
+                st.columns(
+                    [1.25, 1.65, 0.55, 0.55, 5.5]
+                )
+            )
+
+            with action_col1:
+
+                render_copy_button(
+                    message_id,
+                    message["content"],
+                )
+
+            with action_col2:
+
+                if st.button(
+                    "🔄 Regenerate",
+                    key=f"regenerate_{message_id}",
+                ):
+
+                    regenerate_response(
+                        message_index
+                    )
+
+            with action_col3:
+
+                if st.button(
+                    "👍",
+                    key=f"thumb_up_{message_id}",
+                ):
+
+                    give_feedback(
+                        message_id,
+                        "positive",
+                    )
+
+                    st.rerun()
+
+            with action_col4:
+
+                if st.button(
+                    "👎",
+                    key=f"thumb_down_{message_id}",
+                ):
+
+                    give_feedback(
+                        message_id,
+                        "negative",
+                    )
+
+                    st.rerun()
+
+            if message_id in st.session_state.feedback:
+
+                feedback_value = (
+                    st.session_state.feedback[
+                        message_id
+                    ]
+                )
+
+                if feedback_value == "positive":
+
+                    st.caption(
+                        "👍 Thanks for your feedback!"
+                    )
+
+                else:
+
+                    st.caption(
+                        "Thanks for your feedback. "
+                        "We'll use it to improve the assistant."
+                    )
+
             render_sources(
-                message.get("sources", [])
+                message.get(
+                    "sources",
+                    [],
+                )
             )
 
 
@@ -533,13 +941,20 @@ user_question = st.chat_input(
     "Ask me anything about our services..."
 )
 
+
 if user_question:
 
     with st.chat_message("user"):
-        st.markdown(user_question)
+
+        st.markdown(
+            user_question
+        )
 
     with st.chat_message("assistant"):
-        process_question(user_question)
+
+        process_question(
+            user_question
+        )
 
     st.rerun()
 
