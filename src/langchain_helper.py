@@ -19,102 +19,68 @@ from src.config import (
     RETRIEVER_CONFIG,
 )
 
-
-# ============================================================
-# ENVIRONMENT
-# ============================================================
-
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
-
 load_dotenv()
 
-
-# ============================================================
-# PATHS
-# ============================================================
-
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-DATASET_PATH = (
-    BASE_DIR
-    / "dataset"
-    / "dataset.csv"
-)
-
-VECTORDB_PATH = (
-    BASE_DIR
-    / "faiss_index"
-)
-
-LOG_FILE_PATH = (
-    BASE_DIR
-    / LOGGING_CONFIG["log_file"]
-)
-
-
-# ============================================================
-# LOGGING
-# ============================================================
+DATASET_PATH = BASE_DIR / "dataset" / "dataset.csv"
+VECTORDB_PATH = BASE_DIR / "faiss_index"
+LOG_FILE_PATH = BASE_DIR / LOGGING_CONFIG["log_file"]
 
 logging.basicConfig(
-    level=getattr(
-        logging,
-        LOGGING_CONFIG["level"],
-    ),
+    level=getattr(logging, LOGGING_CONFIG["level"]),
     format=LOGGING_CONFIG["format"],
     handlers=[
-        logging.FileHandler(
-            LOG_FILE_PATH,
-            encoding="utf-8",
-        ),
+        logging.FileHandler(LOG_FILE_PATH, encoding="utf-8"),
         logging.StreamHandler(),
     ],
 )
 
 logger = logging.getLogger(__name__)
 
-
-# ============================================================
-# RETRIEVAL SETTINGS
-# ============================================================
-
-# Retrieve more candidates internally.
-# Only the best relevant documents will be shown to the user.
+# Retrieval tuning
 MAX_RETRIEVAL_CANDIDATES = 8
-
-# Maximum number of sources displayed.
-MAX_SOURCE_DOCUMENTS = RETRIEVER_CONFIG.get(
-    "k",
-    3,
-)
-
-# Minimum confidence required for the BEST result.
-#
-# This is intentionally much lower than the previous 0.7
-# because FAISS + HuggingFace relevance scores can vary.
 MIN_BEST_RELEVANCE = 0.30
 
-# Additional documents must be reasonably close to the
-# strongest result.
-ADDITIONAL_SOURCE_RATIO = 0.78
+# A secondary source must be close to the best source and also
+# independently relevant. This prevents weakly related chunks
+# from appearing in the Sources section.
+ADDITIONAL_SOURCE_RATIO = 0.88
+MIN_ADDITIONAL_RELEVANCE = 0.46
+MAX_SOURCES = 3
 
-# Absolute minimum for additional sources.
-MIN_ADDITIONAL_RELEVANCE = 0.42
+
+def normalize_text(text):
+    """Normalize text for lexical comparison."""
+    return re.findall(r"\b[a-z0-9]+\b", str(text).lower())
 
 
-# ============================================================
-# GEMINI
-# ============================================================
+def calculate_lexical_overlap(query, document_text):
+    """Calculate the proportion of query terms found in a document."""
+    query_terms = set(normalize_text(query))
+    document_terms = set(normalize_text(document_text))
+
+    if not query_terms:
+        return 0.0
+
+    return len(query_terms.intersection(document_terms)) / len(query_terms)
+
+
+def calculate_combined_relevance(semantic_score, lexical_score):
+    """
+    Combine semantic and lexical relevance.
+
+    Semantic similarity remains the primary signal while lexical
+    overlap helps distinguish closely related support sections.
+    """
+    return (semantic_score * 0.75) + (lexical_score * 0.25)
+
 
 @lru_cache(maxsize=1)
 def get_llm():
-
-    api_key = os.getenv(
-        "GOOGLE_API_KEY"
-    )
+    api_key = os.getenv("GOOGLE_API_KEY")
 
     if not api_key:
-
         raise ValueError(
             "GOOGLE_API_KEY is not configured. "
             "Add it to the .env file or Streamlit secrets."
@@ -126,64 +92,36 @@ def get_llm():
         max_tokens=LLM_CONFIG["max_tokens"],
     )
 
-    logger.info(
-        "Gemini LLM initialized"
-    )
-
+    logger.info("Gemini LLM initialized")
     return llm
 
 
-# ============================================================
-# EMBEDDINGS
-# ============================================================
-
 @lru_cache(maxsize=1)
 def get_embeddings():
-
     embeddings = HuggingFaceEmbeddings(
-        model_name=EMBEDDINGS_CONFIG[
-            "model_name"
-        ]
+        model_name=EMBEDDINGS_CONFIG["model_name"]
     )
 
-    logger.info(
-        "Embeddings model loaded"
-    )
-
+    logger.info("Embeddings model loaded")
     return embeddings
 
 
-# ============================================================
-# CREATE VECTOR DATABASE
-# ============================================================
-
 def create_vector_db():
-
+    """Create and save the FAISS vector database from the current dataset."""
     if not DATASET_PATH.exists():
-
         raise FileNotFoundError(
             f"Dataset not found at {DATASET_PATH}"
         )
 
-    logger.info(
-        "Creating vector database..."
-    )
-
     loader = CSVLoader(
-        file_path=str(
-            DATASET_PATH
-        ),
-        source_column=DATASET_CONFIG[
-            "csv_column"
-        ],
+        file_path=str(DATASET_PATH),
+        source_column=DATASET_CONFIG["csv_column"],
     )
 
     documents = loader.load()
 
-    logger.info(
-        "Loaded %s documents from CSV",
-        len(documents),
-    )
+    if not documents:
+        raise ValueError("The dataset does not contain any documents.")
 
     embeddings = get_embeddings()
 
@@ -192,37 +130,25 @@ def create_vector_db():
         embeddings,
     )
 
-    vectordb.save_local(
-        str(VECTORDB_PATH)
-    )
+    VECTORDB_PATH.mkdir(parents=True, exist_ok=True)
 
-    logger.info(
-        "FAISS index created successfully"
-    )
+    vectordb.save_local(str(VECTORDB_PATH))
 
     load_vector_db.cache_clear()
+
+    logger.info("FAISS vector database created with %d documents", len(documents))
 
     return vectordb
 
 
-# ============================================================
-# LOAD VECTOR DATABASE
-# ============================================================
-
 @lru_cache(maxsize=1)
 def load_vector_db():
-
+    """Load the existing FAISS vector database."""
     if not VECTORDB_PATH.exists():
-
         raise FileNotFoundError(
-            f"Vector database not found at "
-            f"{VECTORDB_PATH}. "
+            f"Vector database not found at {VECTORDB_PATH}. "
             "Please create it first."
         )
-
-    logger.info(
-        "Loading FAISS vector database..."
-    )
 
     vectordb = FAISS.load_local(
         str(VECTORDB_PATH),
@@ -231,548 +157,49 @@ def load_vector_db():
     )
 
     logger.info(
-        "FAISS vector database loaded"
+        "Loaded FAISS index with %d vectors",
+        vectordb.index.ntotal,
     )
 
     return vectordb
 
 
-# ============================================================
-# NORMALIZE GEMINI RESPONSE
-# ============================================================
-
-def normalize_response_content(
-    content,
-):
-
-    if isinstance(
-        content,
-        str,
-    ):
-
-        return content.strip()
-
-    if isinstance(
-        content,
-        list,
-    ):
-
-        text_parts = []
-
-        for item in content:
-
-            if isinstance(
-                item,
-                dict,
-            ):
-
-                if "text" in item:
-
-                    text_parts.append(
-                        str(
-                            item["text"]
-                        )
-                    )
-
-            elif isinstance(
-                item,
-                str,
-            ):
-
-                text_parts.append(
-                    item
-                )
-
-        return "".join(
-            text_parts
-        ).strip()
-
-    return str(
-        content
-    ).strip()
-
-
-# ============================================================
-# TOKENIZATION
-# ============================================================
-
-def tokenize(text):
-
-    if not text:
-
-        return set()
-
-    words = re.findall(
-        r"[a-zA-Z0-9]+",
-        text.lower(),
-    )
-
-    stop_words = {
-        "the",
-        "a",
-        "an",
-        "is",
-        "are",
-        "was",
-        "were",
-        "be",
-        "to",
-        "of",
-        "and",
-        "or",
-        "in",
-        "on",
-        "for",
-        "with",
-        "what",
-        "how",
-        "when",
-        "where",
-        "why",
-        "can",
-        "could",
-        "should",
-        "would",
-        "i",
-        "me",
-        "my",
-        "you",
-        "your",
-        "it",
-        "they",
-        "them",
-        "this",
-        "that",
-    }
-
-    return {
-        word
-        for word in words
-        if word not in stop_words
-    }
-
-
-# ============================================================
-# LEXICAL RELEVANCE
-#
-# This is an additional safety layer.
-#
-# Example:
-#
-# Question:
-# "How often should the HEPA filter be replaced?"
-#
-# SmartHome document:
-# contains HEPA + filter + replaced
-#
-# Power BI document:
-# contains almost none of those terms
-#
-# Therefore the SmartHome document gets a stronger
-# relevance signal.
-# ============================================================
-
-def calculate_lexical_overlap(
-    query,
-    document,
-):
-
-    query_tokens = tokenize(
-        query
-    )
-
-    document_tokens = tokenize(
-        document.page_content
-    )
-
-    if not query_tokens:
-
-        return 0.0
-
-    overlap = (
-        query_tokens
-        & document_tokens
-    )
-
-    return len(overlap) / len(
-        query_tokens
-    )
-
-
-# ============================================================
-# BUILD RETRIEVAL QUERY
-# ============================================================
-
-def build_retrieval_query(
-    question,
-    chat_history,
-):
-
-    question = question.strip()
-
-    if not chat_history:
-
-        return question
-
-    recent_messages = (
-        chat_history[-6:]
-    )
-
-    history_parts = []
-
-    for message in recent_messages:
-
-        role = message.get(
-            "role",
-            "",
-        )
-
-        content = message.get(
-            "content",
-            "",
-        )
-
-        if not content:
-
-            continue
-
-        history_parts.append(
-            f"{role.capitalize()}: {content}"
-        )
-
-    if not history_parts:
-
-        return question
-
-    history_text = "\n".join(
-        history_parts
-    )
-
-    return (
-        "Conversation context:\n"
-        f"{history_text}\n\n"
-        "Current question:\n"
-        f"{question}"
-    )
-
-
-# ============================================================
-# RETRIEVE RELEVANT DOCUMENTS
-# ============================================================
-
-def retrieve_relevant_documents(
-    vectordb,
-    query,
-):
-
-    logger.info(
-        "Retrieving candidates..."
-    )
-
-    try:
-
-        scored_documents = (
-            vectordb
-            .similarity_search_with_relevance_scores(
-                query,
-                k=MAX_RETRIEVAL_CANDIDATES,
-            )
-        )
-
-    except Exception as error:
-
-        logger.warning(
-            "Relevance-score retrieval failed: %s",
-            error,
-        )
-
-        documents = (
-            vectordb.similarity_search(
-                query,
-                k=MAX_SOURCE_DOCUMENTS,
-            )
-        )
-
-        return documents
-
-
-    if not scored_documents:
-
-        logger.info(
-            "No candidates retrieved."
-        )
-
-        return []
-
-
-    # --------------------------------------------------------
-    # CALCULATE COMBINED RELEVANCE
-    # --------------------------------------------------------
-
-    candidates = []
-
-    for document, semantic_score in scored_documents:
-
-        try:
-
-            semantic_score = float(
-                semantic_score
-            )
-
-        except (
-            TypeError,
-            ValueError,
-        ):
-
-            continue
-
-
-        lexical_score = (
-            calculate_lexical_overlap(
-                query,
-                document,
-            )
-        )
-
-
-        # Semantic similarity is the primary signal.
-        #
-        # Lexical overlap is used as a supporting signal,
-        # especially for exact product terms such as:
-        # HEPA, warranty, filter, internship, etc.
-        combined_score = (
-            semantic_score * 0.75
-            + lexical_score * 0.25
-        )
-
-
-        candidates.append(
-            {
-                "document": document,
-                "semantic_score": semantic_score,
-                "lexical_score": lexical_score,
-                "combined_score": combined_score,
-            }
-        )
-
-
-        logger.info(
-            "Candidate | semantic=%.4f | lexical=%.4f | combined=%.4f",
-            semantic_score,
-            lexical_score,
-            combined_score,
-        )
-
-
-    if not candidates:
-
-        return []
-
-
-    # --------------------------------------------------------
-    # SORT BY COMBINED RELEVANCE
-    # --------------------------------------------------------
-
-    candidates.sort(
-        key=lambda item: item[
-            "combined_score"
-        ],
-        reverse=True,
-    )
-
-
-    best_candidate = candidates[0]
-
-    best_score = best_candidate[
-        "combined_score"
-    ]
-
-
-    logger.info(
-        "Best relevance score: %.4f",
-        best_score,
-    )
-
-
-    # --------------------------------------------------------
-    # GLOBAL REJECTION
-    #
-    # If even the strongest document is weak,
-    # treat the question as outside the KB.
-    # --------------------------------------------------------
-
-    if best_score < MIN_BEST_RELEVANCE:
-
-        logger.info(
-            "Best document is below minimum relevance. "
-            "Returning no sources."
-        )
-
-        return []
-
-
-    # --------------------------------------------------------
-    # SELECT RELEVANT SOURCES
-    # --------------------------------------------------------
-
-    relevant_documents = []
-
-    for candidate in candidates:
-
-        score = candidate[
-            "combined_score"
-        ]
-
-        is_best = (
-            candidate
-            is best_candidate
-        )
-
-
-        # Always retain the strongest document.
-        if is_best:
-
-            relevant_documents.append(
-                candidate
-            )
-
-            continue
-
-
-        # Additional documents must satisfy BOTH:
-        #
-        # 1. They have a reasonable absolute score.
-        # 2. They are close enough to the best result.
-        #
-        # This prevents unrelated documents from appearing
-        # simply because FAISS returned them in the top 8.
-        close_to_best = (
-            score
-            >= best_score
-            * ADDITIONAL_SOURCE_RATIO
-        )
-
-        sufficiently_relevant = (
-            score
-            >= MIN_ADDITIONAL_RELEVANCE
-        )
-
-
-        if (
-            close_to_best
-            and sufficiently_relevant
-        ):
-
-            relevant_documents.append(
-                candidate
-            )
-
-
-        if (
-            len(relevant_documents)
-            >= MAX_SOURCE_DOCUMENTS
-        ):
-
-            break
-
-
-    # --------------------------------------------------------
-    # ADD RELEVANCE METADATA
-    # --------------------------------------------------------
-
-    final_documents = []
-
-    for candidate in relevant_documents:
-
-        document = candidate[
-            "document"
-        ]
-
-        document.metadata = dict(
-            document.metadata or {}
-        )
-
-        document.metadata[
-            "semantic_score"
-        ] = round(
-            candidate[
-                "semantic_score"
-            ],
-            4,
-        )
-
-        document.metadata[
-            "lexical_score"
-        ] = round(
-            candidate[
-                "lexical_score"
-            ],
-            4,
-        )
-
-        document.metadata[
-            "relevance_score"
-        ] = round(
-            candidate[
-                "combined_score"
-            ],
-            4,
-        )
-
-        final_documents.append(
-            document
-        )
-
-
-    logger.info(
-        "Final relevant sources: %s",
-        len(final_documents),
-    )
-
-    return final_documents
-
-
-# ============================================================
-# QA CHAIN
-# ============================================================
-
 def get_qa_chain():
+    """
+    Create the customer-service RAG question-answering function.
 
+    Retrieval uses semantic similarity plus lexical overlap.
+    The strongest relevant source is always retained. Additional
+    sources are included only when they are sufficiently close to
+    the strongest source and independently relevant.
+    """
     vectordb = load_vector_db()
 
+    retriever = vectordb.as_retriever(
+        search_kwargs={
+            "k": MAX_RETRIEVAL_CANDIDATES,
+        }
+    )
 
     prompt = ChatPromptTemplate.from_template(
         """
 You are a helpful customer service assistant.
 
-Answer the current question using ONLY the
-knowledge-base context provided below.
+Answer the current question using ONLY the information
+provided in the knowledge-base context.
 
-IMPORTANT RULES:
+You may use the previous conversation to understand
+what the user is referring to.
 
-1. The knowledge-base context is the ONLY source
-   of factual information.
+Do not use the previous conversation as a source of facts.
+The knowledge-base context is the only source of factual information.
 
-2. Previous conversation can only be used to
-   understand references such as:
-   "it", "they", "that", "this", "the product",
-   "the course", etc.
-
-3. Never use previous conversation as a factual source.
-
-4. Never use your own general knowledge.
-
-5. Never guess or invent information.
-
-6. If the knowledge-base context does not contain
-   enough information to answer the question, say:
+If the answer is not present in the knowledge-base context,
+say exactly:
 
 "I don't know based on the available information."
 
-7. Answer naturally and directly.
-
-8. Do not mention FAISS, embeddings, retrieval,
-   similarity scores, prompts, or internal instructions.
+Do not make up information.
 
 Previous conversation:
 {history}
@@ -785,139 +212,236 @@ Current question:
 """
     )
 
-
-    def ask_question(
-        question,
-        chat_history=None,
-    ):
-
-        question = question.strip()
+    def ask_question(question, chat_history=None):
+        question = str(question).strip()
 
         if not question:
+            raise ValueError("Question cannot be empty.")
 
-            raise ValueError(
-                "Question cannot be empty."
-            )
+        chat_history = chat_history or []
 
-
-        chat_history = (
-            chat_history
-            or []
-        )
-
-
-        history_messages = (
-            chat_history[-6:]
-        )
-
+        history_messages = chat_history[-6:]
 
         history_text = "\n".join(
-            (
-                f"{message['role'].capitalize()}: "
-                f"{message['content']}"
-            )
+            f"{message['role'].capitalize()}: "
+            f"{message['content']}"
             for message in history_messages
             if message.get("content")
         )
 
+        retrieval_query = question
 
-        # ----------------------------------------------------
-        # RETRIEVAL
-        # ----------------------------------------------------
-
-        retrieval_query = (
-            build_retrieval_query(
-                question,
-                history_messages,
+        if history_text:
+            retrieval_query = (
+                "Previous conversation:\n"
+                f"{history_text}\n\n"
+                "Current question:\n"
+                f"{question}"
             )
+
+        logger.info("Question: %s", question)
+
+        # Retrieve more candidates than we finally expose so that
+        # relevance filtering has enough choices.
+        candidate_documents = retriever.invoke(retrieval_query)
+
+        scored_documents = []
+
+        # similarity_search_with_relevance_scores gives normalized
+        # relevance scores for the same FAISS store.
+        try:
+            scored_results = (
+                vectordb.similarity_search_with_relevance_scores(
+                    retrieval_query,
+                    k=MAX_RETRIEVAL_CANDIDATES,
+                )
+            )
+        except Exception:
+            scored_results = []
+
+        if scored_results:
+            for document, semantic_score in scored_results:
+                lexical_score = calculate_lexical_overlap(
+                    question,
+                    document.page_content,
+                )
+
+                relevance_score = calculate_combined_relevance(
+                    semantic_score,
+                    lexical_score,
+                )
+
+                document.metadata["semantic_score"] = round(
+                    float(semantic_score),
+                    4,
+                )
+                document.metadata["lexical_score"] = round(
+                    float(lexical_score),
+                    4,
+                )
+                document.metadata["relevance_score"] = round(
+                    float(relevance_score),
+                    4,
+                )
+
+                scored_documents.append(
+                    (
+                        document,
+                        float(semantic_score),
+                        float(lexical_score),
+                        float(relevance_score),
+                    )
+                )
+
+        # Fallback for vector-store implementations that do not return
+        # normalized relevance scores.
+        if not scored_documents:
+            for rank, document in enumerate(candidate_documents):
+                lexical_score = calculate_lexical_overlap(
+                    question,
+                    document.page_content,
+                )
+
+                # Preserve ordering when an explicit semantic score
+                # cannot be obtained.
+                semantic_score = max(
+                    0.0,
+                    1.0 - (rank / max(len(candidate_documents), 1)),
+                )
+
+                relevance_score = calculate_combined_relevance(
+                    semantic_score,
+                    lexical_score,
+                )
+
+                document.metadata["semantic_score"] = round(
+                    float(semantic_score),
+                    4,
+                )
+                document.metadata["lexical_score"] = round(
+                    float(lexical_score),
+                    4,
+                )
+                document.metadata["relevance_score"] = round(
+                    float(relevance_score),
+                    4,
+                )
+
+                scored_documents.append(
+                    (
+                        document,
+                        semantic_score,
+                        lexical_score,
+                        relevance_score,
+                    )
+                )
+
+        scored_documents.sort(
+            key=lambda item: item[3],
+            reverse=True,
         )
 
+        selected_documents = []
 
-        documents = (
-            retrieve_relevant_documents(
-                vectordb,
-                retrieval_query,
-            )
+        if scored_documents:
+            best_document, _, _, best_relevance = scored_documents[0]
+
+            # If the strongest result itself is too weak, do not let
+            # unrelated content become the answer context.
+            if best_relevance >= MIN_BEST_RELEVANCE:
+                selected_documents.append(best_document)
+
+                # Add secondary sources only when they are close to the
+                # best result AND independently relevant.
+                for (
+                    document,
+                    _semantic_score,
+                    _lexical_score,
+                    relevance_score,
+                ) in scored_documents[1:]:
+                    if len(selected_documents) >= MAX_SOURCES:
+                        break
+
+                    if (
+                        relevance_score >= MIN_ADDITIONAL_RELEVANCE
+                        and relevance_score
+                        >= best_relevance * ADDITIONAL_SOURCE_RATIO
+                    ):
+                        selected_documents.append(document)
+
+        logger.info(
+            "Retrieved %d candidates; selected %d relevant sources",
+            len(scored_documents),
+            len(selected_documents),
         )
 
-
-        # ----------------------------------------------------
-        # NO RELEVANT DOCUMENT
-        # ----------------------------------------------------
-
-        if not documents:
-
-            logger.info(
-                "No sufficiently relevant information found."
-            )
-
+        if not selected_documents:
             return {
-                "result": (
-                    "I don't know based on the "
-                    "available information."
-                ),
+                "result": "I don't know based on the available information.",
                 "source_documents": [],
             }
 
-
-        # ----------------------------------------------------
-        # BUILD CONTEXT
-        # ----------------------------------------------------
-
-        context_parts = []
-
-        for document in documents:
-
-            if document.page_content:
-
-                context_parts.append(
-                    document.page_content
-                )
-
-
         context = "\n\n".join(
-            context_parts
+            document.page_content
+            for document in selected_documents
         )
 
-
-        # ----------------------------------------------------
-        # GENERATE ANSWER
-        # ----------------------------------------------------
+        logger.info(
+            "Context size: %d characters",
+            len(context),
+        )
 
         messages = prompt.invoke(
             {
-                "history": (
-                    history_text
-                    or "No previous conversation."
-                ),
+                "history": history_text or "No previous conversation.",
                 "context": context,
                 "question": question,
             }
         )
 
+        logger.info("Generating response with Gemini...")
 
-        response = get_llm().invoke(
-            messages
-        )
+        response = get_llm().invoke(messages)
 
+        answer = response.content
 
-        answer = normalize_response_content(
-            response.content
-        )
+        if isinstance(answer, list):
+            text_parts = []
 
+            for item in answer:
+                if isinstance(item, dict) and "text" in item:
+                    text_parts.append(item["text"])
+                elif isinstance(item, str):
+                    text_parts.append(item)
 
-        if not answer:
+            answer = "".join(text_parts)
 
-            answer = (
-                "I don't know based on the "
-                "available information."
-            )
-
+        answer = str(answer).strip()
 
         return {
             "result": answer,
-            "source_documents": documents,
+            "source_documents": selected_documents,
         }
 
-
     return ask_question
+
+
+if __name__ == "__main__":
+    logger.info("=" * 60)
+    logger.info("Customer Service Chatbot - Vector Database Test")
+    logger.info("=" * 60)
+
+    create_vector_db()
+
+    chain = get_qa_chain()
+
+    test_question = "What should I do if the device won't turn on?"
+
+    result = chain(test_question)
+
+    logger.info("Question: %s", test_question)
+    logger.info("Answer: %s", result["result"])
+    logger.info(
+        "Selected sources: %d",
+        len(result["source_documents"]),
+    )
