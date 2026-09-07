@@ -328,44 +328,271 @@ def split_text(
     chunk_size=1800,
     overlap=250,
 ):
+    """
+    Split document text into retrieval-friendly chunks.
+
+    Strategy:
+    1. Detect numbered/markdown-style sections such as:
+       "1. Product Overview"
+       "2. Filter Replacement"
+       "## Warranty"
+    2. Keep each section together when it fits within chunk_size.
+    3. If a section is too large, split it into smaller overlapping
+       chunks while preserving the section heading.
+    4. If no recognizable headings exist, fall back to paragraph-aware
+       fixed-size chunking.
+
+    This produces much more focused RAG sources than treating an entire
+    uploaded document as one chunk.
+    """
 
     text = text.strip()
 
     if not text:
         return []
 
-    chunks = []
+    # Normalize line endings and excessive whitespace.
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    text = re.sub(r"[ \t]+", " ", text)
 
-    start = 0
+    # --------------------------------------------------
+    # HEADING-AWARE SPLITTING
+    # --------------------------------------------------
+    #
+    # Supports common knowledge-base/document headings:
+    #   1. Product Overview
+    #   2. Filter Replacement
+    #   5. Common Issue: Device Will Not Turn On
+    #   ## Warranty
+    #   Section 1: Introduction
+    #
+    heading_pattern = re.compile(
+        r"(?im)^[ \t]*("
+        r"(?:#{1,6}[ \t]+.+)"
+        r"|(?:\d{1,3}[.)][ \t]+.+)"
+        r"|(?:section[ \t]+\d{1,3}(?:[.:)][ \t]*|[ \t]+).+)"
+        r")[ \t]*$"
+    )
 
-    text_length = len(text)
+    matches = list(heading_pattern.finditer(text))
 
-    while start < text_length:
+    sections = []
 
-        end = min(
-            start + chunk_size,
-            text_length,
-        )
+    if matches:
+        # Text before the first heading.
+        prefix = text[:matches[0].start()].strip()
 
-        chunk = text[
-            start:end
-        ].strip()
-
-        if chunk:
-
-            chunks.append(
-                chunk
+        if prefix:
+            sections.append(
+                {
+                    "heading": "",
+                    "text": prefix,
+                }
             )
 
-        if end >= text_length:
-            break
+        for index, match in enumerate(matches):
+            heading = match.group(1).strip()
 
-        start = max(
-            end - overlap,
-            start + 1,
+            section_start = match.end()
+            section_end = (
+                matches[index + 1].start()
+                if index + 1 < len(matches)
+                else len(text)
+            )
+
+            body = text[section_start:section_end].strip()
+
+            section_text = (
+                f"{heading}\n{body}".strip()
+                if body
+                else heading
+            )
+
+            if section_text:
+                sections.append(
+                    {
+                        "heading": heading,
+                        "text": section_text,
+                    }
+                )
+
+    # --------------------------------------------------
+    # SPLIT A LARGE BLOCK WITH OVERLAP
+    # --------------------------------------------------
+
+    def split_large_block(block, heading=""):
+        block = block.strip()
+
+        if not block:
+            return []
+
+        heading_prefix = f"{heading}\n" if heading else ""
+
+        # If the whole section already fits, keep it as one focused chunk.
+        if len(block) <= chunk_size:
+            return [block]
+
+        # Prefer paragraph boundaries before falling back to characters.
+        paragraphs = [
+            paragraph.strip()
+            for paragraph in re.split(r"\n\s*\n", block)
+            if paragraph.strip()
+        ]
+
+        if not paragraphs:
+            paragraphs = [block]
+
+        chunks = []
+        current = ""
+
+        for paragraph in paragraphs:
+            candidate = (
+                f"{current}\n\n{paragraph}".strip()
+                if current
+                else paragraph
+            )
+
+            # Leave room for the heading in every sub-chunk.
+            available_size = max(
+                chunk_size - len(heading_prefix),
+                300,
+            )
+
+            if len(candidate) <= available_size:
+                current = candidate
+                continue
+
+            if current:
+                chunks.append(
+                    f"{heading_prefix}{current}".strip()
+                    if heading
+                    else current
+                )
+
+            # Paragraph itself may be larger than the available size.
+            if len(paragraph) > available_size:
+                start = 0
+
+                while start < len(paragraph):
+                    end = min(
+                        start + available_size,
+                        len(paragraph),
+                    )
+
+                    piece = paragraph[start:end].strip()
+
+                    if piece:
+                        chunks.append(
+                            f"{heading_prefix}{piece}".strip()
+                            if heading
+                            else piece
+                        )
+
+                    if end >= len(paragraph):
+                        break
+
+                    start = max(
+                        end - overlap,
+                        start + 1,
+                    )
+
+                current = ""
+            else:
+                current = paragraph
+
+        if current:
+            chunks.append(
+                f"{heading_prefix}{current}".strip()
+                if heading
+                else current
+            )
+
+        return chunks
+
+    # If headings were found, split each section independently.
+    if sections:
+        chunks = []
+
+        for section in sections:
+            chunks.extend(
+                split_large_block(
+                    section["text"],
+                    section["heading"],
+                )
+            )
+
+        return [
+            chunk.strip()
+            for chunk in chunks
+            if chunk.strip()
+        ]
+
+    # --------------------------------------------------
+    # FALLBACK: PARAGRAPH-AWARE CHUNKING
+    # --------------------------------------------------
+
+    paragraphs = [
+        paragraph.strip()
+        for paragraph in re.split(r"\n\s*\n", text)
+        if paragraph.strip()
+    ]
+
+    if not paragraphs:
+        paragraphs = [text]
+
+    chunks = []
+    current = ""
+
+    for paragraph in paragraphs:
+        candidate = (
+            f"{current}\n\n{paragraph}".strip()
+            if current
+            else paragraph
         )
 
-    return chunks
+        if len(candidate) <= chunk_size:
+            current = candidate
+            continue
+
+        if current:
+            chunks.append(current)
+
+        if len(paragraph) <= chunk_size:
+            current = paragraph
+            continue
+
+        # Character-level fallback for a very large paragraph.
+        start = 0
+
+        while start < len(paragraph):
+            end = min(
+                start + chunk_size,
+                len(paragraph),
+            )
+
+            chunk = paragraph[start:end].strip()
+
+            if chunk:
+                chunks.append(chunk)
+
+            if end >= len(paragraph):
+                break
+
+            start = max(
+                end - overlap,
+                start + 1,
+            )
+
+        current = ""
+
+    if current:
+        chunks.append(current)
+
+    return [
+        chunk.strip()
+        for chunk in chunks
+        if chunk.strip()
+    ]
 
 
 # ==================================================

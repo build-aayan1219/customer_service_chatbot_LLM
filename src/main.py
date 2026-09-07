@@ -6,33 +6,13 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 
-# ==================================================
-# PATH SETUP
-# ==================================================
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
 
-# ==================================================
-# SESSION STATE
-# ==================================================
-
-if "show_analytics" not in st.session_state:
-    st.session_state.show_analytics = False
-
-if "show_knowledge_base" not in st.session_state:
-    st.session_state.show_knowledge_base = False
-
-
-# ==================================================
-# IMPORTS
-# ==================================================
-
 from src.analytics import render_analytics
-
 from src.chat_manager import (
     add_message,
     create_chat,
@@ -44,20 +24,13 @@ from src.chat_manager import (
     search_chats,
     update_message_feedback,
 )
-
-from src.knowledge_base import (
-    render_knowledge_base,
-)
-
-from src.langchain_helper import (
-    create_vector_db,
-    get_qa_chain,
-)
+from src.knowledge_base import render_knowledge_base
+from src.langchain_helper import get_qa_chain
 
 
-# ==================================================
-# PAGE CONFIG
-# ==================================================
+# ============================================================
+# PAGE CONFIGURATION
+# ============================================================
 
 st.set_page_config(
     page_title="AI Customer Support",
@@ -67,81 +40,95 @@ st.set_page_config(
 )
 
 
-# ==================================================
-# MAIN CSS
-# ==================================================
+# ============================================================
+# SESSION STATE
+# ============================================================
+
+if "show_analytics" not in st.session_state:
+    st.session_state.show_analytics = False
+
+if "show_knowledge_base" not in st.session_state:
+    st.session_state.show_knowledge_base = False
+
+if "pending_question" not in st.session_state:
+    st.session_state.pending_question = None
+
+if "search_text" not in st.session_state:
+    st.session_state.search_text = ""
+
+
+# ============================================================
+# GLOBAL CSS
+#
+# IMPORTANT:
+# This is the ONLY custom CSS block.
+# It explicitly uses unsafe_allow_html=True.
+#
+# No welcome HTML is used anywhere below.
+# ============================================================
 
 st.markdown(
     """
     <style>
+        .main-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 0.2rem;
+        }
 
-    .title {
-        font-size: 2.2rem;
-        font-weight: 700;
-        margin-bottom: 0.2rem;
-    }
+        .main-subtitle {
+            color: #777;
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+        }
 
-    .subtitle {
-        color: #777;
-        font-size: 1rem;
-        margin-bottom: 1.5rem;
-    }
+        .welcome-container {
+            max-width: 700px;
+            margin: 50px auto 30px auto;
+            padding: 45px 30px;
+            text-align: center;
+            border-radius: 18px;
+            background: rgba(128, 128, 128, 0.08);
+        }
 
-    .welcome-container {
-        max-width: 700px;
-        margin: 50px auto 30px auto;
-        padding: 45px 30px;
-        text-align: center;
-        border-radius: 18px;
-        background: rgba(128, 128, 128, 0.08);
-    }
+        .welcome-icon {
+            font-size: 42px;
+            margin-bottom: 12px;
+        }
 
-    .welcome-icon {
-        font-size: 42px;
-        margin-bottom: 12px;
-    }
+        .welcome-title {
+            font-size: 25px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
 
-    .welcome-heading {
-        font-size: 25px;
-        font-weight: 700;
-        margin-bottom: 10px;
-    }
-
-    .welcome-description {
-        color: #777;
-        font-size: 15px;
-        line-height: 1.6;
-    }
-
+        .welcome-text {
+            color: #777;
+            font-size: 15px;
+            line-height: 1.6;
+        }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
 
-# ==================================================
-# LOAD CHATS
-# ==================================================
+# ============================================================
+# CHAT INITIALIZATION
+# ============================================================
 
 if "chats" not in st.session_state:
-
     st.session_state.chats = load_chats()
 
-
-# ==================================================
-# CURRENT CHAT
-# ==================================================
 
 if "current_chat_id" not in st.session_state:
 
     if st.session_state.chats:
-
         st.session_state.current_chat_id = (
             st.session_state.chats[0]["id"]
         )
 
     else:
-
         first_chat = create_chat()
 
         st.session_state.chats = [
@@ -152,19 +139,6 @@ if "current_chat_id" not in st.session_state:
             first_chat["id"]
         )
 
-
-# ==================================================
-# SEARCH
-# ==================================================
-
-if "search_text" not in st.session_state:
-
-    st.session_state.search_text = ""
-
-
-# ==================================================
-# FIND CURRENT CHAT
-# ==================================================
 
 current_chat = find_chat(
     st.session_state.chats,
@@ -186,14 +160,11 @@ if current_chat is None:
     )
 
 
-# ==================================================
-# ANALYTICS / KNOWLEDGE BASE VIEW
-# ==================================================
+# ============================================================
+# ANALYTICS ROUTE
+# ============================================================
 
-if (
-    st.session_state.show_analytics
-    or st.session_state.show_knowledge_base
-):
+if st.session_state.show_analytics:
 
     with st.sidebar:
 
@@ -201,90 +172,75 @@ if (
             "## 🤖 AI Customer Support"
         )
 
+        st.caption(
+            "Analytics & Monitoring"
+        )
+
         st.markdown("---")
-
-
-        # ----------------------------------------------
-        # BACK TO CHAT
-        # ----------------------------------------------
 
         if st.button(
             "← Back to Chat",
             use_container_width=True,
+            key="back_from_analytics",
         ):
 
             st.session_state.show_analytics = False
 
-            st.session_state.show_knowledge_base = False
-
             st.rerun()
-
 
         st.markdown("---")
 
+        st.success(
+            "📊 Analytics Active"
+        )
 
-        # ----------------------------------------------
-        # ANALYTICS
-        # ----------------------------------------------
-
-        if st.button(
-            "📊 Analytics",
-            use_container_width=True,
-        ):
-
-            st.session_state.show_analytics = True
-
-            st.session_state.show_knowledge_base = False
-
-            st.rerun()
-
-
-        # ----------------------------------------------
-        # KNOWLEDGE BASE
-        # ----------------------------------------------
-
-        if st.button(
-            "📚 Knowledge Base",
-            use_container_width=True,
-        ):
-
-            st.session_state.show_analytics = False
-
-            st.session_state.show_knowledge_base = True
-
-            st.rerun()
-
-
-        st.markdown("---")
-
-
-        if st.session_state.show_analytics:
-
-            st.success(
-                "Analytics Active"
-            )
-
-        else:
-
-            st.success(
-                "Knowledge Base Active"
-            )
-
-
-    if st.session_state.show_analytics:
-
-        render_analytics()
-
-    elif st.session_state.show_knowledge_base:
-
-        render_knowledge_base()
+    render_analytics()
 
     st.stop()
 
 
-# ==================================================
+# ============================================================
+# KNOWLEDGE BASE ROUTE
+# ============================================================
+
+if st.session_state.show_knowledge_base:
+
+    with st.sidebar:
+
+        st.markdown(
+            "## 🤖 AI Customer Support"
+        )
+
+        st.caption(
+            "Knowledge Base Manager"
+        )
+
+        st.markdown("---")
+
+        if st.button(
+            "← Back to Chat",
+            use_container_width=True,
+            key="back_from_knowledge_base",
+        ):
+
+            st.session_state.show_knowledge_base = False
+
+            st.rerun()
+
+        st.markdown("---")
+
+        st.success(
+            "📚 Knowledge Base Active"
+        )
+
+    render_knowledge_base()
+
+    st.stop()
+
+
+# ============================================================
 # SIDEBAR
-# ==================================================
+# ============================================================
 
 with st.sidebar:
 
@@ -294,14 +250,14 @@ with st.sidebar:
 
     st.markdown("")
 
-
-    # ----------------------------------------------
+    # --------------------------------------------------------
     # NEW CHAT
-    # ----------------------------------------------
+    # --------------------------------------------------------
 
     if st.button(
         "＋ New Chat",
         use_container_width=True,
+        key="new_chat_button",
     ):
 
         new_chat = create_chat()
@@ -315,45 +271,41 @@ with st.sidebar:
             new_chat["id"]
         )
 
-        st.rerun()
+        st.session_state.pending_question = None
 
+        st.rerun()
 
     st.markdown("---")
 
 
-    # ----------------------------------------------
-    # ANALYTICS
-    # ----------------------------------------------
+    # --------------------------------------------------------
+    # DASHBOARD
+    # --------------------------------------------------------
 
     st.markdown(
         "### 📊 Dashboard"
     )
 
-
     if st.button(
         "📊 Analytics",
         use_container_width=True,
+        key="analytics_button",
     ):
 
         st.session_state.show_analytics = True
-
         st.session_state.show_knowledge_base = False
 
         st.rerun()
 
 
-    # ----------------------------------------------
-    # KNOWLEDGE BASE
-    # ----------------------------------------------
-
     if st.button(
         "📚 Knowledge Base",
         use_container_width=True,
+        key="knowledge_base_button",
     ):
 
-        st.session_state.show_analytics = False
-
         st.session_state.show_knowledge_base = True
+        st.session_state.show_analytics = False
 
         st.rerun()
 
@@ -361,52 +313,45 @@ with st.sidebar:
     st.markdown("---")
 
 
-    # ----------------------------------------------
-    # SEARCH
-    # ----------------------------------------------
+    # --------------------------------------------------------
+    # SEARCH CONVERSATIONS
+    # --------------------------------------------------------
 
     st.markdown(
         "### 🔎 Search Conversations"
     )
-
 
     search_text = st.text_input(
         "Search chats...",
         value=st.session_state.search_text,
         label_visibility="collapsed",
         placeholder="Search chats...",
+        key="conversation_search",
     )
 
-
-    st.session_state.search_text = (
-        search_text
-    )
-
+    st.session_state.search_text = search_text
 
     filtered_chats = search_chats(
         st.session_state.chats,
         search_text,
     )
 
-
     st.markdown("---")
 
 
-    # ----------------------------------------------
+    # --------------------------------------------------------
     # CHAT HISTORY
-    # ----------------------------------------------
+    # --------------------------------------------------------
 
     st.markdown(
         "### 💬 Chat History"
     )
-
 
     if not filtered_chats:
 
         st.caption(
             "No matching conversations."
         )
-
 
     else:
 
@@ -419,19 +364,16 @@ with st.sidebar:
                 "New Chat",
             )
 
-
             is_current = (
                 chat_id
                 == st.session_state.current_chat_id
             )
-
 
             button_label = (
                 "🟢 "
                 if is_current
                 else "💬 "
             ) + title
-
 
             if st.button(
                 button_label,
@@ -443,20 +385,21 @@ with st.sidebar:
                     chat_id
                 )
 
+                st.session_state.pending_question = None
+
                 st.rerun()
 
 
     st.markdown("---")
 
 
-    # ----------------------------------------------
+    # --------------------------------------------------------
     # CHAT MANAGEMENT
-    # ----------------------------------------------
+    # --------------------------------------------------------
 
     st.markdown(
         "### ⚙️ Chat Management"
     )
-
 
     rename_value = st.text_input(
         "Rename current chat",
@@ -471,32 +414,41 @@ with st.sidebar:
     if st.button(
         "✏️ Rename Chat",
         use_container_width=True,
+        key="rename_chat_button",
     ):
 
-        rename_chat(
-            current_chat,
-            rename_value,
-        )
+        cleaned_name = rename_value.strip()
 
-        st.success(
-            "Chat renamed."
-        )
+        if cleaned_name:
 
-        st.rerun()
+            rename_chat(
+                current_chat,
+                cleaned_name,
+            )
+
+            st.success(
+                "Chat renamed."
+            )
+
+            st.rerun()
+
+        else:
+
+            st.warning(
+                "Chat name cannot be empty."
+            )
 
 
     if st.button(
         "🗑️ Delete Current Chat",
         use_container_width=True,
+        key="delete_current_chat_button",
     ):
 
-        st.session_state.chats = (
-            delete_chat(
-                st.session_state.chats,
-                current_chat["id"],
-            )
+        st.session_state.chats = delete_chat(
+            st.session_state.chats,
+            current_chat["id"],
         )
-
 
         if st.session_state.chats:
 
@@ -516,13 +468,13 @@ with st.sidebar:
                 new_chat["id"]
             )
 
-
         st.rerun()
 
 
     if st.button(
         "🧹 Clear All Chats",
         use_container_width=True,
+        key="clear_all_chats_button",
     ):
 
         delete_all_chats()
@@ -543,21 +495,25 @@ with st.sidebar:
     st.markdown("---")
 
 
-    # ----------------------------------------------
-    # QUICK KNOWLEDGE BASE UPDATE
-    # ----------------------------------------------
+    # --------------------------------------------------------
+    # KNOWLEDGE BASE STATUS
+    # --------------------------------------------------------
 
     st.markdown(
-        "### 📚 Quick Knowledge Base Update"
+        "### 📚 Knowledge Base"
     )
 
-
     if st.button(
-        "🔄 Rebuild Knowledge Base",
+        "🔄 Create / Update Knowledge Base",
         use_container_width=True,
+        key="update_kb_button",
     ):
 
         try:
+
+            from src.langchain_helper import (
+                create_vector_db
+            )
 
             with st.spinner(
                 "Updating knowledge base..."
@@ -565,18 +521,13 @@ with st.sidebar:
 
                 create_vector_db()
 
-
             st.success(
-                "Knowledge base updated."
+                "Knowledge base updated successfully!"
             )
-
 
         except Exception as error:
 
-            error_message = str(
-                error
-            )
-
+            error_message = str(error)
 
             if (
                 "429" in error_message
@@ -585,15 +536,15 @@ with st.sidebar:
             ):
 
                 st.warning(
-                    "Gemini API usage limit "
-                    "has been reached."
+                    "Gemini API usage limit has "
+                    "been reached. The knowledge "
+                    "base itself may still be updated."
                 )
 
             else:
 
                 st.error(
-                    "Could not update the "
-                    "knowledge base."
+                    "Could not update the knowledge base."
                 )
 
 
@@ -601,102 +552,108 @@ with st.sidebar:
         "🟢 Knowledge Base Ready"
     )
 
-
     st.markdown("---")
 
 
-    # ----------------------------------------------
+    # --------------------------------------------------------
     # ABOUT
-    # ----------------------------------------------
+    # --------------------------------------------------------
 
     st.markdown(
         "### ℹ️ About"
     )
 
-
     st.write(
-        """
-        This AI Customer Support Assistant uses
-        Retrieval-Augmented Generation (RAG)
-        to answer questions using information
-        from the available knowledge base.
-        """
+        "This AI Customer Support Assistant "
+        "uses Retrieval-Augmented Generation "
+        "(RAG) to answer questions using the "
+        "available knowledge base."
     )
 
+
+    # --------------------------------------------------------
+    # TECH STACK
+    # --------------------------------------------------------
 
     st.markdown(
         "### 🛠️ Tech Stack"
     )
 
-
     st.write(
-        """
-        Python • Streamlit • LangChain • Gemini
-        • HuggingFace Embeddings • FAISS • SQLite
-        """
+        "Python • Streamlit • LangChain • Gemini "
+        "• HuggingFace Embeddings • FAISS • SQLite"
     )
 
 
-# ==================================================
-# HEADER
-# ==================================================
+# ============================================================
+# MAIN HEADER
+# ============================================================
 
 st.markdown(
-    '<div class="title">'
-    '🤖 AI Customer Service Assistant'
-    '</div>',
+    """
+    <div class="main-title">
+        🤖 AI Customer Service Assistant
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.markdown(
+    """
+    <div class="main-subtitle">
+        Ask questions and get answers from our knowledge base
+    </div>
+    """,
     unsafe_allow_html=True,
 )
 
 
-st.markdown(
-    '<div class="subtitle">'
-    'Ask questions and get answers from our knowledge base'
-    '</div>',
-    unsafe_allow_html=True,
-)
+# ============================================================
+# WELCOME SCREEN
+#
+# IMPORTANT:
+# NO RAW HTML IS USED HERE.
+#
+# The previous problem happened because the welcome HTML
+# was being rendered as text.
+#
+# This version uses Streamlit-native components only.
+# ============================================================
+
+if not current_chat.get("messages"):
+
+    welcome_container = st.container()
+
+    with welcome_container:
+
+        st.markdown("")
+
+        st.markdown(
+            "### 💬"
+        )
+
+        st.markdown(
+            "## How can I help you?"
+        )
+
+        st.markdown(
+            "Ask me about courses, internships, "
+            "services, tools and other available "
+            "information."
+        )
+
+        st.markdown("")
 
 
-# ==================================================
-# WELCOME
-# ==================================================
+# ============================================================
+# SUGGESTED QUESTIONS
+# ============================================================
 
-if not current_chat["messages"]:
-
-    st.markdown(
-        """
-        <div class="welcome-container">
-
-            <div class="welcome-icon">
-                💬
-            </div>
-
-            <div class="welcome-heading">
-                How can I help you?
-            </div>
-
-            <div class="welcome-description">
-                Ask me about courses, internships,
-                services, tools and other available
-                information.
-            </div>
-
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-# ==================================================
-# SUGGESTIONS
-# ==================================================
-
-if not current_chat["messages"]:
+if not current_chat.get("messages"):
 
     st.markdown(
         "### 💡 Try asking"
     )
-
 
     col1, col2 = st.columns(2)
 
@@ -706,6 +663,7 @@ if not current_chat["messages"]:
         if st.button(
             "🎓 Do you provide internships?",
             use_container_width=True,
+            key="suggestion_internship",
         ):
 
             st.session_state.pending_question = (
@@ -718,6 +676,7 @@ if not current_chat["messages"]:
         if st.button(
             "📚 What courses are available?",
             use_container_width=True,
+            key="suggestion_courses",
         ):
 
             st.session_state.pending_question = (
@@ -732,6 +691,7 @@ if not current_chat["messages"]:
         if st.button(
             "💻 Can I learn Power BI on Mac?",
             use_container_width=True,
+            key="suggestion_powerbi",
         ):
 
             st.session_state.pending_question = (
@@ -744,6 +704,7 @@ if not current_chat["messages"]:
         if st.button(
             "🎯 What are the eligibility requirements?",
             use_container_width=True,
+            key="suggestion_eligibility",
         ):
 
             st.session_state.pending_question = (
@@ -753,12 +714,12 @@ if not current_chat["messages"]:
             st.rerun()
 
 
-# ==================================================
-# DISPLAY CHAT
-# ==================================================
+# ============================================================
+# DISPLAY EXISTING CHAT
+# ============================================================
 
 for index, message in enumerate(
-    current_chat["messages"]
+    current_chat.get("messages", [])
 ):
 
     role = message.get(
@@ -771,10 +732,16 @@ for index, message in enumerate(
         "",
     )
 
+    with st.chat_message(role):
 
-    with st.chat_message(
-        role
-    ):
+        # ----------------------------------------------------
+        # IMPORTANT:
+        # AI responses are rendered as Markdown.
+        #
+        # We DO NOT use unsafe_allow_html=True here.
+        # Therefore an AI response containing HTML tags
+        # will not become arbitrary page HTML.
+        # ----------------------------------------------------
 
         st.markdown(
             content
@@ -789,14 +756,16 @@ for index, message in enumerate(
             )
 
 
-            button_col1, button_col2, button_col3, button_col4 = st.columns(
-                [1, 1, 1, 1]
+            button_col1, button_col2, button_col3, button_col4 = (
+                st.columns(
+                    [1, 1, 1, 1]
+                )
             )
 
 
-            # ------------------------------------------
+            # ------------------------------------------------
             # COPY
-            # ------------------------------------------
+            # ------------------------------------------------
 
             with button_col1:
 
@@ -809,9 +778,9 @@ for index, message in enumerate(
                     components.html(
                         f"""
                         <script>
-                        navigator.clipboard.writeText(
-                            {content!r}
-                        );
+                            navigator.clipboard.writeText(
+                                {content!r}
+                            );
                         </script>
                         """,
                         height=0,
@@ -822,9 +791,9 @@ for index, message in enumerate(
                     )
 
 
-            # ------------------------------------------
+            # ------------------------------------------------
             # REGENERATE
-            # ------------------------------------------
+            # ------------------------------------------------
 
             with button_col2:
 
@@ -838,9 +807,10 @@ for index, message in enumerate(
 
 
                     for previous_message in reversed(
-                        current_chat["messages"][
-                            :index
-                        ]
+                        current_chat.get(
+                            "messages",
+                            []
+                        )[:index]
                     ):
 
                         if (
@@ -866,18 +836,16 @@ for index, message in enumerate(
                             "messages"
                         ][index]
 
-
                         st.session_state.pending_question = (
                             previous_question
                         )
 
-
                         st.rerun()
 
 
-            # ------------------------------------------
+            # ------------------------------------------------
             # POSITIVE FEEDBACK
-            # ------------------------------------------
+            # ------------------------------------------------
 
             with button_col3:
 
@@ -893,18 +861,16 @@ for index, message in enumerate(
                         "positive",
                     )
 
-
                     st.toast(
                         "Thanks for your feedback!"
                     )
 
-
                     st.rerun()
 
 
-            # ------------------------------------------
+            # ------------------------------------------------
             # NEGATIVE FEEDBACK
-            # ------------------------------------------
+            # ------------------------------------------------
 
             with button_col4:
 
@@ -920,18 +886,16 @@ for index, message in enumerate(
                         "negative",
                     )
 
-
                     st.toast(
                         "Thanks for your feedback!"
                     )
 
-
                     st.rerun()
 
 
-            # ------------------------------------------
+            # ------------------------------------------------
             # SOURCES
-            # ------------------------------------------
+            # ------------------------------------------------
 
             if sources:
 
@@ -978,7 +942,6 @@ for index, message in enumerate(
                             f"**Source {source_number}**"
                         )
 
-
                         st.write(
                             page_content
                         )
@@ -987,31 +950,32 @@ for index, message in enumerate(
                         if metadata:
 
                             st.caption(
-                                str(
-                                    metadata
-                                )
+                                str(metadata)
                             )
 
+                        if (
+                            source_number
+                            < len(sources)
+                        ):
 
-                        st.markdown(
-                            "---"
-                        )
+                            st.markdown("---")
 
 
-# ==================================================
+# ============================================================
 # PROCESS QUESTION
-# ==================================================
+# ============================================================
 
-def process_question(
-    question
-):
+def process_question(question):
 
     question = question.strip()
-
 
     if not question:
         return
 
+
+    # --------------------------------------------------------
+    # SAVE USER MESSAGE
+    # --------------------------------------------------------
 
     add_message(
         current_chat,
@@ -1020,16 +984,16 @@ def process_question(
     )
 
 
-    start_time = (
-        time.perf_counter()
-    )
+    start_time = time.perf_counter()
 
 
     try:
 
-        with st.chat_message(
-            "assistant"
-        ):
+        # ----------------------------------------------------
+        # GENERATE AI RESPONSE
+        # ----------------------------------------------------
+
+        with st.chat_message("assistant"):
 
             with st.spinner(
                 "Thinking..."
@@ -1037,14 +1001,11 @@ def process_question(
 
                 chain = get_qa_chain()
 
-
                 response = chain(
                     question,
-                    chat_history=(
-                        current_chat[
-                            "messages"
-                        ][:-1]
-                    ),
+                    chat_history=current_chat[
+                        "messages"
+                    ][:-1],
                 )
 
 
@@ -1052,7 +1013,6 @@ def process_question(
                 "result",
                 "",
             )
-
 
             sources = response.get(
                 "source_documents",
@@ -1066,10 +1026,18 @@ def process_question(
             )
 
 
+            # ------------------------------------------------
+            # DISPLAY ANSWER
+            # ------------------------------------------------
+
             st.markdown(
                 answer
             )
 
+
+            # ------------------------------------------------
+            # DISPLAY SOURCES
+            # ------------------------------------------------
 
             if sources:
 
@@ -1082,24 +1050,39 @@ def process_question(
                         start=1,
                     ):
 
-                        page_content = getattr(
+                        if isinstance(
                             source,
-                            "page_content",
-                            "",
-                        )
+                            dict,
+                        ):
 
+                            page_content = source.get(
+                                "page_content",
+                                "",
+                            )
 
-                        metadata = getattr(
-                            source,
-                            "metadata",
-                            {},
-                        )
+                            metadata = source.get(
+                                "metadata",
+                                {},
+                            )
+
+                        else:
+
+                            page_content = getattr(
+                                source,
+                                "page_content",
+                                "",
+                            )
+
+                            metadata = getattr(
+                                source,
+                                "metadata",
+                                {},
+                            )
 
 
                         st.markdown(
                             f"**Source {source_number}**"
                         )
-
 
                         st.write(
                             page_content
@@ -1109,16 +1092,21 @@ def process_question(
                         if metadata:
 
                             st.caption(
-                                str(
-                                    metadata
-                                )
+                                str(metadata)
                             )
 
 
-                        st.markdown(
-                            "---"
-                        )
+                        if (
+                            source_number
+                            < len(sources)
+                        ):
 
+                            st.markdown("---")
+
+
+        # ----------------------------------------------------
+        # SAVE ASSISTANT MESSAGE
+        # ----------------------------------------------------
 
         add_message(
             current_chat,
@@ -1131,10 +1119,7 @@ def process_question(
 
     except Exception as error:
 
-        error_message = str(
-            error
-        )
-
+        error_message = str(error)
 
         elapsed_time = (
             time.perf_counter()
@@ -1153,7 +1138,6 @@ def process_question(
                 "The Gemini API usage limit has been reached. "
                 "Please try again later."
             )
-
 
         else:
 
@@ -1177,30 +1161,28 @@ def process_question(
         )
 
 
-# ==================================================
-# PENDING QUESTION
-# ==================================================
+# ============================================================
+# PENDING SUGGESTED QUESTION
+# ============================================================
 
-if "pending_question" in st.session_state:
+if st.session_state.pending_question:
 
     pending_question = (
-        st.session_state.pop(
-            "pending_question"
-        )
+        st.session_state.pending_question
     )
 
+    st.session_state.pending_question = None
 
     process_question(
         pending_question
     )
 
-
     st.rerun()
 
 
-# ==================================================
+# ============================================================
 # CHAT INPUT
-# ==================================================
+# ============================================================
 
 user_question = st.chat_input(
     "Ask me anything about our services..."
@@ -1212,6 +1194,5 @@ if user_question:
     process_question(
         user_question
     )
-
 
     st.rerun()
