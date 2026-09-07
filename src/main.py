@@ -30,7 +30,7 @@ from src.chat_manager import (
 
 from src.langchain_helper import (
     create_vector_db,
-    get_qa_chain,
+    get_qa_stream,
 )
 
 
@@ -157,10 +157,6 @@ def render_source(source, source_number=None):
     - Otherwise the source is shown as Knowledge Base.
     """
 
-    # --------------------------------------------------
-    # Extract page content and metadata safely
-    # --------------------------------------------------
-
     if isinstance(source, dict):
 
         page_content = source.get(
@@ -199,16 +195,6 @@ def render_source(source, source_number=None):
 
     # --------------------------------------------------
     # Get ONLY a real filename
-    #
-    # DO NOT use metadata["source"].
-    #
-    # In the current RAG index, "source" can contain
-    # the complete retrieved chunk. Using it here was
-    # causing text such as:
-    #
-    # "5. Common Issue... First, check..."
-    #
-    # to appear as a filename.
     # --------------------------------------------------
 
     raw_source_file = (
@@ -291,8 +277,6 @@ def render_source(source, source_number=None):
         )
 
 
-        # Remove prompt prefix
-
         if first_line.lower().startswith(
             "prompt:"
         ):
@@ -302,8 +286,6 @@ def render_source(source, source_number=None):
                 .strip()
             )
 
-
-        # Remove response prefix
 
         if first_line.lower().startswith(
             "response:"
@@ -315,8 +297,6 @@ def render_source(source, source_number=None):
             )
 
 
-        # Remove question prefix
-
         if first_line.lower().startswith(
             "question:"
         ):
@@ -326,8 +306,6 @@ def render_source(source, source_number=None):
                 .strip()
             )
 
-
-        # Remove answer prefix
 
         if first_line.lower().startswith(
             "answer:"
@@ -1326,41 +1304,51 @@ def process_question(question):
 
         with st.chat_message("assistant"):
 
-            with st.spinner(
-                "Thinking..."
-            ):
+            # ------------------------------------------
+            # STREAMING RESPONSE
+            # ------------------------------------------
 
-                chain = get_qa_chain()
-
-
-                response = chain(
-                    question,
-                    chat_history=current_chat[
-                        "messages"
-                    ][:-1],
-                )
-
-
-            answer = response.get(
-                "result",
-                "",
-            )
-
-
-            sources = response.get(
-                "source_documents",
-                [],
-            )
-
-
-            elapsed_time = (
-                time.perf_counter()
-                - start_time
+            stream, sources = get_qa_stream(
+                question,
+                chat_history=current_chat[
+                    "messages"
+                ][:-1],
             )
 
 
             st.markdown(
-                answer
+                '<div style="margin-bottom: 8px;"></div>',
+                unsafe_allow_html=True,
+            )
+
+
+            answer = st.write_stream(
+                stream
+            )
+
+
+            if answer is None:
+
+                answer = ""
+
+            elif not isinstance(
+                answer,
+                str,
+            ):
+
+                answer = str(answer)
+
+
+            answer = answer.strip()
+
+
+            # ------------------------------------------
+            # RESPONSE TIME
+            # ------------------------------------------
+
+            elapsed_time = (
+                time.perf_counter()
+                - start_time
             )
 
 
