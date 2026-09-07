@@ -7,6 +7,10 @@ import pandas as pd
 import streamlit as st
 
 
+# ==================================================
+# PATHS
+# ==================================================
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 DATABASE_PATH = BASE_DIR / "chat_history.db"
@@ -17,17 +21,50 @@ DATASET_PATH = (
     / "dataset.csv"
 )
 
-VECTORDB_PATH = (
-    BASE_DIR / "faiss_index"
-)
+VECTORDB_PATH = BASE_DIR / "faiss_index"
 
 UNKNOWN_RESPONSE = (
     "I don't know based on the available information."
 )
 
 
-def get_connection():
+# ==================================================
+# CSS
+# ==================================================
 
+st.markdown(
+    """
+    <style>
+
+    .dashboard-title {
+        font-size: 2.3rem;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    .dashboard-subtitle {
+        color: #777;
+        margin-bottom: 25px;
+    }
+
+    .section-title {
+        font-size: 1.35rem;
+        font-weight: 650;
+        margin-top: 30px;
+        margin-bottom: 15px;
+    }
+
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
+# ==================================================
+# DATABASE
+# ==================================================
+
+def get_connection():
     connection = sqlite3.connect(
         DATABASE_PATH,
         check_same_thread=False,
@@ -39,14 +76,12 @@ def get_connection():
 
 
 def load_chats():
-
     if not DATABASE_PATH.exists():
         return []
 
     connection = get_connection()
 
     try:
-
         rows = connection.execute(
             """
             SELECT
@@ -61,9 +96,7 @@ def load_chats():
         ).fetchall()
 
     except sqlite3.Error:
-
         connection.close()
-
         return []
 
     connection.close()
@@ -73,7 +106,6 @@ def load_chats():
     for row in rows:
 
         try:
-
             messages = json.loads(
                 row["messages"]
             )
@@ -82,7 +114,6 @@ def load_chats():
             json.JSONDecodeError,
             TypeError,
         ):
-
             messages = []
 
         chats.append(
@@ -98,16 +129,22 @@ def load_chats():
     return chats
 
 
+# ==================================================
+# ANALYTICS CALCULATION
+# ==================================================
+
 def calculate_analytics(chats):
 
     total_conversations = len(chats)
 
     total_questions = 0
+
     total_responses = 0
 
     unknown_queries = 0
 
     positive_feedback = 0
+
     negative_feedback = 0
 
     questions = []
@@ -115,6 +152,7 @@ def calculate_analytics(chats):
     response_times = []
 
     daily_activity = Counter()
+
 
     for chat in chats:
 
@@ -130,6 +168,7 @@ def calculate_analytics(chats):
             ).split(" ")[0]
 
             daily_activity[date] += 1
+
 
         for message in chat.get(
             "messages",
@@ -148,6 +187,7 @@ def calculate_analytics(chats):
                 )
             ).strip()
 
+
             if role == "user":
 
                 total_questions += 1
@@ -158,17 +198,21 @@ def calculate_analytics(chats):
                         content
                     )
 
+
             elif role == "assistant":
 
                 total_responses += 1
+
 
                 if content == UNKNOWN_RESPONSE:
 
                     unknown_queries += 1
 
+
                 feedback = message.get(
                     "feedback"
                 )
+
 
                 if feedback == "positive":
 
@@ -178,18 +222,18 @@ def calculate_analytics(chats):
 
                     negative_feedback += 1
 
+
                 response_time = message.get(
                     "response_time"
                 )
+
 
                 if response_time is not None:
 
                     try:
 
                         response_times.append(
-                            float(
-                                response_time
-                            )
+                            float(response_time)
                         )
 
                     except (
@@ -199,11 +243,13 @@ def calculate_analytics(chats):
 
                         pass
 
+
     popular_questions = Counter(
         question.strip()
         for question in questions
         if question.strip()
     )
+
 
     if response_times:
 
@@ -223,15 +269,19 @@ def calculate_analytics(chats):
     else:
 
         average_response_time = None
+
         fastest_response = None
+
         slowest_response = None
+
 
     total_feedback = (
         positive_feedback
         + negative_feedback
     )
 
-    if total_feedback:
+
+    if total_feedback > 0:
 
         satisfaction_rate = (
             positive_feedback
@@ -242,7 +292,8 @@ def calculate_analytics(chats):
 
         satisfaction_rate = None
 
-    if total_responses:
+
+    if total_responses > 0:
 
         unknown_rate = (
             unknown_queries
@@ -252,6 +303,7 @@ def calculate_analytics(chats):
     else:
 
         unknown_rate = 0
+
 
     return {
         "total_conversations":
@@ -295,12 +347,20 @@ def calculate_analytics(chats):
     }
 
 
+# ==================================================
+# KNOWLEDGE BASE
+# ==================================================
+
 def get_knowledge_base_stats():
 
-    rows = 0
-    columns = 0
-    file_size = 0
-    last_updated = "Unavailable"
+    dataset_rows = 0
+
+    dataset_columns = 0
+
+    dataset_size = 0
+
+    dataset_last_updated = "Unavailable"
+
 
     if DATASET_PATH.exists():
 
@@ -310,20 +370,26 @@ def get_knowledge_base_stats():
                 DATASET_PATH
             )
 
-            rows = len(dataframe)
+            dataset_rows = len(
+                dataframe
+            )
 
-            columns = len(
+            dataset_columns = len(
                 dataframe.columns
             )
 
-            file_size = (
+            dataset_size = (
                 DATASET_PATH.stat().st_size
                 / 1024
             )
 
-            last_updated = (
+            modified_time = (
+                DATASET_PATH.stat().st_mtime
+            )
+
+            dataset_last_updated = (
                 pd.to_datetime(
-                    DATASET_PATH.stat().st_mtime,
+                    modified_time,
                     unit="s",
                 ).strftime(
                     "%Y-%m-%d %H:%M"
@@ -332,88 +398,40 @@ def get_knowledge_base_stats():
 
         except Exception:
 
-            pass
+            dataset_rows = 0
+
+            dataset_columns = 0
+
+            dataset_size = 0
+
+            dataset_last_updated = (
+                "Unavailable"
+            )
+
 
     return {
-        "dataset_rows": rows,
-        "dataset_columns": columns,
-        "file_size_kb": file_size,
-        "last_updated": last_updated,
+        "dataset_rows":
+            dataset_rows,
+
+        "dataset_columns":
+            dataset_columns,
+
+        "dataset_size":
+            dataset_size,
+
+        "dataset_last_updated":
+            dataset_last_updated,
+
         "vector_db_available":
             VECTORDB_PATH.exists(),
     }
 
 
-def metric_card(
-    label,
-    value,
-):
-
-    st.markdown(
-        f"""
-        <div class="metric-card">
-            <div class="metric-label">
-                {label}
-            </div>
-
-            <div class="metric-value">
-                {value}
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
+# ==================================================
+# RENDER ANALYTICS
+# ==================================================
 
 def render_analytics():
-
-    st.markdown(
-        """
-        <style>
-
-        .dashboard-title {
-            font-size: 2.3rem;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-
-        .dashboard-subtitle {
-            color: #777;
-            margin-bottom: 25px;
-        }
-
-        .metric-card {
-            padding: 20px;
-            border-radius: 14px;
-            border: 1px solid
-                rgba(128,128,128,0.25);
-            background:
-                rgba(128,128,128,0.06);
-            min-height: 125px;
-        }
-
-        .metric-label {
-            font-size: 14px;
-            color: #777;
-            margin-bottom: 8px;
-        }
-
-        .metric-value {
-            font-size: 30px;
-            font-weight: 700;
-        }
-
-        .section-title {
-            font-size: 1.35rem;
-            font-weight: 650;
-            margin-top: 30px;
-            margin-bottom: 15px;
-        }
-
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
 
     chats = load_chats()
 
@@ -424,6 +442,11 @@ def render_analytics():
     knowledge_base = (
         get_knowledge_base_stats()
     )
+
+
+    # ==================================================
+    # HEADER
+    # ==================================================
 
     st.markdown(
         '<div class="dashboard-title">'
@@ -436,18 +459,28 @@ def render_analytics():
         """
         <div class="dashboard-subtitle">
             Monitor chatbot usage, performance,
-            customer satisfaction and
-            knowledge-base activity.
+            customer satisfaction and knowledge-base
+            activity.
         </div>
         """,
         unsafe_allow_html=True,
     )
+
+
+    # ==================================================
+    # REFRESH
+    # ==================================================
 
     if st.button(
         "🔄 Refresh Analytics"
     ):
 
         st.rerun()
+
+
+    # ==================================================
+    # OVERVIEW
+    # ==================================================
 
     st.markdown(
         '<div class="section-title">'
@@ -456,43 +489,53 @@ def render_analytics():
         unsafe_allow_html=True,
     )
 
+
     col1, col2, col3, col4 = st.columns(4)
+
 
     with col1:
 
-        metric_card(
+        st.metric(
             "Total Conversations",
             analytics[
                 "total_conversations"
             ],
         )
 
+
     with col2:
 
-        metric_card(
+        st.metric(
             "Total Questions",
             analytics[
                 "total_questions"
             ],
         )
 
+
     with col3:
 
-        metric_card(
+        st.metric(
             "AI Responses",
             analytics[
                 "total_responses"
             ],
         )
 
+
     with col4:
 
-        metric_card(
+        st.metric(
             "Knowledge Base Entries",
             knowledge_base[
                 "dataset_rows"
             ],
         )
+
+
+    # ==================================================
+    # PERFORMANCE
+    # ==================================================
 
     st.markdown(
         '<div class="section-title">'
@@ -501,46 +544,72 @@ def render_analytics():
         unsafe_allow_html=True,
     )
 
+
     col1, col2, col3, col4 = st.columns(4)
 
-    average = analytics[
-        "average_response_time"
-    ]
-
-    fastest = analytics[
-        "fastest_response"
-    ]
-
-    slowest = analytics[
-        "slowest_response"
-    ]
 
     with col1:
 
+        if analytics[
+            "average_response_time"
+        ] is not None:
+
+            value = (
+                f'{analytics["average_response_time"]:.2f}s'
+            )
+
+        else:
+
+            value = "No data"
+
+
         st.metric(
             "Average Response Time",
-            f"{average:.2f}s"
-            if average is not None
-            else "No data",
+            value,
         )
+
 
     with col2:
 
+        if analytics[
+            "fastest_response"
+        ] is not None:
+
+            value = (
+                f'{analytics["fastest_response"]:.2f}s'
+            )
+
+        else:
+
+            value = "No data"
+
+
         st.metric(
             "Fastest Response",
-            f"{fastest:.2f}s"
-            if fastest is not None
-            else "No data",
+            value,
         )
+
 
     with col3:
 
+        if analytics[
+            "slowest_response"
+        ] is not None:
+
+            value = (
+                f'{analytics["slowest_response"]:.2f}s'
+            )
+
+        else:
+
+            value = "No data"
+
+
         st.metric(
             "Slowest Response",
-            f"{slowest:.2f}s"
-            if slowest is not None
-            else "No data",
+            value,
         )
+
 
     with col4:
 
@@ -551,6 +620,11 @@ def render_analytics():
             ],
         )
 
+
+    # ==================================================
+    # RESPONSE QUALITY
+    # ==================================================
+
     st.markdown(
         '<div class="section-title">'
         '🎯 Response Quality'
@@ -558,7 +632,9 @@ def render_analytics():
         unsafe_allow_html=True,
     )
 
+
     col1, col2, col3, col4 = st.columns(4)
+
 
     with col1:
 
@@ -567,18 +643,27 @@ def render_analytics():
             f'{analytics["unknown_rate"]:.1f}%',
         )
 
+
     with col2:
 
-        satisfaction = analytics[
+        if analytics[
             "satisfaction_rate"
-        ]
+        ] is not None:
+
+            value = (
+                f'{analytics["satisfaction_rate"]:.1f}%'
+            )
+
+        else:
+
+            value = "No feedback"
+
 
         st.metric(
             "Satisfaction",
-            f"{satisfaction:.1f}%"
-            if satisfaction is not None
-            else "No feedback",
+            value,
         )
+
 
     with col3:
 
@@ -589,6 +674,7 @@ def render_analytics():
             ],
         )
 
+
     with col4:
 
         st.metric(
@@ -598,6 +684,11 @@ def render_analytics():
             ],
         )
 
+
+    # ==================================================
+    # POPULAR QUESTIONS
+    # ==================================================
+
     st.markdown(
         '<div class="section-title">'
         '🔥 Popular Questions'
@@ -605,29 +696,38 @@ def render_analytics():
         unsafe_allow_html=True,
     )
 
-    popular_questions = analytics[
-        "popular_questions"
-    ]
+
+    popular_questions = (
+        analytics[
+            "popular_questions"
+        ]
+    )
+
 
     if popular_questions:
 
         popular_data = []
 
+
         for question, count in (
-            popular_questions
-            .most_common(10)
+            popular_questions.most_common(10)
         ):
 
             popular_data.append(
                 {
-                    "Question": question,
-                    "Times Asked": count,
+                    "Question":
+                        question,
+
+                    "Times Asked":
+                        count,
                 }
             )
+
 
         popular_df = pd.DataFrame(
             popular_data
         )
+
 
         st.dataframe(
             popular_df,
@@ -635,11 +735,17 @@ def render_analytics():
             hide_index=True,
         )
 
+
     else:
 
         st.info(
             "No questions have been asked yet."
         )
+
+
+    # ==================================================
+    # CONVERSATION ACTIVITY
+    # ==================================================
 
     st.markdown(
         '<div class="section-title">'
@@ -648,18 +754,26 @@ def render_analytics():
         unsafe_allow_html=True,
     )
 
-    daily_activity = analytics[
-        "daily_activity"
-    ]
+
+    daily_activity = (
+        analytics[
+            "daily_activity"
+        ]
+    )
+
 
     if daily_activity:
 
         activity_data = pd.DataFrame(
             [
                 {
-                    "Date": date,
-                    "Conversations": count,
+                    "Date":
+                        date,
+
+                    "Conversations":
+                        count,
                 }
+
                 for date, count
                 in sorted(
                     daily_activity.items()
@@ -667,16 +781,19 @@ def render_analytics():
             ]
         )
 
+
         activity_data["Date"] = (
             pd.to_datetime(
                 activity_data["Date"]
             )
         )
 
+
         activity_data = (
             activity_data
             .set_index("Date")
         )
+
 
         st.line_chart(
             activity_data[
@@ -684,12 +801,18 @@ def render_analytics():
             ]
         )
 
+
     else:
 
         st.info(
-            "Conversation activity will "
-            "appear after users start chatting."
+            "Conversation activity will appear "
+            "after users start chatting."
         )
+
+
+    # ==================================================
+    # KNOWLEDGE BASE
+    # ==================================================
 
     st.markdown(
         '<div class="section-title">'
@@ -698,7 +821,9 @@ def render_analytics():
         unsafe_allow_html=True,
     )
 
-    col1, col2, col3, col4 = st.columns(4)
+
+    col1, col2, col3 = st.columns(3)
+
 
     with col1:
 
@@ -709,6 +834,7 @@ def render_analytics():
             ],
         )
 
+
     with col2:
 
         st.metric(
@@ -718,35 +844,73 @@ def render_analytics():
             ],
         )
 
+
     with col3:
+
+        size = knowledge_base[
+            "dataset_size"
+        ]
+
+        if size >= 1024:
+
+            size_text = (
+                f"{size / 1024:.2f} MB"
+            )
+
+        else:
+
+            size_text = (
+                f"{size:.2f} KB"
+            )
+
 
         st.metric(
             "Dataset Size",
-            f'{knowledge_base["file_size_kb"]:.1f} KB',
+            size_text,
         )
 
-    with col4:
+
+    col1, col2, col3 = st.columns(3)
+
+
+    with col1:
 
         if knowledge_base[
             "vector_db_available"
         ]:
 
             st.success(
-                "🟢 Vector DB Ready"
+                "🟢 Vector Database Ready"
             )
 
         else:
 
             st.warning(
-                "🟡 Vector DB Not Found"
+                "🟡 Vector Database Not Found"
             )
 
-    st.caption(
-        "Last dataset update: "
-        + knowledge_base[
-            "last_updated"
-        ]
-    )
+
+    with col2:
+
+        st.metric(
+            "Stored Conversations",
+            len(chats),
+        )
+
+
+    with col3:
+
+        st.metric(
+            "Last Dataset Update",
+            knowledge_base[
+                "dataset_last_updated"
+            ],
+        )
+
+
+    # ==================================================
+    # RECENT CONVERSATIONS
+    # ==================================================
 
     st.markdown(
         '<div class="section-title">'
@@ -755,9 +919,11 @@ def render_analytics():
         unsafe_allow_html=True,
     )
 
+
     if chats:
 
         recent_data = []
+
 
         for chat in chats[:10]:
 
@@ -785,9 +951,11 @@ def render_analytics():
                 }
             )
 
+
         recent_df = pd.DataFrame(
             recent_data
         )
+
 
         st.dataframe(
             recent_df,
@@ -795,11 +963,17 @@ def render_analytics():
             hide_index=True,
         )
 
+
     else:
 
         st.info(
             "No conversations available."
         )
+
+
+    # ==================================================
+    # SYSTEM STATUS
+    # ==================================================
 
     st.markdown(
         '<div class="section-title">'
@@ -808,7 +982,9 @@ def render_analytics():
         unsafe_allow_html=True,
     )
 
+
     col1, col2, col3 = st.columns(3)
+
 
     with col1:
 
@@ -826,6 +1002,7 @@ def render_analytics():
                 "Knowledge Base: Offline"
             )
 
+
     with col2:
 
         if DATABASE_PATH.exists():
@@ -839,6 +1016,7 @@ def render_analytics():
             st.warning(
                 "Chat Database: Not Created"
             )
+
 
     with col3:
 
