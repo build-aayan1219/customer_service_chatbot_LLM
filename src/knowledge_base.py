@@ -6,6 +6,8 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
+import re
+
 from src.langchain_helper import create_vector_db
 
 
