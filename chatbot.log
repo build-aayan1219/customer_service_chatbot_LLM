@@ -1574,3 +1574,146 @@ ModuleNotFoundError("No module named 'faiss.swigfaiss_avx2'")
 2026-09-05 22:27:18,276 - google_genai.models - INFO - AFC is enabled with max remote calls: 10.
 2026-09-05 22:27:21,465 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:streamGenerateContent?alt=sse "HTTP/1.1 200 OK"
 2026-09-05 22:27:21,477 - langchain_helper - INFO - Streaming response completed
+2026-09-06 15:41:11,885 - langchain_helper - INFO - Dataset path: E:\customer_service_chatbot_LLM\dataset\dataset.csv
+2026-09-06 15:41:11,885 - langchain_helper - INFO - Vector DB path: E:\customer_service_chatbot_LLM\faiss_index
+2026-09-06 15:46:01,831 - asyncio - ERROR - Exception in callback _ProactorBasePipeTransport._call_connection_lost(None)
+handle: <Handle _ProactorBasePipeTransport._call_connection_lost(None)>
+Traceback (most recent call last):
+  File "C:\Users\Aayan\AppData\Local\Programs\Python\Python311\Lib\asyncio\events.py", line 84, in _run
+    self._context.run(self._callback, *self._args)
+  File "C:\Users\Aayan\AppData\Local\Programs\Python\Python311\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+    self._sock.shutdown(socket.SHUT_RDWR)
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+2026-09-06 15:48:50,835 - langchain_helper - INFO - Dataset path: E:\customer_service_chatbot_LLM\dataset\dataset.csv
+2026-09-06 15:48:50,835 - langchain_helper - INFO - Vector DB path: E:\customer_service_chatbot_LLM\faiss_index
+2026-09-06 15:55:24,197 - src.langchain_helper - INFO - Dataset path: E:\customer_service_chatbot_LLM\dataset\dataset.csv
+2026-09-06 15:55:24,197 - src.langchain_helper - INFO - Vector DB path: E:\customer_service_chatbot_LLM\faiss_index
+2026-09-06 16:02:55,107 - src.langchain_helper - INFO - Dataset path: E:\customer_service_chatbot_LLM\dataset\dataset.csv
+2026-09-06 16:02:55,108 - src.langchain_helper - INFO - Vector DB path: E:\customer_service_chatbot_LLM\faiss_index
+2026-09-06 16:03:30,944 - src.langchain_helper - INFO - Loading FAISS vector database...
+2026-09-06 16:03:30,945 - src.langchain_helper - INFO - Loading HuggingFace embeddings model...
+2026-09-06 16:03:31,061 - sentence_transformers.base.model - INFO - No device provided, using cpu
+2026-09-06 16:03:34,133 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/agent-harnesses "HTTP/1.1 200 OK"
+2026-09-06 16:03:34,494 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/modules.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-06 16:03:34,495 - huggingface_hub.utils._http - WARNING - Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-09-06 16:03:34,545 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/modules.json "HTTP/1.1 200 OK"
+2026-09-06 16:03:35,235 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config_sentence_transformers.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-06 16:03:35,291 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/config_sentence_transformers.json "HTTP/1.1 200 OK"
+2026-09-06 16:03:35,326 - sentence_transformers.base.model - INFO - Loading SentenceTransformer model from sentence-transformers/all-MiniLM-L6-v2.
+2026-09-06 16:03:35,559 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config_sentence_transformers.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-06 16:03:35,596 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/config_sentence_transformers.json "HTTP/1.1 200 OK"
+2026-09-06 16:03:35,844 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/README.md "HTTP/1.1 307 Temporary Redirect"
+2026-09-06 16:03:35,878 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/README.md "HTTP/1.1 200 OK"
+2026-09-06 16:03:36,303 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/modules.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-06 16:03:36,350 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/modules.json "HTTP/1.1 200 OK"
+2026-09-06 16:03:36,599 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/sentence_bert_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-06 16:03:36,648 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/sentence_bert_config.json "HTTP/1.1 200 OK"
+2026-09-06 16:03:36,900 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/adapter_config.json "HTTP/1.1 404 Not Found"
+2026-09-06 16:03:37,170 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-06 16:03:37,235 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/config.json "HTTP/1.1 200 OK"
+2026-09-06 16:04:10,724 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/processor_config.json "HTTP/1.1 404 Not Found"
+2026-09-06 16:04:11,001 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-09-06 16:04:11,266 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/video_preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-09-06 16:04:11,571 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-09-06 16:04:11,809 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-06 16:04:11,851 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-09-06 16:04:12,096 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-06 16:04:12,145 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/config.json "HTTP/1.1 200 OK"
+2026-09-06 16:04:12,377 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-06 16:04:12,414 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/config.json "HTTP/1.1 200 OK"
+2026-09-06 16:04:12,671 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-06 16:04:12,713 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-09-06 16:04:13,486 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-09-06 16:04:13,725 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-09-06 16:04:17,738 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/1_Pooling/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-06 16:04:17,778 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/1_Pooling%2Fconfig.json "HTTP/1.1 200 OK"
+2026-09-06 16:04:18,171 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/2_Normalize/config.json "HTTP/1.1 404 Not Found"
+2026-09-06 16:04:18,412 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2 "HTTP/1.1 200 OK"
+2026-09-06 16:04:19,841 - src.langchain_helper - INFO - Embeddings model loaded
+2026-09-06 16:04:20,041 - faiss.loader - INFO - Loading faiss with AVX2 support.
+2026-09-06 16:04:20,041 - faiss.loader - INFO - Could not load library with AVX2 support due to:
+ModuleNotFoundError("No module named 'faiss.swigfaiss_avx2'")
+2026-09-06 16:04:20,041 - faiss.loader - INFO - Loading faiss.
+2026-09-06 16:04:55,300 - faiss.loader - INFO - Successfully loaded faiss.
+2026-09-06 16:04:57,609 - src.langchain_helper - INFO - Loaded FAISS index with 99 vectors
+2026-09-06 16:04:59,234 - src.langchain_helper - INFO - QA chain ready with retriever k=3
+2026-09-06 16:04:59,235 - src.langchain_helper - INFO - Retrieval query: Do you provide internships?
+2026-09-06 16:05:12,539 - src.langchain_helper - INFO - Retrieved 3 documents
+2026-09-06 16:05:12,539 - src.langchain_helper - INFO - Context size: 236 characters
+2026-09-06 16:05:12,752 - src.langchain_helper - INFO - Generating response with Gemini...
+2026-09-06 16:05:12,752 - src.langchain_helper - INFO - Initializing Google Gemini LLM...
+2026-09-06 16:05:14,708 - src.langchain_helper - INFO - Gemini LLM initialized
+2026-09-06 16:05:15,389 - google_genai.models - INFO - AFC is enabled with max remote calls: 10.
+2026-09-06 16:05:15,389 - google_genai.models - WARNING - Direct use of automatic function calling (AFC) in Models.generate_content is not recommended. Instead, we recommend to use AFC in Chat.send_message. Similarly, direct use of AFC in Models.generate_content_stream is not recommended. Instead, we recommend to use AFC in Chat.send_message_stream.
+2026-09-06 16:05:25,302 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent "HTTP/1.1 200 OK"
+2026-09-06 16:05:25,489 - src.langchain_helper - INFO - Answer generated: 52 characters
+2026-09-06 16:05:26,286 - src.langchain_helper - INFO - Dataset path: E:\customer_service_chatbot_LLM\dataset\dataset.csv
+2026-09-06 16:05:26,287 - src.langchain_helper - INFO - Vector DB path: E:\customer_service_chatbot_LLM\faiss_index
+2026-09-06 16:07:29,443 - src.langchain_helper - INFO - Dataset path: E:\customer_service_chatbot_LLM\dataset\dataset.csv
+2026-09-06 16:07:29,443 - src.langchain_helper - INFO - Vector DB path: E:\customer_service_chatbot_LLM\faiss_index
+2026-09-07 14:21:32,757 - src.langchain_helper - INFO - Dataset path: E:\customer_service_chatbot_LLM\dataset\dataset.csv
+2026-09-07 14:21:32,769 - src.langchain_helper - INFO - Vector DB path: E:\customer_service_chatbot_LLM\faiss_index
+2026-09-07 14:23:00,238 - src.langchain_helper - INFO - Loading FAISS vector database...
+2026-09-07 14:23:00,239 - src.langchain_helper - INFO - Loading HuggingFace embeddings model...
+2026-09-07 14:23:00,321 - sentence_transformers.base.model - INFO - No device provided, using cpu
+2026-09-07 14:23:01,631 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/modules.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-07 14:23:01,671 - huggingface_hub.utils._http - WARNING - Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-09-07 14:23:01,710 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/modules.json "HTTP/1.1 200 OK"
+2026-09-07 14:23:02,057 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config_sentence_transformers.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-07 14:23:02,093 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/config_sentence_transformers.json "HTTP/1.1 200 OK"
+2026-09-07 14:23:02,098 - sentence_transformers.base.model - INFO - Loading SentenceTransformer model from sentence-transformers/all-MiniLM-L6-v2.
+2026-09-07 14:23:02,339 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config_sentence_transformers.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-07 14:23:02,375 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/config_sentence_transformers.json "HTTP/1.1 200 OK"
+2026-09-07 14:23:02,655 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/README.md "HTTP/1.1 307 Temporary Redirect"
+2026-09-07 14:23:02,787 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/README.md "HTTP/1.1 200 OK"
+2026-09-07 14:23:03,302 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/modules.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-07 14:23:03,455 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/modules.json "HTTP/1.1 200 OK"
+2026-09-07 14:23:03,737 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/sentence_bert_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-07 14:23:03,786 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/sentence_bert_config.json "HTTP/1.1 200 OK"
+2026-09-07 14:23:04,039 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/adapter_config.json "HTTP/1.1 404 Not Found"
+2026-09-07 14:23:04,330 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-07 14:23:04,365 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/config.json "HTTP/1.1 200 OK"
+2026-09-07 14:23:06,852 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/processor_config.json "HTTP/1.1 404 Not Found"
+2026-09-07 14:23:07,141 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-09-07 14:23:07,386 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/video_preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-09-07 14:23:07,625 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-09-07 14:23:07,874 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-07 14:23:07,943 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-09-07 14:23:08,290 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-07 14:23:08,320 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/config.json "HTTP/1.1 200 OK"
+2026-09-07 14:23:08,612 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-07 14:23:08,661 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/config.json "HTTP/1.1 200 OK"
+2026-09-07 14:23:08,944 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-07 14:23:08,980 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-09-07 14:23:09,258 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-09-07 14:23:09,497 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-09-07 14:23:10,704 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/1_Pooling/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-07 14:23:10,763 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/1_Pooling%2Fconfig.json "HTTP/1.1 200 OK"
+2026-09-07 14:23:11,139 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/2_Normalize/config.json "HTTP/1.1 404 Not Found"
+2026-09-07 14:23:11,404 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2 "HTTP/1.1 200 OK"
+2026-09-07 14:23:11,481 - src.langchain_helper - INFO - Embeddings model loaded
+2026-09-07 14:23:11,535 - faiss.loader - INFO - Loading faiss with AVX2 support.
+2026-09-07 14:23:11,536 - faiss.loader - INFO - Could not load library with AVX2 support due to:
+ModuleNotFoundError("No module named 'faiss.swigfaiss_avx2'")
+2026-09-07 14:23:11,536 - faiss.loader - INFO - Loading faiss.
+2026-09-07 14:23:13,879 - faiss.loader - INFO - Successfully loaded faiss.
+2026-09-07 14:23:15,256 - src.langchain_helper - INFO - Loaded FAISS index with 99 vectors
+2026-09-07 14:23:15,560 - src.langchain_helper - INFO - QA chain ready with retriever k=3
+2026-09-07 14:23:15,560 - src.langchain_helper - INFO - Retrieval query: are they virtual?
+2026-09-07 14:23:24,788 - src.langchain_helper - INFO - Retrieved 3 documents
+2026-09-07 14:23:24,789 - src.langchain_helper - INFO - Context size: 326 characters
+2026-09-07 14:23:24,795 - src.langchain_helper - INFO - Generating response with Gemini...
+2026-09-07 14:23:24,795 - src.langchain_helper - INFO - Initializing Google Gemini LLM...
+2026-09-07 14:23:26,232 - src.langchain_helper - INFO - Gemini LLM initialized
+2026-09-07 14:23:26,607 - google_genai.models - INFO - AFC is enabled with max remote calls: 10.
+2026-09-07 14:23:26,608 - google_genai.models - WARNING - Direct use of automatic function calling (AFC) in Models.generate_content is not recommended. Instead, we recommend to use AFC in Chat.send_message. Similarly, direct use of AFC in Models.generate_content_stream is not recommended. Instead, we recommend to use AFC in Chat.send_message_stream.
+2026-09-07 14:23:42,167 - src.langchain_helper - INFO - QA chain ready with retriever k=3
+2026-09-07 14:23:42,167 - src.langchain_helper - INFO - Retrieval query: Are they virtual?
+2026-09-07 14:23:42,223 - src.langchain_helper - INFO - Retrieved 3 documents
+2026-09-07 14:23:42,223 - src.langchain_helper - INFO - Context size: 317 characters
+2026-09-07 14:23:42,225 - src.langchain_helper - INFO - Generating response with Gemini...
+2026-09-07 14:23:42,226 - google_genai.models - INFO - AFC is enabled with max remote calls: 10.
+2026-09-07 14:23:45,493 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent "HTTP/1.1 200 OK"
+2026-09-07 14:23:45,604 - src.langchain_helper - INFO - Answer generated: 52 characters
+2026-09-07 14:24:18,991 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent "HTTP/1.1 200 OK"
+2026-09-07 14:24:19,010 - src.langchain_helper - INFO - Answer generated: 52 characters

@@ -5,22 +5,11 @@ from datetime import datetime
 from pathlib import Path
 
 
-# ============================================================================
-# DATABASE
-# ============================================================================
-
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 DATABASE_PATH = BASE_DIR / "chat_history.db"
 
 
-# ============================================================================
-# DATABASE CONNECTION
-# ============================================================================
-
 def get_connection():
-    """Create a database connection."""
-
     connection = sqlite3.connect(
         DATABASE_PATH,
         check_same_thread=False,
@@ -31,13 +20,7 @@ def get_connection():
     return connection
 
 
-# ============================================================================
-# INITIALIZE DATABASE
-# ============================================================================
-
 def initialize_database():
-    """Create the chat database if it does not exist."""
-
     connection = get_connection()
 
     connection.execute(
@@ -56,13 +39,7 @@ def initialize_database():
     connection.close()
 
 
-# ============================================================================
-# SERIALIZATION
-# ============================================================================
-
 def serialize_sources(sources):
-    """Convert source documents into JSON-safe data."""
-
     serialized = []
 
     for source in sources or []:
@@ -72,25 +49,37 @@ def serialize_sources(sources):
             serialized.append(
                 {
                     "page_content": source.page_content,
+                    "metadata": getattr(
+                        source,
+                        "metadata",
+                        {},
+                    ),
                 }
             )
 
         elif isinstance(source, dict):
 
-            serialized.append(source)
+            serialized.append(
+                {
+                    "page_content": source.get(
+                        "page_content",
+                        "",
+                    ),
+                    "metadata": source.get(
+                        "metadata",
+                        {},
+                    ),
+                }
+            )
 
     return serialized
 
 
 def deserialize_sources(sources):
-    """Return stored sources in a simple dictionary format."""
-
     return sources or []
 
 
 def serialize_messages(messages):
-    """Convert messages into JSON-safe data."""
-
     serialized = []
 
     for message in messages:
@@ -111,18 +100,19 @@ def serialize_messages(messages):
                         [],
                     )
                 ),
+                "response_time": message.get(
+                    "response_time"
+                ),
+                "feedback": message.get(
+                    "feedback"
+                ),
             }
         )
 
     return serialized
 
 
-# ============================================================================
-# CHAT CREATION
-# ============================================================================
-
 def create_chat():
-    """Create a new chat object."""
 
     now = datetime.now().strftime(
         "%Y-%m-%d %H:%M:%S"
@@ -137,30 +127,24 @@ def create_chat():
     }
 
 
-# ============================================================================
-# MESSAGE CREATION
-# ============================================================================
-
 def create_message(
     role,
     content,
     sources=None,
+    response_time=None,
+    feedback=None,
 ):
-    """Create a message object."""
 
     return {
         "role": role,
         "content": content,
         "sources": sources or [],
+        "response_time": response_time,
+        "feedback": feedback,
     }
 
 
-# ============================================================================
-# CHAT TITLE
-# ============================================================================
-
 def generate_chat_title(question):
-    """Generate a short title from the first question."""
 
     question = question.strip()
 
@@ -172,49 +156,38 @@ def generate_chat_title(question):
     if len(words) <= 6:
         return question
 
-    return (
-        " ".join(words[:6])
-        + "..."
-    )
+    return " ".join(words[:6]) + "..."
 
-
-# ============================================================================
-# ADD MESSAGE
-# ============================================================================
 
 def add_message(
     chat,
     role,
     content,
     sources=None,
+    response_time=None,
+    feedback=None,
 ):
-    """Add a message to a chat."""
 
     message = create_message(
         role=role,
         content=content,
         sources=sources,
+        response_time=response_time,
+        feedback=feedback,
     )
 
-    chat["messages"].append(
-        message
-    )
+    chat["messages"].append(message)
 
-    chat["updated_at"] = (
-        datetime.now().strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
+    chat["updated_at"] = datetime.now().strftime(
+        "%Y-%m-%d %H:%M:%S"
     )
 
     if (
         chat["title"] == "New Chat"
         and role == "user"
     ):
-
-        chat["title"] = (
-            generate_chat_title(
-                content
-            )
+        chat["title"] = generate_chat_title(
+            content
         )
 
     save_chat(chat)
@@ -222,74 +195,25 @@ def add_message(
     return message
 
 
-# ============================================================================
-# FIND CHAT
-# ============================================================================
-
-def find_chat(
-    chats,
-    chat_id,
-):
-    """Find a chat by ID."""
+def find_chat(chats, chat_id):
 
     for chat in chats:
 
         if chat["id"] == chat_id:
-
             return chat
 
     return None
 
 
-# ============================================================================
-# DELETE CHAT
-# ============================================================================
-
-def delete_chat(
-    chats,
-    chat_id,
-):
-    """Delete a chat from memory and database."""
-
-    remaining_chats = [
-        chat
-        for chat in chats
-        if chat["id"] != chat_id
-    ]
-
-    connection = get_connection()
-
-    connection.execute(
-        "DELETE FROM chats WHERE id = ?",
-        (chat_id,),
-    )
-
-    connection.commit()
-    connection.close()
-
-    return remaining_chats
-
-
-# ============================================================================
-# RENAME CHAT
-# ============================================================================
-
-def rename_chat(
-    chat,
-    new_title,
-):
-    """Rename and save a chat."""
+def rename_chat(chat, new_title):
 
     new_title = new_title.strip()
 
     if new_title:
-
         chat["title"] = new_title
 
-    chat["updated_at"] = (
-        datetime.now().strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
+    chat["updated_at"] = datetime.now().strftime(
+        "%Y-%m-%d %H:%M:%S"
     )
 
     save_chat(chat)
@@ -297,12 +221,65 @@ def rename_chat(
     return chat
 
 
-# ============================================================================
-# SAVE CHAT
-# ============================================================================
+def update_chat(chat):
+
+    chat["updated_at"] = datetime.now().strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
+
+    save_chat(chat)
+
+    return chat
+
+
+def update_message_feedback(
+    chat,
+    message_index,
+    feedback,
+):
+
+    allowed_feedback = {
+        "positive",
+        "negative",
+        None,
+    }
+
+    if feedback not in allowed_feedback:
+
+        raise ValueError(
+            "Invalid feedback value."
+        )
+
+    if (
+        message_index < 0
+        or message_index >= len(
+            chat["messages"]
+        )
+    ):
+        raise IndexError(
+            "Message index out of range."
+        )
+
+    message = chat["messages"][
+        message_index
+    ]
+
+    if message.get("role") != "assistant":
+
+        raise ValueError(
+            "Feedback can only be added to assistant messages."
+        )
+
+    message["feedback"] = feedback
+
+    chat["updated_at"] = datetime.now().strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
+
+    save_chat(chat)
+
 
 def save_chat(chat):
-    """Save or update a chat in SQLite."""
 
     initialize_database()
 
@@ -311,7 +288,8 @@ def save_chat(chat):
     messages_json = json.dumps(
         serialize_messages(
             chat["messages"]
-        )
+        ),
+        ensure_ascii=False,
     )
 
     connection.execute(
@@ -324,6 +302,7 @@ def save_chat(chat):
             updated_at
         )
         VALUES (?, ?, ?, ?, ?)
+
         ON CONFLICT(id)
         DO UPDATE SET
             title = excluded.title,
@@ -343,12 +322,7 @@ def save_chat(chat):
     connection.close()
 
 
-# ============================================================================
-# LOAD CHATS
-# ============================================================================
-
 def load_chats():
-    """Load all saved chats from SQLite."""
 
     initialize_database()
 
@@ -397,6 +371,16 @@ def load_chats():
                 )
             )
 
+            message.setdefault(
+                "response_time",
+                None,
+            )
+
+            message.setdefault(
+                "feedback",
+                None,
+            )
+
         chats.append(
             {
                 "id": row["id"],
@@ -410,15 +394,10 @@ def load_chats():
     return chats
 
 
-# ============================================================================
-# SEARCH CHATS
-# ============================================================================
-
 def search_chats(
     chats,
     search_text,
 ):
-    """Search chats by title and message content."""
 
     search_text = search_text.strip().lower()
 
@@ -437,6 +416,7 @@ def search_chats(
         if search_text in title:
 
             matching_chats.append(chat)
+
             continue
 
         for message in chat.get(
@@ -458,30 +438,33 @@ def search_chats(
     return matching_chats
 
 
-# ============================================================================
-# UPDATE CHAT
-# ============================================================================
+def delete_chat(
+    chats,
+    chat_id,
+):
 
-def update_chat(chat):
-    """Save the current state of a chat."""
+    remaining_chats = [
+        chat
+        for chat in chats
+        if chat["id"] != chat_id
+    ]
 
-    chat["updated_at"] = (
-        datetime.now().strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
+    initialize_database()
+
+    connection = get_connection()
+
+    connection.execute(
+        "DELETE FROM chats WHERE id = ?",
+        (chat_id,),
     )
 
-    save_chat(chat)
+    connection.commit()
+    connection.close()
 
-    return chat
+    return remaining_chats
 
-
-# ============================================================================
-# DATABASE CLEANUP
-# ============================================================================
 
 def delete_all_chats():
-    """Delete all saved conversations."""
 
     initialize_database()
 
