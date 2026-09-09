@@ -100,30 +100,64 @@ MAX_SOURCES = 5
 
 FILE_OVERVIEW_PATTERNS = [
     r"\bwhat\s+is\s+(?:in|inside|present\s+in)\b",
+
     r"\bwhat(?:'s|\s+is)\s+(?:in|inside)\b",
-    r"\bwhat\s+does\s+(?:this|the)\s+(?:file|document)\s+contain\b",
-    r"\bwhat\s+is\s+(?:this|the)\s+(?:file|document)\s+about\b",
-    r"\bsummar(?:y|ize|ise)\b.*\b(?:file|document)\b",
-    r"\b(?:file|document)\b.*\bsummar(?:y|ize|ise)\b",
-    r"\bcontents?\s+of\s+(?:this|the)\s+(?:file|document)\b",
-    r"\bexplain\s+(?:this|the)\s+(?:file|document)\b",
-    r"\bdescribe\s+(?:this|the)\s+(?:file|document)\b",
-    r"\battached\s+(?:file|document)\b",
-    r"\buploaded\s+(?:file|document)\b",
+
+    r"\bwhat\s+does\s+(?:this|the)\s+"
+    r"(?:file|document)\s+contain\b",
+
+    r"\bwhat\s+is\s+(?:this|the)\s+"
+    r"(?:file|document)\s+about\b",
+
+    r"\bsummar(?:y|ize|ise)\b.*"
+    r"\b(?:file|document)\b",
+
+    r"\b(?:file|document)\b.*"
+    r"\bsummar(?:y|ize|ise)\b",
+
+    r"\bcontents?\s+of\s+"
+    r"(?:this|the)\s+"
+    r"(?:file|document)\b",
+
+    r"\bexplain\s+(?:this|the)\s+"
+    r"(?:file|document)\b",
+
+    r"\bdescribe\s+(?:this|the)\s+"
+    r"(?:file|document)\b",
+
+    r"\battached\s+"
+    r"(?:file|document)\b",
+
+    r"\buploaded\s+"
+    r"(?:file|document)\b",
+
+    r"\bwhat\s+does\s+this\s+contain\b",
+
+    r"\bwhat\s+is\s+included\s+"
+    r"in\s+(?:this|the)\b",
+
+    r"\bshow\s+me\s+what\s+"
+    r"is\s+in\s+(?:this|the)\b",
 ]
 
 
-def is_file_overview_question(question):
+def is_file_overview_question(
+    question,
+):
     question = str(
         question or ""
     ).lower().strip()
+
+    if not question:
+        return False
 
     return any(
         re.search(
             pattern,
             question,
         )
-        for pattern in FILE_OVERVIEW_PATTERNS
+        for pattern
+        in FILE_OVERVIEW_PATTERNS
     )
 
 
@@ -139,7 +173,9 @@ def normalize_text(text):
 
 
 def normalize_phrase(text):
-    text = str(text or "").lower()
+    text = str(
+        text or ""
+    ).lower()
 
     replacements = {
         "won't": "will not",
@@ -189,7 +225,9 @@ def calculate_lexical_overlap(
     )
 
     document_terms = set(
-        normalize_text(document_text)
+        normalize_text(
+            document_text
+        )
     )
 
     if not query_terms:
@@ -197,7 +235,8 @@ def calculate_lexical_overlap(
 
     return (
         len(
-            query_terms.intersection(
+            query_terms
+            .intersection(
                 document_terms
             )
         )
@@ -213,7 +252,9 @@ def generate_ngrams(
     text,
     n,
 ):
-    tokens = normalize_text(text)
+    tokens = normalize_text(
+        text
+    )
 
     if len(tokens) < n:
         return set()
@@ -356,8 +397,9 @@ def calculate_intent_match(
         query_hits = [
             phrase
             for phrase in phrases
-            if normalize_phrase(phrase)
-            in query_normalized
+            if normalize_phrase(
+                phrase
+            ) in query_normalized
         ]
 
         if not query_hits:
@@ -366,11 +408,13 @@ def calculate_intent_match(
         document_hits = [
             phrase
             for phrase in phrases
-            if normalize_phrase(phrase)
-            in document_normalized
+            if normalize_phrase(
+                phrase
+            ) in document_normalized
         ]
 
         if document_hits:
+
             score = min(
                 1.0,
                 len(document_hits)
@@ -420,13 +464,16 @@ def get_llm():
     if not api_key:
         raise ValueError(
             "GOOGLE_API_KEY is not configured. "
-            "Add it to the .env file or Streamlit secrets."
+            "Add it to the .env file or "
+            "Streamlit secrets."
         )
 
     llm = ChatGoogleGenerativeAI(
         model=LLM_CONFIG["model"],
         google_api_key=api_key,
-        max_tokens=LLM_CONFIG["max_tokens"],
+        max_tokens=LLM_CONFIG[
+            "max_tokens"
+        ],
     )
 
     logger.info(
@@ -481,7 +528,8 @@ def create_vector_db():
 
     if not documents:
         raise ValueError(
-            "The dataset does not contain any documents."
+            "The dataset does not contain "
+            "any documents."
         )
 
     vectordb = FAISS.from_documents(
@@ -501,7 +549,8 @@ def create_vector_db():
     load_vector_db.cache_clear()
 
     logger.info(
-        "FAISS vector database created with %d documents",
+        "Global FAISS database created "
+        "with %d documents",
         len(documents),
     )
 
@@ -525,7 +574,8 @@ def load_vector_db():
     )
 
     logger.info(
-        "Loaded global FAISS index with %d vectors",
+        "Loaded global FAISS index "
+        "with %d vectors",
         vectordb.index.ntotal,
     )
 
@@ -537,14 +587,16 @@ def load_vector_db():
 # ============================================================
 
 def load_conversation_vector_db(
-    chat_id
+    chat_id,
 ):
     if not chat_id:
         return None
 
     try:
+
         from src.conversation_files import (
-            load_conversation_vector_db as loader,
+            load_conversation_vector_db
+            as loader
         )
 
         return loader(
@@ -552,10 +604,13 @@ def load_conversation_vector_db(
         )
 
     except Exception as error:
+
         logger.warning(
-            "Could not load conversation FAISS: %s",
+            "Could not load conversation "
+            "FAISS: %s",
             error,
         )
+
         return None
 
 
@@ -572,6 +627,7 @@ def search_vector_db(
         return []
 
     try:
+
         return (
             vectordb
             .similarity_search_with_relevance_scores(
@@ -581,15 +637,19 @@ def search_vector_db(
         )
 
     except Exception as error:
+
         logger.warning(
             "Relevance-score search failed: %s",
             error,
         )
 
         try:
-            documents = vectordb.similarity_search(
-                query,
-                k=k,
+
+            documents = (
+                vectordb.similarity_search(
+                    query,
+                    k=k,
+                )
             )
 
             return [
@@ -597,7 +657,8 @@ def search_vector_db(
                     document,
                     max(
                         0.0,
-                        1.0 - (
+                        1.0
+                        - (
                             index
                             / max(
                                 len(documents),
@@ -611,10 +672,12 @@ def search_vector_db(
             ]
 
         except Exception as fallback_error:
+
             logger.error(
                 "Vector search failed: %s",
                 fallback_error,
             )
+
             return []
 
 
@@ -622,8 +685,9 @@ def search_vector_db(
 # DOCUMENT IDENTITY
 # ============================================================
 
-def document_identity(document):
-
+def document_identity(
+    document,
+):
     metadata = getattr(
         document,
         "metadata",
@@ -637,10 +701,18 @@ def document_identity(document):
         metadata = {}
 
     source_file = (
-        metadata.get("source_file")
-        or metadata.get("file_name")
-        or metadata.get("filename")
-        or metadata.get("source")
+        metadata.get(
+            "source_file"
+        )
+        or metadata.get(
+            "file_name"
+        )
+        or metadata.get(
+            "filename"
+        )
+        or metadata.get(
+            "source"
+        )
         or ""
     )
 
@@ -692,10 +764,14 @@ def retrieve_documents(
         if message.get("content")
     )
 
-    retrieval_query = question
+    # --------------------------------------------------------
+    # Global retrieval query
+    # --------------------------------------------------------
+
+    global_query = question
 
     if history_text:
-        retrieval_query = (
+        global_query = (
             "Previous conversation:\n"
             f"{history_text}\n\n"
             "Current question:\n"
@@ -708,7 +784,7 @@ def retrieve_documents(
     )
 
     # ========================================================
-    # SPECIAL FILE OVERVIEW MODE
+    # FILE OVERVIEW MODE
     # ========================================================
 
     if (
@@ -717,7 +793,9 @@ def retrieve_documents(
             question
         )
     ):
+
         try:
+
             from src.conversation_files import (
                 get_conversation_overview_documents,
             )
@@ -725,12 +803,14 @@ def retrieve_documents(
             overview_documents = (
                 get_conversation_overview_documents(
                     chat_id,
-                    max_chunks=8,
+                    max_chunks=10,
                 )
             )
 
             if overview_documents:
+
                 for document in overview_documents:
+
                     metadata = (
                         document.metadata
                         if isinstance(
@@ -752,17 +832,22 @@ def retrieve_documents(
                         "overview_retrieval"
                     ] = True
 
-                    document.metadata = metadata
+                    document.metadata = (
+                        metadata
+                    )
 
                 logger.info(
-                    "File overview mode selected %d "
-                    "representative chunks",
-                    len(overview_documents),
+                    "File overview mode selected "
+                    "%d representative chunks",
+                    len(
+                        overview_documents
+                    ),
                 )
 
                 return overview_documents
 
         except Exception as error:
+
             logger.warning(
                 "File overview retrieval failed: %s",
                 error,
@@ -775,9 +860,11 @@ def retrieve_documents(
     global_db = None
 
     try:
+
         global_db = load_vector_db()
 
     except Exception as error:
+
         logger.warning(
             "Global vector database unavailable: %s",
             error,
@@ -785,7 +872,7 @@ def retrieve_documents(
 
     global_results = search_vector_db(
         global_db,
-        retrieval_query,
+        global_query,
     )
 
     # ========================================================
@@ -798,9 +885,17 @@ def retrieve_documents(
         )
     )
 
+    # IMPORTANT:
+    #
+    # Attached files are searched using ONLY
+    # the current question.
+    #
+    # Do NOT mix previous conversation into
+    # the conversation-file vector query.
+    #
     conversation_results = search_vector_db(
         conversation_db,
-        retrieval_query,
+        question,
     )
 
     logger.info(
@@ -820,19 +915,25 @@ def retrieve_documents(
     all_results = []
 
     for document, semantic_score in global_results:
+
         all_results.append(
             (
                 document,
-                float(semantic_score),
+                float(
+                    semantic_score
+                ),
                 "global_knowledge",
             )
         )
 
     for document, semantic_score in conversation_results:
+
         all_results.append(
             (
                 document,
-                float(semantic_score),
+                float(
+                    semantic_score
+                ),
                 "conversation_file",
             )
         )
@@ -910,11 +1011,17 @@ def retrieve_documents(
         ):
             metadata = {}
 
-        if store_type == "conversation_file":
+        if (
+            store_type
+            == "conversation_file"
+        ):
+
             metadata[
                 "source_type"
             ] = "conversation_file"
+
         else:
+
             metadata.setdefault(
                 "source_type",
                 "global_knowledge",
@@ -983,18 +1090,23 @@ def retrieve_documents(
 
         document = item[0]
 
-        identity = document_identity(
-            document
+        identity = (
+            document_identity(
+                document
+            )
         )
 
-        existing = unique_documents.get(
-            identity
+        existing = (
+            unique_documents.get(
+                identity
+            )
         )
 
         if (
             existing is None
             or item[5] > existing[5]
         ):
+
             unique_documents[
                 identity
             ] = item
@@ -1017,9 +1129,12 @@ def retrieve_documents(
     # ========================================================
 
     for rank, item in enumerate(
-        scored_documents[:MAX_SOURCES],
+        scored_documents[
+            :MAX_SOURCES
+        ],
         start=1,
     ):
+
         (
             document,
             semantic_score,
@@ -1052,13 +1167,22 @@ def retrieve_documents(
 
     if scored_documents:
 
-        best_item = scored_documents[0]
+        best_item = (
+            scored_documents[0]
+        )
 
-        best_document = best_item[0]
+        best_document = (
+            best_item[0]
+        )
 
-        best_relevance = best_item[5]
+        best_relevance = (
+            best_item[5]
+        )
 
-        if best_relevance >= MIN_BEST_RELEVANCE:
+        if (
+            best_relevance
+            >= MIN_BEST_RELEVANCE
+        ):
 
             selected_documents.append(
                 best_document
@@ -1066,14 +1190,19 @@ def retrieve_documents(
 
             for item in scored_documents[1:]:
 
-                if len(
-                    selected_documents
-                ) >= MAX_SOURCES:
+                if (
+                    len(
+                        selected_documents
+                    )
+                    >= MAX_SOURCES
+                ):
                     break
 
                 document = item[0]
 
-                relevance_score = item[5]
+                relevance_score = (
+                    item[5]
+                )
 
                 if (
                     relevance_score
@@ -1085,14 +1214,20 @@ def retrieve_documents(
                         * ADDITIONAL_SOURCE_RATIO
                     )
                 ):
+
                     selected_documents.append(
                         document
                     )
 
     logger.info(
-        "Retrieved %d candidates; selected %d sources",
-        len(scored_documents),
-        len(selected_documents),
+        "Retrieved %d candidates; "
+        "selected %d sources",
+        len(
+            scored_documents
+        ),
+        len(
+            selected_documents
+        ),
     )
 
     return selected_documents
@@ -1106,9 +1241,10 @@ def build_prompt():
 
     return ChatPromptTemplate.from_template(
         """
-You are a professional AI customer support assistant.
+You are a professional AI customer support
+and document-assistant chatbot.
 
-You answer questions using trusted information retrieved
+You answer using trusted information retrieved
 from the available knowledge sources.
 
 There are two possible factual sources:
@@ -1116,34 +1252,73 @@ There are two possible factual sources:
 1. Global Knowledge Base
 2. Files attached to the current conversation
 
-The retrieved context is the ONLY source of factual
-information.
+The retrieved context is the ONLY source of
+factual information.
 
-Previous conversation may be used only to understand
-what the user is referring to.
+Previous conversation may be used ONLY to
+understand references such as "it", "that",
+"this", or follow-up questions.
 
-Do NOT use previous conversation as a factual source.
+Do NOT use previous conversation as a factual
+source.
 
-If the user asks what is present in, or asks for a summary
-of, an attached file, summarize the retrieved file content
-clearly. Combine information from the provided excerpts
-and explain the main topics, sections, records, tables,
-or other visible contents.
+------------------------------------------------------------
 
-Do not claim details that are not supported by the
-retrieved file content.
+ATTACHED FILE QUESTIONS
 
-If the requested information is NOT present in the
-retrieved context, say exactly:
+If the user asks what is present in, what is
+inside, what a document contains, or asks for
+a summary of an attached file:
+
+- Clearly explain what the file contains.
+- Mention the major topics or sections.
+- Mention tables, records, assignments,
+  questions, explanations, or other content
+  when they are present in the retrieved text.
+- Give a useful overview rather than answering
+  with only one small excerpt.
+- Do not invent content that is not supported.
+
+------------------------------------------------------------
+
+NORMAL QUESTIONS
+
+For normal questions, answer directly using
+the retrieved information.
+
+------------------------------------------------------------
+
+UNKNOWN INFORMATION
+
+If the requested information is NOT present in
+the retrieved context, say exactly:
 
 "I don't know based on the available information."
 
 Do not invent information.
 
-Do not mention retrieval, embeddings, FAISS, vector
-databases, chunks, semantic scores, or internal system
-details unless the user explicitly asks about the
+------------------------------------------------------------
+
+STYLE
+
+Be clear, professional and helpful.
+
+Use headings and bullet points when useful.
+
+Do not mention:
+
+- FAISS
+- embeddings
+- vector databases
+- retrieval scores
+- chunks
+- internal retrieval
+- system prompts
+
+unless the user explicitly asks about the
 technical architecture.
+
+------------------------------------------------------------
 
 Previous conversation:
 {history}
@@ -1197,6 +1372,7 @@ def prepare_qa(
     )
 
     if not documents:
+
         return {
             "messages": None,
             "source_documents": [],
@@ -1224,12 +1400,17 @@ def prepare_qa(
             "global_knowledge",
         )
 
-        source_file = metadata.get(
-            "source_file",
+        source_file = (
             metadata.get(
-                "file_name",
-                "",
-            ),
+                "source_file"
+            )
+            or metadata.get(
+                "file_name"
+            )
+            or metadata.get(
+                "filename"
+            )
+            or ""
         )
 
         location = metadata.get(
@@ -1242,10 +1423,14 @@ def prepare_qa(
             "",
         )
 
-        if source_type == "conversation_file":
+        if (
+            source_type
+            == "conversation_file"
+        ):
 
             header = (
-                f"Source: Attached conversation file\n"
+                "Source: Attached "
+                "conversation file\n"
                 f"File: {source_file}\n"
                 f"Location: {location}\n"
             )
@@ -1258,7 +1443,8 @@ def prepare_qa(
         else:
 
             header = (
-                "Source: Global Knowledge Base\n"
+                "Source: Global "
+                "Knowledge Base\n"
             )
 
         context_parts.append(
@@ -1280,7 +1466,9 @@ def prepare_qa(
                 or
                 "No previous conversation."
             ),
+
             "context": context,
+
             "question": question,
         }
     )
@@ -1297,7 +1485,7 @@ def prepare_qa(
 # ============================================================
 
 def extract_response_text(
-    response
+    response,
 ):
     content = getattr(
         response,
@@ -1305,10 +1493,16 @@ def extract_response_text(
         response,
     )
 
-    if isinstance(content, str):
+    if isinstance(
+        content,
+        str,
+    ):
         return content.strip()
 
-    if isinstance(content, list):
+    if isinstance(
+        content,
+        list,
+    ):
 
         parts = []
 
@@ -1324,6 +1518,7 @@ def extract_response_text(
                 item,
                 dict,
             ):
+
                 text = item.get(
                     "text"
                 )
@@ -1333,7 +1528,9 @@ def extract_response_text(
                         str(text)
                     )
 
-        return "".join(parts).strip()
+        return "".join(
+            parts
+        ).strip()
 
     return str(
         content
@@ -1345,7 +1542,7 @@ def extract_response_text(
 # ============================================================
 
 def extract_stream_text(
-    chunk
+    chunk,
 ):
     content = getattr(
         chunk,
@@ -1378,6 +1575,7 @@ def extract_stream_text(
                 item,
                 dict,
             ):
+
                 text = item.get(
                     "text"
                 )
@@ -1415,9 +1613,13 @@ def get_qa_chain():
         if not prepared[
             "has_context"
         ]:
+
             return {
                 "result":
-                    "I don't know based on the available information.",
+                    "I don't know based "
+                    "on the available "
+                    "information.",
+
                 "source_documents": [],
             }
 
@@ -1430,12 +1632,15 @@ def get_qa_chain():
             )
         )
 
-        answer = extract_response_text(
-            response
+        answer = (
+            extract_response_text(
+                response
+            )
         )
 
         return {
             "result": answer,
+
             "source_documents":
                 prepared[
                     "source_documents"
@@ -1465,9 +1670,11 @@ def get_qa_stream(
     ]:
 
         def no_context_stream():
+
             yield (
-                "I don't know based on "
-                "the available information."
+                "I don't know based "
+                "on the available "
+                "information."
             )
 
         return (
@@ -1494,8 +1701,10 @@ def get_qa_stream(
                 )
             ):
 
-                text = extract_stream_text(
-                    chunk
+                text = (
+                    extract_stream_text(
+                        chunk
+                    )
                 )
 
                 if text:
@@ -1520,17 +1729,24 @@ def get_qa_stream(
                 or
                 "quota" in error_text
             ):
+
                 yield (
                     "\n\n⚠️ "
-                    "The AI service usage limit "
-                    "has been reached. Please try "
-                    "again later."
+                    "The AI service "
+                    "usage limit has "
+                    "been reached. "
+                    "Please try again "
+                    "later."
                 )
+
             else:
+
                 yield (
                     "\n\n⚠️ "
-                    "The AI service is temporarily "
-                    "unavailable. Please try again."
+                    "The AI service is "
+                    "temporarily "
+                    "unavailable. "
+                    "Please try again."
                 )
 
     return (
@@ -1540,45 +1756,61 @@ def get_qa_stream(
 
 
 # ============================================================
-# TEST
+# DIRECT TEST
 # ============================================================
 
 if __name__ == "__main__":
 
-    logger.info("=" * 60)
     logger.info(
-        "Customer Service Chatbot - Retrieval Test"
-    )
-    logger.info("=" * 60)
-
-    create_vector_db()
-
-    chain = get_qa_chain()
-
-    test_question = (
-        "What should I do if the device "
-        "won't turn on?"
-    )
-
-    result = chain(
-        test_question
+        "=" * 60
     )
 
     logger.info(
-        "Question: %s",
-        test_question,
+        "Customer Service Chatbot "
+        "- Retrieval Test"
     )
 
     logger.info(
-        "Answer: %s",
-        result["result"],
+        "=" * 60
     )
 
-    logger.info(
-        "Selected sources: %d",
-        len(
-            result[
-                "source_documents"
-            ]
-        ),
-    )
+    try:
+
+        create_vector_db()
+
+        chain = get_qa_chain()
+
+        test_question = (
+            "What should I do if "
+            "the device won't turn on?"
+        )
+
+        result = chain(
+            test_question
+        )
+
+        logger.info(
+            "Question: %s",
+            test_question,
+        )
+
+        logger.info(
+            "Answer: %s",
+            result["result"],
+        )
+
+        logger.info(
+            "Selected sources: %d",
+            len(
+                result[
+                    "source_documents"
+                ]
+            ),
+        )
+
+    except Exception as error:
+
+        logger.exception(
+            "Test failed: %s",
+            error,
+        )
