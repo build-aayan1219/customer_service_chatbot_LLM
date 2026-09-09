@@ -16,7 +16,6 @@ from src.config import (
     EMBEDDINGS_CONFIG,
     LLM_CONFIG,
     LOGGING_CONFIG,
-    RETRIEVER_CONFIG,
 )
 
 
@@ -33,7 +32,9 @@ load_dotenv()
 # PATHS
 # ==================================================
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(
+    __file__
+).resolve().parent.parent
 
 DATASET_PATH = (
     BASE_DIR
@@ -80,11 +81,8 @@ logger = logging.getLogger(__name__)
 
 MAX_RETRIEVAL_CANDIDATES = 8
 
-# Minimum score required for the best source.
 MIN_BEST_RELEVANCE = 0.30
 
-# Secondary sources must be reasonably close
-# to the strongest source.
 ADDITIONAL_SOURCE_RATIO = 0.88
 
 MIN_ADDITIONAL_RELEVANCE = 0.46
@@ -99,10 +97,8 @@ MAX_SOURCES = 3
 def normalize_text(text):
     """
     Normalize text for lexical comparison.
-
-    Converts text to lowercase and extracts
-    alphanumeric tokens.
     """
+
     return re.findall(
         r"\b[a-z0-9]+\b",
         str(text).lower(),
@@ -112,12 +108,12 @@ def normalize_text(text):
 def normalize_phrase(text):
     """
     Normalize text while preserving word order.
-
-    Used for phrase matching.
     """
-    text = str(text).lower()
 
-    # Normalize common contractions.
+    text = str(
+        text
+    ).lower()
+
     replacements = {
         "won't": "will not",
         "can't": "cannot",
@@ -132,6 +128,7 @@ def normalize_phrase(text):
     }
 
     for old, new in replacements.items():
+
         text = text.replace(
             old,
             new,
@@ -161,12 +158,7 @@ def calculate_lexical_overlap(
     document_text,
 ):
     """
-    Calculate the proportion of meaningful query
-    terms found in a document.
-
-    Stop words are ignored so words such as:
-    'what', 'should', 'I', 'do', 'if'
-    do not dominate retrieval.
+    Calculate meaningful query-term overlap.
     """
 
     stop_words = {
@@ -219,18 +211,21 @@ def calculate_lexical_overlap(
         "about",
         "please",
         "tell",
-        "me",
     }
 
     query_terms = {
         term
-        for term in normalize_text(query)
+        for term in normalize_text(
+            query
+        )
         if term not in stop_words
         and len(term) > 1
     }
 
     document_terms = set(
-        normalize_text(document_text)
+        normalize_text(
+            document_text
+        )
     )
 
     if not query_terms:
@@ -249,7 +244,7 @@ def calculate_lexical_overlap(
 
 
 # ==================================================
-# PHRASE MATCHING
+# N-GRAMS
 # ==================================================
 
 def generate_ngrams(
@@ -259,6 +254,7 @@ def generate_ngrams(
     """
     Generate normalized word n-grams.
     """
+
     words = normalize_phrase(
         text
     ).split()
@@ -267,12 +263,18 @@ def generate_ngrams(
         return set()
 
     return {
-        " ".join(words[index:index + n])
+        " ".join(
+            words[index:index + n]
+        )
         for index in range(
             len(words) - n + 1
         )
     }
 
+
+# ==================================================
+# PHRASE MATCHING
+# ==================================================
 
 def calculate_phrase_match(
     query,
@@ -280,17 +282,6 @@ def calculate_phrase_match(
 ):
     """
     Calculate phrase-level similarity.
-
-    Exact two-word and three-word phrases receive
-    stronger importance than individual words.
-
-    This is particularly useful for support queries such as:
-
-    - turn on
-    - unusual noise
-    - filter replacement
-    - refund request
-    - customer support
     """
 
     normalized_query = normalize_phrase(
@@ -304,10 +295,12 @@ def calculate_phrase_match(
     if not normalized_query:
         return 0.0
 
-    # Strong exact phrase match.
     if (
-        normalized_query in normalized_document
-        and len(normalized_query.split()) >= 2
+        normalized_query
+        in normalized_document
+        and len(
+            normalized_query.split()
+        ) >= 2
     ):
         return 1.0
 
@@ -332,9 +325,11 @@ def calculate_phrase_match(
     )
 
     bigram_score = 0.0
+
     trigram_score = 0.0
 
     if query_bigrams:
+
         bigram_score = (
             len(
                 query_bigrams.intersection(
@@ -345,6 +340,7 @@ def calculate_phrase_match(
         )
 
     if query_trigrams:
+
         trigram_score = (
             len(
                 query_trigrams.intersection(
@@ -354,7 +350,6 @@ def calculate_phrase_match(
             / len(query_trigrams)
         )
 
-    # Trigrams are more specific than bigrams.
     return max(
         bigram_score,
         trigram_score,
@@ -362,7 +357,7 @@ def calculate_phrase_match(
 
 
 # ==================================================
-# ISSUE / INTENT KEYWORD MATCHING
+# INTENT MATCHING
 # ==================================================
 
 def calculate_intent_match(
@@ -370,13 +365,9 @@ def calculate_intent_match(
     document_text,
 ):
     """
-    Detect important customer-service intent phrases.
+    Detect support-related intent overlap.
 
-    This gives a controlled boost to documents that contain
-    the same troubleshooting intent as the question.
-
-    It does NOT generate factual information.
-    It only affects retrieval ranking.
+    This affects retrieval ranking only.
     """
 
     query_text = normalize_phrase(
@@ -391,6 +382,7 @@ def calculate_intent_match(
         return 0.0
 
     intent_groups = [
+
         {
             "name": "power_on",
             "query_phrases": [
@@ -417,6 +409,7 @@ def calculate_intent_match(
                 "not turning on",
             ],
         },
+
         {
             "name": "noise",
             "query_phrases": [
@@ -434,6 +427,7 @@ def calculate_intent_match(
                 "loud noise",
             ],
         },
+
         {
             "name": "filter",
             "query_phrases": [
@@ -449,6 +443,7 @@ def calculate_intent_match(
                 "filter should normally be replaced",
             ],
         },
+
         {
             "name": "refund",
             "query_phrases": [
@@ -463,6 +458,7 @@ def calculate_intent_match(
                 "refund eligibility",
             ],
         },
+
         {
             "name": "warranty",
             "query_phrases": [
@@ -476,6 +472,7 @@ def calculate_intent_match(
                 "covered by warranty",
             ],
         },
+
         {
             "name": "support",
             "query_phrases": [
@@ -493,9 +490,8 @@ def calculate_intent_match(
         },
     ]
 
-    matched_intents = []
-
     for group in intent_groups:
+
         query_match = any(
             phrase in query_text
             for phrase in group[
@@ -514,12 +510,7 @@ def calculate_intent_match(
         )
 
         if document_match:
-            matched_intents.append(
-                group["name"]
-            )
-
-    if matched_intents:
-        return 1.0
+            return 1.0
 
     return 0.0
 
@@ -535,25 +526,16 @@ def calculate_combined_relevance(
     intent_score=0.0,
 ):
     """
-    Combine semantic, lexical, phrase, and intent
-    relevance signals.
-
-    Ranking priority:
-
-    1. Semantic similarity
-    2. Exact phrase matching
-    3. Intent matching
-    4. Individual keyword overlap
-
-    The intent and phrase signals are especially useful
-    for short troubleshooting questions.
+    Combine retrieval signals.
     """
 
     semantic_score = max(
         0.0,
         min(
             1.0,
-            float(semantic_score),
+            float(
+                semantic_score
+            ),
         ),
     )
 
@@ -561,7 +543,9 @@ def calculate_combined_relevance(
         0.0,
         min(
             1.0,
-            float(lexical_score),
+            float(
+                lexical_score
+            ),
         ),
     )
 
@@ -569,7 +553,9 @@ def calculate_combined_relevance(
         0.0,
         min(
             1.0,
-            float(phrase_score),
+            float(
+                phrase_score
+            ),
         ),
     )
 
@@ -577,12 +563,12 @@ def calculate_combined_relevance(
         0.0,
         min(
             1.0,
-            float(intent_score),
+            float(
+                intent_score
+            ),
         ),
     )
 
-    # Semantic similarity remains important,
-    # while exact support phrases receive a strong boost.
     return (
         semantic_score * 0.50
         + phrase_score * 0.20
@@ -598,7 +584,7 @@ def calculate_combined_relevance(
 @lru_cache(maxsize=1)
 def get_llm():
     """
-    Initialize and cache the Gemini LLM.
+    Initialize and cache Gemini.
     """
 
     api_key = os.getenv(
@@ -606,6 +592,7 @@ def get_llm():
     )
 
     if not api_key:
+
         raise ValueError(
             "GOOGLE_API_KEY is not configured. "
             "Add it to the .env file or Streamlit secrets."
@@ -620,7 +607,7 @@ def get_llm():
     )
 
     logger.info(
-        "Gemini LLM initialized"
+        "Gemini LLM initialized."
     )
 
     return llm
@@ -643,23 +630,23 @@ def get_embeddings():
     )
 
     logger.info(
-        "Embeddings model loaded"
+        "Embeddings model loaded."
     )
 
     return embeddings
 
 
 # ==================================================
-# CREATE VECTOR DATABASE
+# GLOBAL VECTOR DATABASE
 # ==================================================
 
 def create_vector_db():
     """
-    Create and save the FAISS vector database
-    from the current dataset.
+    Create the global FAISS database from dataset.csv.
     """
 
     if not DATASET_PATH.exists():
+
         raise FileNotFoundError(
             f"Dataset not found at {DATASET_PATH}"
         )
@@ -676,15 +663,14 @@ def create_vector_db():
     documents = loader.load()
 
     if not documents:
+
         raise ValueError(
             "The dataset does not contain any documents."
         )
 
-    embeddings = get_embeddings()
-
     vectordb = FAISS.from_documents(
         documents,
-        embeddings,
+        get_embeddings(),
     )
 
     VECTORDB_PATH.mkdir(
@@ -699,28 +685,28 @@ def create_vector_db():
     load_vector_db.cache_clear()
 
     logger.info(
-        "FAISS vector database created with %d documents",
+        "Global FAISS created with %d documents.",
         len(documents),
     )
 
     return vectordb
 
 
-# ==================================================
-# LOAD VECTOR DATABASE
-# ==================================================
-
 @lru_cache(maxsize=1)
 def load_vector_db():
     """
-    Load the existing FAISS vector database.
+    Load the global FAISS database.
+
+    If it does not exist yet, create it automatically.
     """
 
     if not VECTORDB_PATH.exists():
-        raise FileNotFoundError(
-            f"Vector database not found at {VECTORDB_PATH}. "
-            "Please create it first."
+
+        logger.info(
+            "Global FAISS does not exist. Creating it automatically."
         )
+
+        return create_vector_db()
 
     vectordb = FAISS.load_local(
         str(VECTORDB_PATH),
@@ -729,7 +715,7 @@ def load_vector_db():
     )
 
     logger.info(
-        "Loaded FAISS index with %d vectors",
+        "Loaded global FAISS with %d vectors.",
         vectordb.index.ntotal,
     )
 
@@ -737,59 +723,14 @@ def load_vector_db():
 
 
 # ==================================================
-# BUILD PROMPT
-# ==================================================
-
-def _build_prompt():
-    """
-    Build the customer-service RAG prompt.
-    """
-
-    return ChatPromptTemplate.from_template(
-        """
-You are a helpful customer service assistant.
-
-Answer the current question using ONLY the information
-provided in the knowledge-base context.
-
-You may use the previous conversation to understand
-what the user is referring to.
-
-Do not use the previous conversation as a source of facts.
-The knowledge-base context is the only source of factual information.
-
-If the answer is not present in the knowledge-base context,
-say exactly:
-
-"I don't know based on the available information."
-
-Do not make up information.
-
-Give the answer clearly and directly.
-When the knowledge base provides steps, preserve the
-important steps in a numbered list.
-
-Previous conversation:
-{history}
-
-Knowledge-base context:
-{context}
-
-Current question:
-{question}
-"""
-    )
-
-
-# ==================================================
-# HISTORY FORMATTER
+# HISTORY
 # ==================================================
 
 def _prepare_history(
     chat_history,
 ):
     """
-    Convert recent conversation messages into text.
+    Convert recent messages into text.
     """
 
     chat_history = chat_history or []
@@ -812,34 +753,216 @@ def _prepare_history(
 
 
 # ==================================================
-# RETRIEVAL
+# RETRIEVAL CANDIDATES
+# ==================================================
+
+def _get_global_candidates(
+    retrieval_query,
+):
+    """
+    Retrieve candidates from the global knowledge base.
+    """
+
+    try:
+
+        vectordb = load_vector_db()
+
+        scored_results = (
+            vectordb
+            .similarity_search_with_relevance_scores(
+                retrieval_query,
+                k=MAX_RETRIEVAL_CANDIDATES,
+            )
+        )
+
+        return scored_results
+
+    except Exception as error:
+
+        logger.warning(
+            "Global retrieval failed: %s",
+            error,
+        )
+
+        return []
+
+
+def _get_conversation_candidates(
+    chat_id,
+    retrieval_query,
+):
+    """
+    Retrieve candidates from the current chat's files.
+    """
+
+    if not chat_id:
+        return []
+
+    try:
+
+        from src.conversation_files import (
+            search_conversation_files,
+        )
+
+        return search_conversation_files(
+            chat_id,
+            retrieval_query,
+            k=MAX_RETRIEVAL_CANDIDATES,
+        )
+
+    except Exception as error:
+
+        logger.warning(
+            "Conversation-file retrieval failed: %s",
+            error,
+        )
+
+        return []
+
+
+# ==================================================
+# DOCUMENT SCORING
+# ==================================================
+
+def _score_documents(
+    scored_results,
+    question,
+):
+    """
+    Apply the existing semantic + lexical +
+    phrase + intent ranking system.
+    """
+
+    scored_documents = []
+
+    for document, semantic_score in scored_results:
+
+        try:
+
+            semantic_score = float(
+                semantic_score
+            )
+
+        except Exception:
+
+            semantic_score = 0.0
+
+        semantic_score = max(
+            0.0,
+            min(
+                1.0,
+                semantic_score,
+            ),
+        )
+
+        page_content = (
+            document.page_content
+        )
+
+        lexical_score = (
+            calculate_lexical_overlap(
+                question,
+                page_content,
+            )
+        )
+
+        phrase_score = (
+            calculate_phrase_match(
+                question,
+                page_content,
+            )
+        )
+
+        intent_score = (
+            calculate_intent_match(
+                question,
+                page_content,
+            )
+        )
+
+        relevance_score = (
+            calculate_combined_relevance(
+                semantic_score,
+                lexical_score,
+                phrase_score,
+                intent_score,
+            )
+        )
+
+        metadata = document.metadata
+
+        metadata["semantic_score"] = round(
+            semantic_score,
+            4,
+        )
+
+        metadata["lexical_score"] = round(
+            lexical_score,
+            4,
+        )
+
+        metadata["phrase_score"] = round(
+            phrase_score,
+            4,
+        )
+
+        metadata["intent_score"] = round(
+            intent_score,
+            4,
+        )
+
+        metadata["relevance_score"] = round(
+            relevance_score,
+            4,
+        )
+
+        if metadata.get(
+            "source_type"
+        ) == "conversation_file":
+
+            metadata["source_type"] = (
+                "conversation_file"
+            )
+
+        else:
+
+            metadata.setdefault(
+                "source_type",
+                "global_knowledge",
+            )
+
+        scored_documents.append(
+            (
+                document,
+                semantic_score,
+                lexical_score,
+                phrase_score,
+                intent_score,
+                relevance_score,
+            )
+        )
+
+    return scored_documents
+
+
+# ==================================================
+# RETRIEVE + RANK
 # ==================================================
 
 def _retrieve_documents(
     question,
     chat_history=None,
+    chat_id=None,
 ):
     """
-    Retrieve and rank relevant documents.
+    Retrieve from BOTH:
 
-    IMPORTANT:
-    Retrieval scoring uses the CURRENT QUESTION for
-    lexical, phrase, and intent matching.
+    1. Global knowledge base
+    2. Current conversation files
 
-    Conversation history is used only to help semantic
-    retrieval understand follow-up questions.
-
-    This prevents unrelated previous messages from
-    dominating keyword matching.
+    Chat history helps semantic retrieval but does not
+    participate in lexical / phrase / intent scoring.
     """
-
-    vectordb = load_vector_db()
-
-    retriever = vectordb.as_retriever(
-        search_kwargs={
-            "k": MAX_RETRIEVAL_CANDIDATES,
-        }
-    )
 
     history_text = _prepare_history(
         chat_history
@@ -848,6 +971,7 @@ def _retrieve_documents(
     retrieval_query = question
 
     if history_text != "No previous conversation.":
+
         retrieval_query = (
             "Previous conversation:\n"
             f"{history_text}\n\n"
@@ -860,278 +984,87 @@ def _retrieve_documents(
         question,
     )
 
-    logger.info(
-        "Retrieval query prepared."
+    # ----------------------------------------------
+    # Global candidates
+    # ----------------------------------------------
+
+    global_results = _get_global_candidates(
+        retrieval_query
     )
 
-    # ------------------------------------------
-    # Candidate retrieval
-    # ------------------------------------------
+    # ----------------------------------------------
+    # Conversation candidates
+    # ----------------------------------------------
 
-    candidate_documents = (
-        retriever.invoke(
-            retrieval_query
+    conversation_results = (
+        _get_conversation_candidates(
+            chat_id,
+            retrieval_query,
         )
     )
 
-    # ------------------------------------------
-    # Semantic scores
-    # ------------------------------------------
+    # ----------------------------------------------
+    # Combine
+    # ----------------------------------------------
 
-    scored_results = []
+    combined_results = (
+        global_results
+        + conversation_results
+    )
 
-    try:
-        scored_results = (
-            vectordb.similarity_search_with_relevance_scores(
-                retrieval_query,
-                k=MAX_RETRIEVAL_CANDIDATES,
+    # ----------------------------------------------
+    # Deduplicate
+    # ----------------------------------------------
+
+    unique_results = []
+
+    seen = set()
+
+    for document, semantic_score in combined_results:
+
+        metadata = document.metadata or {}
+
+        file_id = metadata.get(
+            "file_id",
+            "",
+        )
+
+        content_key = (
+            file_id,
+            document.page_content.strip(),
+        )
+
+        if content_key in seen:
+            continue
+
+        seen.add(
+            content_key
+        )
+
+        unique_results.append(
+            (
+                document,
+                semantic_score,
             )
         )
-    except Exception as error:
-        logger.warning(
-            "Could not obtain normalized semantic scores: %s",
-            error,
-        )
 
-    scored_documents = []
+    # ----------------------------------------------
+    # Rank
+    # ----------------------------------------------
 
-    # ------------------------------------------
-    # Primary scoring
-    # ------------------------------------------
-
-    if scored_results:
-
-        for document, semantic_score in scored_results:
-
-            page_content = (
-                document.page_content
-            )
-
-            lexical_score = (
-                calculate_lexical_overlap(
-                    question,
-                    page_content,
-                )
-            )
-
-            phrase_score = (
-                calculate_phrase_match(
-                    question,
-                    page_content,
-                )
-            )
-
-            intent_score = (
-                calculate_intent_match(
-                    question,
-                    page_content,
-                )
-            )
-
-            relevance_score = (
-                calculate_combined_relevance(
-                    semantic_score,
-                    lexical_score,
-                    phrase_score,
-                    intent_score,
-                )
-            )
-
-            # Save detailed scores inside metadata.
-            document.metadata[
-                "semantic_score"
-            ] = round(
-                float(
-                    semantic_score
-                ),
-                4,
-            )
-
-            document.metadata[
-                "lexical_score"
-            ] = round(
-                float(
-                    lexical_score
-                ),
-                4,
-            )
-
-            document.metadata[
-                "phrase_score"
-            ] = round(
-                float(
-                    phrase_score
-                ),
-                4,
-            )
-
-            document.metadata[
-                "intent_score"
-            ] = round(
-                float(
-                    intent_score
-                ),
-                4,
-            )
-
-            document.metadata[
-                "relevance_score"
-            ] = round(
-                float(
-                    relevance_score
-                ),
-                4,
-            )
-
-            scored_documents.append(
-                (
-                    document,
-                    float(
-                        semantic_score
-                    ),
-                    float(
-                        lexical_score
-                    ),
-                    float(
-                        phrase_score
-                    ),
-                    float(
-                        intent_score
-                    ),
-                    float(
-                        relevance_score
-                    ),
-                )
-            )
-
-    # ------------------------------------------
-    # Fallback scoring
-    # ------------------------------------------
-
-    if not scored_documents:
-
-        for rank, document in enumerate(
-            candidate_documents
-        ):
-
-            page_content = (
-                document.page_content
-            )
-
-            lexical_score = (
-                calculate_lexical_overlap(
-                    question,
-                    page_content,
-                )
-            )
-
-            phrase_score = (
-                calculate_phrase_match(
-                    question,
-                    page_content,
-                )
-            )
-
-            intent_score = (
-                calculate_intent_match(
-                    question,
-                    page_content,
-                )
-            )
-
-            # Approximate semantic ordering when
-            # normalized scores are unavailable.
-            semantic_score = max(
-                0.0,
-                1.0
-                - (
-                    rank
-                    / max(
-                        len(
-                            candidate_documents
-                        ),
-                        1,
-                    )
-                ),
-            )
-
-            relevance_score = (
-                calculate_combined_relevance(
-                    semantic_score,
-                    lexical_score,
-                    phrase_score,
-                    intent_score,
-                )
-            )
-
-            document.metadata[
-                "semantic_score"
-            ] = round(
-                float(
-                    semantic_score
-                ),
-                4,
-            )
-
-            document.metadata[
-                "lexical_score"
-            ] = round(
-                float(
-                    lexical_score
-                ),
-                4,
-            )
-
-            document.metadata[
-                "phrase_score"
-            ] = round(
-                float(
-                    phrase_score
-                ),
-                4,
-            )
-
-            document.metadata[
-                "intent_score"
-            ] = round(
-                float(
-                    intent_score
-                ),
-                4,
-            )
-
-            document.metadata[
-                "relevance_score"
-            ] = round(
-                float(
-                    relevance_score
-                ),
-                4,
-            )
-
-            scored_documents.append(
-                (
-                    document,
-                    semantic_score,
-                    lexical_score,
-                    phrase_score,
-                    intent_score,
-                    relevance_score,
-                )
-            )
-
-    # ------------------------------------------
-    # Sort by final relevance
-    # ------------------------------------------
+    scored_documents = _score_documents(
+        unique_results,
+        question,
+    )
 
     scored_documents.sort(
         key=lambda item: item[5],
         reverse=True,
     )
 
-    # ------------------------------------------
-    # Log top results
-    # ------------------------------------------
+    # ----------------------------------------------
+    # Log candidates
+    # ----------------------------------------------
 
     for rank, item in enumerate(
         scored_documents[:5],
@@ -1144,13 +1077,17 @@ def _retrieve_documents(
             "Retrieval candidate %d | "
             "semantic=%.4f | lexical=%.4f | "
             "phrase=%.4f | intent=%.4f | "
-            "relevance=%.4f | text=%s",
+            "relevance=%.4f | source=%s | text=%s",
             rank,
             item[1],
             item[2],
             item[3],
             item[4],
             item[5],
+            document.metadata.get(
+                "source_type",
+                "global_knowledge",
+            ),
             document.page_content[
                 :100
             ].replace(
@@ -1159,9 +1096,9 @@ def _retrieve_documents(
             ),
         )
 
-    # ------------------------------------------
-    # Select relevant documents
-    # ------------------------------------------
+    # ----------------------------------------------
+    # Select sources
+    # ----------------------------------------------
 
     selected_documents = []
 
@@ -1176,13 +1113,6 @@ def _retrieve_documents(
             best_relevance,
         ) = scored_documents[0]
 
-        # --------------------------------------
-        # Special protection:
-        # If there is a strong exact phrase or
-        # intent match, trust it even when the
-        # embedding similarity is not perfect.
-        # --------------------------------------
-
         strong_exact_match = (
             best_phrase >= 0.50
             or best_intent >= 1.0
@@ -1193,13 +1123,10 @@ def _retrieve_documents(
             >= MIN_BEST_RELEVANCE
             or strong_exact_match
         ):
+
             selected_documents.append(
                 best_document
             )
-
-            # ----------------------------------
-            # Secondary sources
-            # ----------------------------------
 
             for item in scored_documents[1:]:
 
@@ -1218,9 +1145,6 @@ def _retrieve_documents(
                     relevance_score,
                 ) = item
 
-                # A secondary source must be both
-                # relevant and reasonably close to
-                # the strongest source.
                 if (
                     relevance_score
                     >= MIN_ADDITIONAL_RELEVANCE
@@ -1230,41 +1154,72 @@ def _retrieve_documents(
                         * ADDITIONAL_SOURCE_RATIO
                     )
                 ):
+
                     selected_documents.append(
                         document
                     )
 
-    # ------------------------------------------
-    # Final retrieval log
-    # ------------------------------------------
-
     logger.info(
-        "Retrieved %d candidates; selected %d relevant sources.",
+        "Retrieved %d candidates; selected %d sources.",
         len(scored_documents),
         len(selected_documents),
     )
 
-    if selected_documents:
-
-        for index, document in enumerate(
-            selected_documents,
-            start=1,
-        ):
-
-            logger.info(
-                "Selected source %d: %s",
-                index,
-                document.page_content[
-                    :150
-                ].replace(
-                    "\n",
-                    " ",
-                ),
-            )
-
     return (
         selected_documents,
         history_text,
+    )
+
+
+# ==================================================
+# PROMPT
+# ==================================================
+
+def _build_prompt():
+    """
+    Build the RAG prompt.
+    """
+
+    return ChatPromptTemplate.from_template(
+        """
+You are a helpful customer service assistant.
+
+Answer the current question using ONLY the information
+provided in the knowledge-base context.
+
+The knowledge-base context can contain:
+- Global company knowledge
+- Files uploaded by the user in this conversation
+
+Treat both as factual sources.
+
+You may use the previous conversation to understand
+what the user is referring to.
+
+Do not use previous conversation messages as factual
+sources.
+
+If the answer is not present in the knowledge-base
+context, say exactly:
+
+"I don't know based on the available information."
+
+Do not make up information.
+
+Give the answer clearly and directly.
+
+When the knowledge base provides steps, preserve the
+important steps in a numbered list.
+
+Previous conversation:
+{history}
+
+Knowledge-base context:
+{context}
+
+Current question:
+{question}
+"""
     )
 
 
@@ -1275,6 +1230,7 @@ def _retrieve_documents(
 def _prepare_qa(
     question,
     chat_history=None,
+    chat_id=None,
 ):
     """
     Perform retrieval and prepare the Gemini prompt.
@@ -1285,6 +1241,7 @@ def _prepare_qa(
     ).strip()
 
     if not question:
+
         raise ValueError(
             "Question cannot be empty."
         )
@@ -1295,11 +1252,8 @@ def _prepare_qa(
     ) = _retrieve_documents(
         question,
         chat_history,
+        chat_id,
     )
-
-    # ------------------------------------------
-    # No relevant source
-    # ------------------------------------------
 
     if not selected_documents:
 
@@ -1312,23 +1266,10 @@ def _prepare_qa(
             "has_context": False,
         }
 
-    # ------------------------------------------
-    # Build context
-    # ------------------------------------------
-
     context = "\n\n".join(
         document.page_content
         for document in selected_documents
     )
-
-    logger.info(
-        "Context size: %d characters",
-        len(context),
-    )
-
-    # ------------------------------------------
-    # Prompt
-    # ------------------------------------------
 
     prompt = _build_prompt()
 
@@ -1351,14 +1292,14 @@ def _prepare_qa(
 
 
 # ==================================================
-# RESPONSE CONTENT NORMALIZATION
+# RESPONSE NORMALIZATION
 # ==================================================
 
 def _extract_response_text(
     content,
 ):
     """
-    Normalize Gemini response content into plain text.
+    Normalize Gemini response content.
     """
 
     if content is None:
@@ -1383,6 +1324,7 @@ def _extract_response_text(
                 item,
                 str,
             ):
+
                 text_parts.append(
                     item
                 )
@@ -1393,6 +1335,7 @@ def _extract_response_text(
             ):
 
                 if "text" in item:
+
                     text_parts.append(
                         str(
                             item["text"]
@@ -1403,35 +1346,31 @@ def _extract_response_text(
             text_parts
         )
 
-    return str(content)
+    return str(
+        content
+    )
 
 
 # ==================================================
-# NORMAL QA CHAIN
+# NORMAL QA
 # ==================================================
 
 def get_qa_chain():
     """
-    Create the customer-service RAG
-    question-answering function.
-
-    This function is retained for compatibility
-    with tests and other project modules.
+    Return a compatible non-streaming QA function.
     """
 
     def ask_question(
         question,
         chat_history=None,
+        chat_id=None,
     ):
 
         prepared = _prepare_qa(
             question,
             chat_history,
+            chat_id,
         )
-
-        # --------------------------------------
-        # No relevant information
-        # --------------------------------------
 
         if not prepared[
             "has_context"
@@ -1444,14 +1383,6 @@ def get_qa_chain():
                 ),
                 "source_documents": [],
             }
-
-        # --------------------------------------
-        # Generate response
-        # --------------------------------------
-
-        logger.info(
-            "Generating response with Gemini..."
-        )
 
         response = (
             get_llm().invoke(
@@ -1480,30 +1411,28 @@ def get_qa_chain():
 def get_qa_stream(
     question,
     chat_history=None,
+    chat_id=None,
 ):
     """
     Prepare a RAG question and return:
 
         (stream_generator, source_documents)
 
-    The generator yields Gemini response chunks
-    so Streamlit can display the answer progressively.
+    The generator yields Gemini response chunks.
     """
 
     prepared = _prepare_qa(
         question,
         chat_history,
+        chat_id,
     )
-
-    # ------------------------------------------
-    # No relevant source
-    # ------------------------------------------
 
     if not prepared[
         "has_context"
     ]:
 
         def unknown_generator():
+
             yield (
                 "I don't know based on "
                 "the available information."
@@ -1513,10 +1442,6 @@ def get_qa_stream(
             unknown_generator(),
             [],
         )
-
-    # ------------------------------------------
-    # Gemini streaming
-    # ------------------------------------------
 
     def response_generator():
 
@@ -1565,7 +1490,7 @@ def get_qa_stream(
 
 
 # ==================================================
-# DEBUG / TEST
+# DEBUG
 # ==================================================
 
 if __name__ == "__main__":
@@ -1582,29 +1507,12 @@ if __name__ == "__main__":
         "=" * 60
     )
 
-    # ------------------------------------------
-    # Rebuild vector database
-    # ------------------------------------------
-
     create_vector_db()
-
-    # ------------------------------------------
-    # Test question
-    # ------------------------------------------
 
     test_question = (
         "What should I do if the device "
         "won't turn on?"
     )
-
-    logger.info(
-        "Test question: %s",
-        test_question,
-    )
-
-    # ------------------------------------------
-    # Normal QA test
-    # ------------------------------------------
 
     chain = get_qa_chain()
 
