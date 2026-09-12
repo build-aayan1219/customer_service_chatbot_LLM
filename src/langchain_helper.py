@@ -138,6 +138,20 @@ FILE_OVERVIEW_PATTERNS = [
 
     r"\bshow\s+me\s+what\s+"
     r"is\s+in\s+(?:this|the)\b",
+
+    # Broad attached-code/document questions. These are intentionally
+    # interpreted as overview requests only when the current chat has files.
+    r"\bwhat\s+is\s+(?:this\s+)?code\s+(?:about|related\s+to)\b",
+    r"\bwhat\s+does\s+(?:this\s+)?code\s+do\b",
+    r"\bwhat\s+is\s+(?:this\s+)?code\s+for\b",
+    r"\bwhat\s+project\s+is\s+(?:this\s+)?code\s+(?:for|about)\b",
+    r"\bwhat\s+assignment\s+is\s+(?:this\s+)?code\s+(?:for|about)\b",
+    r"\bwhat\s+is\s+the\s+purpose\s+of\s+(?:this\s+)?code\b",
+    r"\bexplain\s+(?:this\s+)?code\b",
+    r"\btell\s+me\s+about\s+(?:this\s+)?code\b",
+    r"\bwhat\s+is\s+this\s+about\b",
+    r"\bwhat\s+is\s+included\s+here\b",
+    r"\bwhat\s+do(?:es)?\s+this\s+file\s+have\b",
 ]
 
 
