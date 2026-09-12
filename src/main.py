@@ -51,7 +51,9 @@ st.markdown(
 #MainMenu {visibility:hidden;}
 footer {visibility:hidden;}
 header {visibility:hidden;}
-.block-container {padding-top:1.25rem; padding-bottom:7rem; max-width:1180px;}
+.block-container {padding-top:1.15rem; padding-bottom:7rem; max-width:1180px;}
+section[data-testid="stSidebar"] {min-width:300px; max-width:340px;}
+section[data-testid="stSidebar"] .stButton > button {white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
 .title {font-size:2rem;font-weight:750;letter-spacing:-.03em;margin:0;}
 .subtitle {color:#777;margin-top:2px;margin-bottom:18px;}
 .welcome {max-width:760px;margin:70px auto 24px;padding:44px 28px;text-align:center;border:1px solid rgba(128,128,128,.18);border-radius:24px;background:rgba(128,128,128,.045);}
@@ -62,6 +64,9 @@ header {visibility:hidden;}
 .small-muted {font-size:12px;color:#777;}
 .stat-card {padding:18px;border:1px solid rgba(128,128,128,.18);border-radius:16px;background:rgba(128,128,128,.04);}
 .sidebar-brand {font-size:19px;font-weight:750;margin-bottom:12px;}
+.chat-context {padding:9px 13px;border:1px solid rgba(128,128,128,.16);border-radius:12px;background:rgba(128,128,128,.035);margin:0 0 14px;}
+.chat-context strong {font-size:13px;}
+.chat-context span {font-size:12px;color:#777;}
 </style>
 """,
     unsafe_allow_html=True,
@@ -374,6 +379,12 @@ if files:
                     remove_conversation_file(current_chat_id, file_id)
                     st.rerun()
 
+if files:
+    st.markdown(
+        f'<div class="chat-context"><strong>📎 {len(files)} file{'s' if len(files) != 1 else ""} attached</strong><br><span>Ask about the files directly — for example: “What is the code related to?”</span></div>',
+        unsafe_allow_html=True,
+    )
+
 if not current_chat["messages"]:
     st.markdown(
         '<div class="welcome"><div class="welcome-icon">💬</div><div class="welcome-title">How can I help you?</div><div class="welcome-text">Ask about available information or attach a PDF, DOCX, TXT or CSV and ask questions about it.</div></div>',
@@ -414,21 +425,21 @@ for index, message in enumerate(current_chat.get("messages", [])):
         if role == "user":
             a, b = st.columns([1, 1])
             with a:
-                if st.button("Edit", key=f"edit_{index}"):
+                if st.button("✏️ Edit", key=f"edit_{index}", use_container_width=True):
                     st.session_state.editing_index = index
                     st.rerun()
             with b:
-                if st.button("Copy", key=f"copy_user_{index}"):
+                if st.button("📋 Copy", key=f"copy_user_{index}", use_container_width=True):
                     st.session_state.copy_text = content
                     st.toast("Message ready to copy")
         else:
-            a, b, c, d, e = st.columns([1, 1, 1, 1, 5])
+            a, b, c, d, e = st.columns([1.15, 1.85, 0.8, 0.8, 4.4])
             with a:
-                if st.button("Copy", key=f"copy_ai_{index}"):
+                if st.button("📋 Copy", key=f"copy_ai_{index}", use_container_width=True):
                     st.session_state.copy_text = content
-                    st.toast("Copied text is available in your clipboard helper")
+                    st.toast("Response copied to the copy panel")
             with b:
-                if st.button("Regenerate", key=f"regen_{index}"):
+                if st.button("🔄 Regenerate", key=f"regen_{index}", use_container_width=True):
                     if index > 0 and current_chat["messages"][index - 1].get("role") == "user":
                         remove_message(current_chat, index)
                         st.session_state.pending_regenerate = current_chat["messages"][index - 1].get("content", "")
