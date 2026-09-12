@@ -43,15 +43,25 @@ st.set_page_config(
 
 
 # ============================================================
-# GLOBAL CSS
+# GLOBAL STYLE
 # ============================================================
 
 st.markdown(
     """
 <style>
 
+:root {
+    --accent: #ff6b6b;
+    --accent-hover: #ef5b5b;
+    --text: #202124;
+    --muted: #777777;
+    --border: #e7e7e7;
+    --soft: #f7f7f7;
+}
+
+
 /* =========================================================
-   ROOT
+   APPLICATION
    ========================================================= */
 
 .stApp {
@@ -60,8 +70,8 @@ st.markdown(
 
 .block-container {
     max-width: 1120px;
-    padding-top: 0.25rem;
-    padding-bottom: 105px;
+    padding-top: 0.45rem;
+    padding-bottom: 110px;
 }
 
 
@@ -71,19 +81,22 @@ st.markdown(
 
 [data-testid="stSidebar"] {
     background: #fbfbfb;
-    border-right: 1px solid #e5e5e5;
+    border-right: 1px solid var(--border);
 }
 
 [data-testid="stSidebarContent"] {
-    padding: 18px 10px 14px 10px;
+    padding: 15px 10px 10px 10px;
+}
+
+[data-testid="stSidebarUserContent"] {
+    padding-bottom: 85px !important;
 }
 
 [data-testid="stSidebar"] .stButton > button {
-    min-height: 39px;
+    min-height: 38px;
     border-radius: 9px;
-    border: 1px solid transparent;
     font-size: 13px;
-    font-weight: 500;
+    border: 1px solid transparent;
 }
 
 [data-testid="stSidebar"] input {
@@ -91,15 +104,18 @@ st.markdown(
     font-size: 13px;
 }
 
+
+/* Brand */
+
 .sidebar-brand {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 5px 3px 0 3px;
+    padding: 3px 3px 0 3px;
 }
 
 .sidebar-brand-logo {
-    font-size: 23px;
+    font-size: 24px;
     line-height: 1;
     color: #161616;
 }
@@ -111,14 +127,13 @@ st.markdown(
 }
 
 .sidebar-caption {
-    margin: 7px 0 16px 31px;
-    color: #8b8b8b;
+    margin: 7px 0 14px 31px;
+    color: #8a8a8a;
     font-size: 11px;
 }
 
-.sidebar-search-row {
-    margin-bottom: 7px;
-}
+
+/* Sections */
 
 .sidebar-section {
     margin: 18px 3px 7px 3px;
@@ -130,13 +145,54 @@ st.markdown(
 }
 
 .recent-empty {
-    padding: 12px 4px;
+    padding: 10px 4px;
     color: #999999;
     font-size: 12px;
 }
 
-.sidebar-bottom-space {
-    height: 55px;
+
+/* Chat rows */
+
+.sidebar-chat-row {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    margin-bottom: 5px;
+}
+
+.sidebar-chat-button {
+    flex: 1;
+    min-width: 0;
+}
+
+.sidebar-menu-button {
+    width: 42px;
+}
+
+.sidebar-menu-button .stButton > button {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    font-size: 17px !important;
+}
+
+
+/* Fixed account menu */
+
+[data-testid="stSidebar"] [class*="st-key-account_menu"] {
+    position: fixed !important;
+    left: 10px !important;
+    bottom: 10px !important;
+    width: 260px !important;
+    z-index: 9999 !important;
+    background: #fbfbfb;
+    padding-top: 7px;
+    border-top: 1px solid var(--border);
+}
+
+[data-testid="stSidebar"] [class*="st-key-account_menu"] button {
+    text-align: left !important;
+    justify-content: flex-start !important;
+    font-weight: 550 !important;
 }
 
 
@@ -148,7 +204,8 @@ st.markdown(
     display: flex;
     align-items: center;
     min-height: 34px;
-    padding: 2px 0 3px 0;
+    padding: 3px 0 5px;
+    border-bottom: 1px solid #eeeeee;
 }
 
 .chat-topbar-title {
@@ -158,38 +215,37 @@ st.markdown(
 }
 
 .chat-topbar-subtitle {
-    font-size: 11px;
-    color: #9a9a9a;
     margin-left: 9px;
+    font-size: 11px;
+    color: #999999;
 }
 
 
 /* =========================================================
-   HOME
+   HOME SCREEN
    ========================================================= */
 
 .home-wrapper {
-    max-width: 820px;
+    max-width: 850px;
     margin: 0 auto;
     text-align: center;
-    padding-top: 58px;
-    padding-bottom: 35px;
+    padding: 62px 20px 45px;
 }
 
 .home-logo {
-    font-size: 67px;
+    font-size: 68px;
     line-height: 1;
-    margin-bottom: 22px;
+    margin-bottom: 20px;
     color: #22252b;
 }
 
 .home-title {
-    font-size: 39px;
+    font-size: 38px;
     font-weight: 760;
-    letter-spacing: -1.25px;
+    letter-spacing: -1px;
     line-height: 1.15;
     color: #202124;
-    margin-bottom: 13px;
+    margin-bottom: 12px;
 }
 
 .home-subtitle {
@@ -197,24 +253,21 @@ st.markdown(
     font-weight: 500;
     line-height: 1.55;
     color: #555555;
-    margin: 0 auto;
-    max-width: 720px;
 }
 
 .home-greeting {
-    margin-top: 31px;
-    font-size: 29px;
-    font-weight: 720;
-    letter-spacing: -0.5px;
+    margin-top: 32px;
+    font-size: 30px;
+    font-weight: 730;
     color: #202124;
 }
 
 .home-message {
-    margin: 9px auto 0 auto;
-    max-width: 700px;
-    font-size: 15px;
+    max-width: 720px;
+    margin: 10px auto 0;
+    font-size: 16px;
     line-height: 1.65;
-    color: #777777;
+    color: #707070;
 }
 
 
@@ -232,22 +285,8 @@ st.markdown(
     line-height: 1.7;
 }
 
-[data-testid="stChatInput"] {
-    border-top: none !important;
-}
-
 [data-testid="stChatInput"] textarea {
     font-size: 14px !important;
-}
-
-
-/* =========================================================
-   SOURCES
-   ========================================================= */
-
-.source-heading {
-    font-size: 12px;
-    font-weight: 650;
 }
 
 
@@ -258,7 +297,7 @@ st.markdown(
 .attachment-heading {
     font-size: 12px;
     font-weight: 650;
-    margin-bottom: 5px;
+    margin-bottom: 6px;
 }
 
 
@@ -268,10 +307,9 @@ st.markdown(
 
 .app-footer {
     text-align: center;
-    color: #a4a4a4;
+    color: #aaaaaa;
     font-size: 10px;
-    margin-top: 14px;
-    padding-bottom: 8px;
+    margin-top: 12px;
 }
 
 
@@ -281,17 +319,8 @@ st.markdown(
 
 @media (max-width: 800px) {
 
-    .block-container {
-        padding-left: 14px;
-        padding-right: 14px;
-    }
-
     .home-wrapper {
-        padding-top: 35px;
-    }
-
-    .home-logo {
-        font-size: 52px;
+        padding-top: 40px;
     }
 
     .home-title {
@@ -303,12 +332,13 @@ st.markdown(
     }
 
     .home-greeting {
-        font-size: 24px;
+        font-size: 25px;
     }
 
     .home-message {
         font-size: 14px;
     }
+
 }
 
 </style>
@@ -336,10 +366,6 @@ if "current_chat_id" not in st.session_state:
         save_chat(new_chat)
 
         st.session_state.current_chat_id = new_chat["id"]
-
-
-if "search_open" not in st.session_state:
-    st.session_state.search_open = False
 
 
 if "search_text" not in st.session_state:
@@ -371,10 +397,10 @@ if "greeting" not in st.session_state:
     st.session_state.greeting = random.choice(
         [
             "Hey there 👋",
-            "Hey Aayan 👋",
-            "Welcome back, Aayan 👋",
-            "Hey Aayan, ready when you are 👋",
-            "Good to see you, Aayan 👋",
+            "Welcome back 👋",
+            "Hey, ready when you are 👋",
+            "Good to see you 👋",
+            "Hey there, what can we figure out today? 👋",
         ]
     )
 
@@ -387,17 +413,20 @@ def get_current_chat():
 
     chats = load_chats()
 
-    current_chat = find_chat(
+    current = find_chat(
         chats,
         st.session_state.current_chat_id,
     )
 
-    if current_chat is not None:
-        return current_chat
+    if current is not None:
+
+        return current
 
     if chats:
 
-        st.session_state.current_chat_id = chats[0]["id"]
+        st.session_state.current_chat_id = (
+            chats[0]["id"]
+        )
 
         return chats[0]
 
@@ -405,9 +434,22 @@ def get_current_chat():
 
     save_chat(new_chat)
 
-    st.session_state.current_chat_id = new_chat["id"]
+    st.session_state.current_chat_id = (
+        new_chat["id"]
+    )
 
     return new_chat
+
+
+def reset_transient_state():
+
+    st.session_state.pending_question = None
+
+    st.session_state.editing_index = None
+
+    st.session_state.attachment_signature = ""
+
+    st.session_state.show_analytics = False
 
 
 def create_new_chat():
@@ -416,60 +458,59 @@ def create_new_chat():
 
     save_chat(new_chat)
 
-    st.session_state.current_chat_id = new_chat["id"]
-
-    st.session_state.pending_question = None
-
-    st.session_state.editing_index = None
-
-    st.session_state.attachment_signature = ""
-
-    st.session_state.search_open = False
+    st.session_state.current_chat_id = (
+        new_chat["id"]
+    )
 
     st.session_state.search_text = ""
 
-    st.session_state.show_analytics = False
+    reset_transient_state()
 
     st.rerun()
 
 
-def truncate_chat(chat, message_index):
-
-    if message_index < 0:
-        return
+def truncate_chat(
+    chat,
+    message_index,
+):
 
     messages = chat.get(
         "messages",
         [],
     )
 
-    chat["messages"] = messages[:message_index]
+    chat["messages"] = messages[
+        :message_index
+    ]
 
     save_chat(chat)
 
 
 def make_chat_title(question):
 
-    clean_question = " ".join(
-        str(question).strip().split()
+    clean = " ".join(
+        str(question)
+        .strip()
+        .split()
     )
 
-    if not clean_question:
+    if not clean:
+
         return "New Chat"
 
-    if len(clean_question) > 42:
+    if len(clean) > 42:
 
-        return (
-            clean_question[:39]
-            + "..."
-        )
+        return clean[:39] + "..."
 
-    return clean_question
+    return clean
 
 
-def ensure_chat_title(chat, question):
+def ensure_chat_title(
+    chat,
+    question,
+):
 
-    current_title = str(
+    title = str(
         chat.get(
             "title",
             "",
@@ -477,8 +518,8 @@ def ensure_chat_title(chat, question):
     ).strip()
 
     if (
-        not current_title
-        or current_title.lower() == "new chat"
+        not title
+        or title.lower() == "new chat"
     ):
 
         chat["title"] = make_chat_title(
@@ -586,15 +627,19 @@ def source_group(source):
     )
 
 
-def render_sources(sources):
+def render_sources(
+    sources,
+):
 
     if not sources:
+
         return
 
     if not st.session_state.show_sources:
+
         return
 
-    grouped_sources = defaultdict(list)
+    grouped = defaultdict(list)
 
     for source in sources:
 
@@ -607,7 +652,7 @@ def render_sources(sources):
             source
         )
 
-        grouped_sources[
+        grouped[
             (
                 kind,
                 name,
@@ -619,48 +664,44 @@ def render_sources(sources):
             )
         )
 
-    total_groups = len(
-        grouped_sources
-    )
+    group_count = len(grouped)
 
-    source_word = (
+    source_label = (
         "source"
-        if total_groups == 1
+        if group_count == 1
         else "sources"
     )
 
     with st.expander(
-        f"Sources · {total_groups} {source_word}",
+        f"Sources · {group_count} {source_label}",
         expanded=False,
     ):
 
         for (
             kind,
             name,
-        ), items in grouped_sources.items():
+        ), items in grouped.items():
 
-            if kind == "file":
+            icon = (
+                "📄"
+                if kind == "file"
+                else "📚"
+            )
 
-                st.markdown(
-                    f"📄 **{name}**"
-                )
+            st.markdown(
+                f"{icon} **{name}**"
+            )
 
-            else:
+            item_count = len(items)
 
-                st.markdown(
-                    "📚 **Knowledge Base**"
-                )
-
-            count = len(items)
-
-            section_word = (
+            section_label = (
                 "section"
-                if count == 1
+                if item_count == 1
                 else "sections"
             )
 
             st.caption(
-                f"{count} relevant {section_word}"
+                f"{item_count} relevant {section_label}"
             )
 
             for number, (
@@ -697,7 +738,9 @@ def render_sources(sources):
 # EXPORT
 # ============================================================
 
-def export_markdown(chat):
+def export_markdown(
+    chat,
+):
 
     title = str(
         chat.get(
@@ -748,13 +791,16 @@ def export_markdown(chat):
 # QUESTION PROCESSING
 # ============================================================
 
-def process_question(question):
+def process_question(
+    question,
+):
 
     question = str(
         question or ""
     ).strip()
 
     if not question:
+
         return
 
     active_chat = get_current_chat()
@@ -781,21 +827,19 @@ def process_question(question):
 
     try:
 
-        result = get_qa_stream(
+        stream, sources = get_qa_stream(
             question,
             chat_history=history,
             chat_id=active_chat["id"],
         )
 
-        stream, sources = result
-
         with st.chat_message(
             "assistant"
         ):
 
-            answer_placeholder = st.empty()
+            placeholder = st.empty()
 
-            answer_parts = []
+            parts = []
 
             for chunk in stream:
 
@@ -805,18 +849,18 @@ def process_question(question):
 
                 if text:
 
-                    answer_parts.append(
+                    parts.append(
                         text
                     )
 
-                    answer_placeholder.markdown(
+                    placeholder.markdown(
                         "".join(
-                            answer_parts
+                            parts
                         )
                     )
 
         answer = "".join(
-            answer_parts
+            parts
         ).strip()
 
         elapsed = (
@@ -895,11 +939,14 @@ chat = get_current_chat()
 with st.sidebar:
 
     # --------------------------------------------------------
-    # BRAND + SEARCH BUTTON
+    # BRAND
     # --------------------------------------------------------
 
-    brand_col, search_col = st.columns(
-        [8, 1.5]
+    brand_col, search_icon_col = st.columns(
+        [
+            8.5,
+            1.5,
+        ]
     )
 
     with brand_col:
@@ -908,29 +955,29 @@ with st.sidebar:
             """
             <div class="sidebar-brand">
                 <span class="sidebar-brand-logo">✦</span>
-                <span class="sidebar-brand-name">AI Support</span>
+                <span class="sidebar-brand-name">
+                    AI Support
+                </span>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-    with search_col:
+    with search_icon_col:
 
-        if st.button(
-            "⌕",
-            key="sidebar_search_button",
-            help="Search conversations",
-        ):
-
-            st.session_state.search_open = (
-                not st.session_state.search_open
-            )
-
-            if not st.session_state.search_open:
-
-                st.session_state.search_text = ""
-
-            st.rerun()
+        st.markdown(
+            """
+            <div style="
+                font-size:18px;
+                text-align:center;
+                padding-top:3px;
+                color:#555;
+            ">
+                ⌕
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
 
     st.markdown(
@@ -944,20 +991,20 @@ with st.sidebar:
 
 
     # --------------------------------------------------------
-    # SEARCH ONLY WHEN OPEN
+    # SEARCH
     # --------------------------------------------------------
 
-    if st.session_state.search_open:
+    search_value = st.text_input(
+        "Search conversations",
+        value=st.session_state.search_text,
+        placeholder="Search chats...",
+        label_visibility="collapsed",
+        key="sidebar_search",
+    )
 
-        search_value = st.text_input(
-            "Search conversations",
-            value=st.session_state.search_text,
-            placeholder="Search chats...",
-            label_visibility="collapsed",
-            key="conversation_search",
-        )
-
-        st.session_state.search_text = search_value
+    st.session_state.search_text = (
+        search_value
+    )
 
 
     # --------------------------------------------------------
@@ -968,7 +1015,7 @@ with st.sidebar:
         "＋  New chat",
         type="primary",
         use_container_width=True,
-        key="sidebar_new_chat",
+        key="new_chat_sidebar",
     ):
 
         create_new_chat()
@@ -1003,15 +1050,10 @@ with st.sidebar:
         visible_chats = all_chats
 
 
-    # Remove empty default chats except current one.
     cleaned_chats = []
 
-    for item in visible_chats:
 
-        messages = item.get(
-            "messages",
-            [],
-        )
+    for item in visible_chats:
 
         title = str(
             item.get(
@@ -1020,25 +1062,32 @@ with st.sidebar:
             )
         ).strip()
 
+        if not title:
+
+            title = "New Chat"
+
+
         if (
-            not messages
-            and title.lower() == "new chat"
+            not item.get(
+                "messages"
+            )
+            and title.lower()
+            == "new chat"
             and item["id"]
             != st.session_state.current_chat_id
         ):
 
             continue
 
+
         cleaned_chats.append(
             item
         )
 
 
-    visible_chats = cleaned_chats
-
-
-    # Show newest/relevant conversations first.
-    visible_chats = visible_chats[:9]
+    visible_chats = cleaned_chats[
+        :12
+    ]
 
 
     if not visible_chats:
@@ -1053,28 +1102,35 @@ with st.sidebar:
         )
 
 
+    # --------------------------------------------------------
+    # CHAT ROWS
+    # --------------------------------------------------------
+
     for item in visible_chats:
 
         item_id = str(
             item["id"]
         )
 
-        title = str(
+        raw_title = str(
             item.get(
                 "title",
                 "New Chat",
             )
         ).strip()
 
-        if not title:
+        if not raw_title:
 
-            title = "New Chat"
+            raw_title = "New Chat"
 
 
-        if len(title) > 34:
+        display_title = raw_title
 
-            title = (
-                title[:31]
+
+        if len(display_title) > 34:
+
+            display_title = (
+                display_title[:31]
                 + "..."
             )
 
@@ -1086,197 +1142,294 @@ with st.sidebar:
             )
         ):
 
-            button_text = (
+            display_title = (
                 "● "
-                + title
+                + display_title
             )
 
-        else:
 
-            button_text = title
+        chat_column, menu_column = st.columns(
+            [
+                8.7,
+                1.3,
+            ],
+            gap="small",
+        )
 
 
-        if st.button(
-            button_text,
-            use_container_width=True,
-            key="recent_chat_" + item_id,
-        ):
+        # ----------------------------------------------------
+        # OPEN CHAT
+        # ----------------------------------------------------
 
-            st.session_state.current_chat_id = (
-                item_id
-            )
+        with chat_column:
 
-            st.session_state.pending_question = None
+            if st.button(
+                display_title,
+                use_container_width=True,
+                key=(
+                    "chat_open_"
+                    + item_id
+                ),
+            ):
 
-            st.session_state.editing_index = None
+                st.session_state.current_chat_id = (
+                    item_id
+                )
 
-            st.session_state.attachment_signature = ""
+                reset_transient_state()
 
-            st.session_state.show_analytics = False
+                st.rerun()
 
-            st.rerun()
+
+        # ----------------------------------------------------
+        # CHAT THREE DOT MENU
+        # ----------------------------------------------------
+
+        with menu_column:
+
+            if hasattr(
+                st,
+                "popover",
+            ):
+
+                chat_menu = st.popover(
+                    "⋮",
+                    use_container_width=True,
+                    key=(
+                        "chat_menu_"
+                        + item_id
+                    ),
+                )
+
+                with chat_menu:
+
+                    st.markdown(
+                        f"**{raw_title}**"
+                    )
+
+
+                    # ----------------------------------------
+                    # RENAME
+                    # ----------------------------------------
+
+                    new_title = st.text_input(
+                        "Rename",
+                        value=raw_title,
+                        key=(
+                            "rename_input_"
+                            + item_id
+                        ),
+                        label_visibility="collapsed",
+                    )
+
+
+                    if st.button(
+                        "Rename",
+                        use_container_width=True,
+                        key=(
+                            "rename_btn_"
+                            + item_id
+                        ),
+                    ):
+
+                        clean_title = (
+                            new_title.strip()
+                        )
+
+                        if clean_title:
+
+                            rename_chat(
+                                item,
+                                clean_title,
+                            )
+
+                            st.rerun()
+
+
+                    # ----------------------------------------
+                    # EXPORT
+                    # ----------------------------------------
+
+                    st.download_button(
+                        "Export",
+                        data=export_markdown(
+                            item
+                        ),
+                        file_name=(
+                            "conversation.md"
+                        ),
+                        mime="text/markdown",
+                        use_container_width=True,
+                        key=(
+                            "export_btn_"
+                            + item_id
+                        ),
+                    )
+
+
+                    # ----------------------------------------
+                    # DELETE
+                    # ----------------------------------------
+
+                    if st.button(
+                        "Delete",
+                        use_container_width=True,
+                        key=(
+                            "delete_btn_"
+                            + item_id
+                        ),
+                    ):
+
+                        deleted_id = item_id
+
+                        remaining = delete_chat(
+                            load_chats(),
+                            deleted_id,
+                        )
+
+                        delete_all_conversation_files(
+                            [
+                                deleted_id
+                            ]
+                        )
+
+
+                        if remaining:
+
+                            st.session_state.current_chat_id = (
+                                remaining[0]["id"]
+                            )
+
+                        else:
+
+                            replacement = create_chat()
+
+                            save_chat(
+                                replacement
+                            )
+
+                            st.session_state.current_chat_id = (
+                                replacement["id"]
+                            )
+
+
+                        reset_transient_state()
+
+                        st.rerun()
+
+
+            else:
+
+                st.button(
+                    "⋮",
+                    key=(
+                        "chat_menu_fallback_"
+                        + item_id
+                    ),
+                    help="Chat options",
+                )
 
 
     # --------------------------------------------------------
-    # BOTTOM USER MENU
+    # FIXED ACCOUNT MENU
     # --------------------------------------------------------
-
-    st.markdown(
-        """
-        <div class="sidebar-bottom-space"></div>
-        """,
-        unsafe_allow_html=True,
-    )
-
 
     if hasattr(
         st,
         "popover",
     ):
 
-        user_menu = st.popover(
+        account_menu = st.popover(
             "◉  Aayan Shaikh",
             use_container_width=True,
-        )
-
-    else:
-
-        user_menu = st.expander(
-            "◉  Aayan Shaikh",
-            expanded=False,
+            key="account_menu",
         )
 
 
-    with user_menu:
+        with account_menu:
 
-        st.markdown(
-            "### Settings"
-        )
-
-
-        st.session_state.show_sources = st.checkbox(
-            "Show sources",
-            value=st.session_state.show_sources,
-            key="settings_show_sources",
-        )
-
-
-        st.divider()
-
-
-        st.markdown(
-            "**Conversation**"
-        )
-
-
-        current_title = str(
-            chat.get(
-                "title",
-                "New Chat",
+            st.markdown(
+                "### Settings"
             )
-        )
 
 
-        edited_title = st.text_input(
-            "Conversation title",
-            value=current_title,
-            key="conversation_title_input",
-        )
+            # --------------------------------------------
+            # SOURCE SETTING
+            # --------------------------------------------
 
-
-        if st.button(
-            "Rename",
-            use_container_width=True,
-            key="rename_conversation",
-        ):
-
-            clean_title = edited_title.strip()
-
-            if clean_title:
-
-                rename_chat(
-                    chat,
-                    clean_title,
+            st.session_state.show_sources = (
+                st.checkbox(
+                    "Show sources",
+                    value=st.session_state.show_sources,
+                    key="account_show_sources",
                 )
+            )
+
+
+            st.divider()
+
+
+            # --------------------------------------------
+            # ANALYTICS
+            # --------------------------------------------
+
+            if st.button(
+                "Analytics",
+                use_container_width=True,
+                key="account_analytics",
+            ):
+
+                st.session_state.show_analytics = True
 
                 st.rerun()
 
 
-        st.download_button(
-            "Export conversation",
-            data=export_markdown(
-                chat
-            ),
-            file_name="conversation.md",
-            mime="text/markdown",
-            use_container_width=True,
-            key="export_conversation",
-        )
+            # --------------------------------------------
+            # CLEAR CURRENT CHAT
+            # --------------------------------------------
 
+            if st.button(
+                "Clear current chat",
+                use_container_width=True,
+                key="account_clear",
+            ):
 
-        if st.button(
-            "Analytics",
-            use_container_width=True,
-            key="open_analytics",
-        ):
+                chat["messages"] = []
 
-            st.session_state.show_analytics = True
+                chat["title"] = "New Chat"
 
-            st.rerun()
-
-
-        st.divider()
-
-
-        if st.button(
-            "Clear current chat",
-            use_container_width=True,
-            key="clear_current_chat",
-        ):
-
-            chat["messages"] = []
-
-            chat["title"] = "New Chat"
-
-            save_chat(
-                chat
-            )
-
-            st.session_state.pending_question = None
-
-            st.session_state.editing_index = None
-
-            st.session_state.attachment_signature = ""
-
-            st.rerun()
-
-
-        if st.button(
-            "Delete conversation",
-            use_container_width=True,
-            key="delete_current_chat",
-        ):
-
-            deleted_id = chat["id"]
-
-            remaining = delete_chat(
-                load_chats(),
-                deleted_id,
-            )
-
-            delete_all_conversation_files(
-                [
-                    deleted_id
-                ]
-            )
-
-            if remaining:
-
-                st.session_state.current_chat_id = (
-                    remaining[0]["id"]
+                save_chat(
+                    chat
                 )
 
-            else:
+                reset_transient_state()
+
+                st.rerun()
+
+
+            # --------------------------------------------
+            # DELETE ALL
+            # --------------------------------------------
+
+            if st.button(
+                "Delete all conversations",
+                use_container_width=True,
+                key="account_delete_all",
+            ):
+
+                chat_ids = [
+                    item["id"]
+                    for item in load_chats()
+                ]
+
+
+                delete_all_chats()
+
+
+                delete_all_conversation_files(
+                    chat_ids
+                )
+
 
                 replacement = create_chat()
 
@@ -1284,65 +1437,40 @@ with st.sidebar:
                     replacement
                 )
 
+
                 st.session_state.current_chat_id = (
                     replacement["id"]
                 )
 
-            st.session_state.pending_question = None
 
-            st.session_state.editing_index = None
+                reset_transient_state()
 
-            st.session_state.attachment_signature = ""
+                st.rerun()
 
-            st.rerun()
 
+            st.divider()
+
+
+            st.caption(
+                "AI Customer Service Assistant"
+            )
+
+            st.caption(
+                "Gemini · RAG · Document Q&A"
+            )
+
+
+    else:
 
         if st.button(
-            "Delete all conversations",
+            "◉  Aayan Shaikh",
             use_container_width=True,
-            key="delete_all_conversations",
+            key="account_menu_fallback",
         ):
 
-            chat_ids = [
-                item["id"]
-                for item in load_chats()
-            ]
-
-            delete_all_chats()
-
-            delete_all_conversation_files(
-                chat_ids
+            st.info(
+                "Settings are available in newer Streamlit versions."
             )
-
-            replacement = create_chat()
-
-            save_chat(
-                replacement
-            )
-
-            st.session_state.current_chat_id = (
-                replacement["id"]
-            )
-
-            st.session_state.pending_question = None
-
-            st.session_state.editing_index = None
-
-            st.session_state.attachment_signature = ""
-
-            st.rerun()
-
-
-        st.divider()
-
-
-        st.caption(
-            "AI Customer Service Assistant"
-        )
-
-        st.caption(
-            "Gemini · RAG · Document Q&A"
-        )
 
 
 # ============================================================
@@ -1357,22 +1485,26 @@ if st.session_state.show_analytics:
 
         render_analytics()
 
+
         if st.button(
             "← Back to conversation",
-            key="analytics_back_button",
+            key="analytics_back",
         ):
 
             st.session_state.show_analytics = False
 
             st.rerun()
 
+
         st.stop()
+
 
     except Exception as error:
 
         st.error(
             "Analytics could not be loaded."
         )
+
 
         with st.expander(
             "Technical details"
@@ -1382,14 +1514,16 @@ if st.session_state.show_analytics:
                 str(error)
             )
 
+
         if st.button(
             "← Back to conversation",
-            key="analytics_error_back_button",
+            key="analytics_error_back",
         ):
 
             st.session_state.show_analytics = False
 
             st.rerun()
+
 
         st.stop()
 
@@ -1408,12 +1542,21 @@ has_messages = bool(
 
 if has_messages:
 
+    chat_title = str(
+        chat.get(
+            "title",
+            "Conversation",
+        )
+    )
+
+
     st.markdown(
         f"""
         <div class="chat-topbar">
             <span class="chat-topbar-title">
-                {chat.get("title", "Conversation")}
+                {chat_title}
             </span>
+
             <span class="chat-topbar-subtitle">
                 AI Customer Service Assistant
             </span>
@@ -1469,10 +1612,12 @@ if attached_files:
             or "Attached file"
         )
 
+
         size_display = record.get(
             "size_display",
             "",
         )
+
 
         chunk_count = record.get(
             "chunk_count",
@@ -1501,6 +1646,7 @@ if attached_files:
             file_id = record.get(
                 "id"
             )
+
 
             filename = (
                 record.get(
@@ -1536,7 +1682,7 @@ if attached_files:
                 if st.button(
                     "×",
                     key=(
-                        "remove_attachment_"
+                        "remove_file_"
                         + str(file_id)
                     ),
                     help="Remove attachment",
@@ -1548,6 +1694,7 @@ if attached_files:
                             file_id,
                         )
                     )
+
 
                     if removed:
 
@@ -1562,27 +1709,38 @@ if attached_files:
 
 if not has_messages:
 
+    greeting = (
+        st.session_state.greeting
+    )
+
+
     st.markdown(
-        """
+        f"""
         <div class="home-wrapper">
-            <div class="home-logo">✦</div>
+
+            <div class="home-logo">
+                ✦
+            </div>
+
             <div class="home-title">
                 🤖 AI Customer Service Assistant
             </div>
+
             <div class="home-subtitle">
                 Ask questions and get reliable answers
                 from our knowledge base.
             </div>
+
             <div class="home-greeting">
-                """
-        + st.session_state.greeting
-        + """
+                {greeting}
             </div>
+
             <div class="home-message">
-                I'm ready whenever you are. Ask me something,
-                describe a customer issue, or attach a document
-                and ask me about it.
+                I'm ready whenever you are.
+                Ask me something, describe a customer issue,
+                or attach a document and ask me about it.
             </div>
+
         </div>
         """,
         unsafe_allow_html=True,
@@ -1604,6 +1762,7 @@ for index, message in enumerate(
         "role",
         "assistant",
     )
+
 
     content = str(
         message.get(
@@ -1662,6 +1821,7 @@ for index, message in enumerate(
                         edited_text.strip()
                     )
 
+
                     if clean_text:
 
                         truncate_chat(
@@ -1669,13 +1829,19 @@ for index, message in enumerate(
                             index,
                         )
 
-                        st.session_state.editing_index = None
+
+                        st.session_state.editing_index = (
+                            None
+                        )
+
 
                         st.session_state.pending_question = (
                             clean_text
                         )
 
+
                         st.rerun()
+
 
                     else:
 
@@ -1695,7 +1861,9 @@ for index, message in enumerate(
                     ),
                 ):
 
-                    st.session_state.editing_index = None
+                    st.session_state.editing_index = (
+                        None
+                    )
 
                     st.rerun()
 
@@ -1737,12 +1905,14 @@ for index, message in enumerate(
             )
 
 
+            # Like
+
             with action_columns[0]:
 
                 if st.button(
                     "👍",
                     key=(
-                        "message_like_"
+                        "like_"
                         + str(index)
                     ),
                     help="Helpful",
@@ -1757,12 +1927,14 @@ for index, message in enumerate(
                     st.rerun()
 
 
+            # Dislike
+
             with action_columns[1]:
 
                 if st.button(
                     "👎",
                     key=(
-                        "message_dislike_"
+                        "dislike_"
                         + str(index)
                     ),
                     help="Not helpful",
@@ -1777,12 +1949,14 @@ for index, message in enumerate(
                     st.rerun()
 
 
+            # Regenerate
+
             with action_columns[2]:
 
                 if st.button(
                     "↻",
                     key=(
-                        "message_regenerate_"
+                        "regen_"
                         + str(index)
                     ),
                     help="Regenerate response",
@@ -1798,6 +1972,7 @@ for index, message in enumerate(
                             ]
                         )
 
+
                         if (
                             previous_message.get(
                                 "role"
@@ -1812,24 +1987,29 @@ for index, message in enumerate(
                                 )
                             )
 
+
                             truncate_chat(
                                 chat,
                                 index,
                             )
 
+
                             st.session_state.pending_question = (
                                 previous_question
                             )
 
+
                             st.rerun()
 
+
+            # Edit
 
             with action_columns[3]:
 
                 if st.button(
                     "✎",
                     key=(
-                        "message_edit_"
+                        "edit_"
                         + str(index)
                     ),
                     help="Edit question",
@@ -1845,6 +2025,7 @@ for index, message in enumerate(
                             ]
                         )
 
+
                         if (
                             previous_message.get(
                                 "role"
@@ -1856,14 +2037,18 @@ for index, message in enumerate(
                                 index - 1
                             )
 
+
                             st.rerun()
 
+
+            # Response time
 
             with action_columns[4]:
 
                 response_time = message.get(
                     "response_time"
                 )
+
 
                 if response_time is not None:
 
@@ -1891,7 +2076,11 @@ if st.session_state.pending_question:
         st.session_state.pending_question
     )
 
-    st.session_state.pending_question = None
+
+    st.session_state.pending_question = (
+        None
+    )
+
 
     process_question(
         pending_question
@@ -1899,12 +2088,14 @@ if st.session_state.pending_question:
 
 
 # ============================================================
-# STREAMLIT CHAT INPUT CAPABILITIES
+# CHAT INPUT CAPABILITY DETECTION
 # ============================================================
 
-chat_input_parameters = inspect.signature(
-    st.chat_input
-).parameters
+chat_input_parameters = (
+    inspect.signature(
+        st.chat_input
+    ).parameters
+)
 
 
 supports_accept_file = (
@@ -1912,10 +2103,12 @@ supports_accept_file = (
     in chat_input_parameters
 )
 
+
 supports_file_type = (
     "file_type"
     in chat_input_parameters
 )
+
 
 supports_max_uploads = (
     "max_uploads"
@@ -1930,7 +2123,8 @@ supports_max_uploads = (
 if supports_accept_file:
 
     chat_input_kwargs = {
-        "placeholder": "Message AI Support..."
+        "placeholder":
+            "Message AI Support..."
     }
 
 
@@ -1939,6 +2133,7 @@ if supports_accept_file:
         chat_input_kwargs[
             "accept_file"
         ] = "multiple"
+
 
         chat_input_kwargs[
             "max_uploads"
@@ -1979,6 +2174,10 @@ if supports_accept_file:
         composer_files = []
 
 
+        # ----------------------------------------------------
+        # TEXT + FILE EXTRACTION
+        # ----------------------------------------------------
+
         if isinstance(
             composer,
             str,
@@ -1999,6 +2198,7 @@ if supports_accept_file:
                 or ""
             ).strip()
 
+
             composer_files = list(
                 getattr(
                     composer,
@@ -2013,6 +2213,10 @@ if supports_accept_file:
 
         image_files = []
 
+
+        # ----------------------------------------------------
+        # CLASSIFY FILES
+        # ----------------------------------------------------
 
         for uploaded_file in composer_files:
 
@@ -2044,6 +2248,7 @@ if supports_accept_file:
                 document_files.append(
                     uploaded_file
                 )
+
 
             elif extension in {
                 ".png",
@@ -2095,7 +2300,10 @@ if supports_accept_file:
             )
 
 
-            if signature != previous_signature:
+            if (
+                signature
+                != previous_signature
+            ):
 
                 try:
 
@@ -2122,6 +2330,7 @@ if supports_accept_file:
                             [],
                         )
 
+
                         for error in errors:
 
                             st.error(
@@ -2141,6 +2350,7 @@ if supports_accept_file:
                     st.error(
                         "The attached document could not be processed."
                     )
+
 
                     with st.expander(
                         "Technical details"
@@ -2253,7 +2463,10 @@ else:
         )
 
 
-        if signature != previous_signature:
+        if (
+            signature
+            != previous_signature
+        ):
 
             try:
 
@@ -2275,10 +2488,13 @@ else:
                     dict,
                 ):
 
-                    for error in result.get(
+                    errors = result.get(
                         "errors",
                         [],
-                    ):
+                    )
+
+
+                    for error in errors:
 
                         st.error(
                             str(error)
@@ -2297,6 +2513,7 @@ else:
                 st.error(
                     "The attached document could not be processed."
                 )
+
 
                 with st.expander(
                     "Technical details"
