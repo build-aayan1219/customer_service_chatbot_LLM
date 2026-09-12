@@ -138,6 +138,20 @@ FILE_OVERVIEW_PATTERNS = [
 
     r"\bshow\s+me\s+what\s+"
     r"is\s+in\s+(?:this|the)\b",
+
+    # Broad attached-code/document questions. These are intentionally
+    # interpreted as overview requests only when the current chat has files.
+    r"\bwhat\s+is\s+(?:this\s+)?code\s+(?:about|related\s+to)\b",
+    r"\bwhat\s+does\s+(?:this\s+)?code\s+do\b",
+    r"\bwhat\s+is\s+(?:this\s+)?code\s+for\b",
+    r"\bwhat\s+project\s+is\s+(?:this\s+)?code\s+(?:for|about)\b",
+    r"\bwhat\s+assignment\s+is\s+(?:this\s+)?code\s+(?:for|about)\b",
+    r"\bwhat\s+is\s+the\s+purpose\s+of\s+(?:this\s+)?code\b",
+    r"\bexplain\s+(?:this\s+)?code\b",
+    r"\btell\s+me\s+about\s+(?:this\s+)?code\b",
+    r"\bwhat\s+is\s+this\s+about\b",
+    r"\bwhat\s+is\s+included\s+here\b",
+    r"\bwhat\s+do(?:es)?\s+this\s+file\s+have\b",
 ]
 
 
@@ -454,8 +468,8 @@ def calculate_combined_relevance(
 # LLM
 # ============================================================
 
-@lru_cache(maxsize=1)
-def get_llm():
+@lru_cache(maxsize=8)
+def get_llm(temperature=None):
 
     api_key = os.getenv(
         "GOOGLE_API_KEY"
@@ -471,9 +485,12 @@ def get_llm():
     llm = ChatGoogleGenerativeAI(
         model=LLM_CONFIG["model"],
         google_api_key=api_key,
-        max_tokens=LLM_CONFIG[
-            "max_tokens"
-        ],
+        temperature=(
+            LLM_CONFIG.get("temperature", 0.1)
+            if temperature is None
+            else float(temperature)
+        ),
+        max_tokens=LLM_CONFIG["max_tokens"],
     )
 
     logger.info(
@@ -1602,6 +1619,7 @@ def get_qa_chain():
         question,
         chat_history=None,
         chat_id=None,
+        temperature=None,
     ):
 
         prepared = prepare_qa(
@@ -1624,7 +1642,7 @@ def get_qa_chain():
             }
 
         response = (
-            get_llm()
+            get_llm(temperature)
             .invoke(
                 prepared[
                     "messages"
@@ -1658,6 +1676,7 @@ def get_qa_stream(
     question,
     chat_history=None,
     chat_id=None,
+    temperature=None,
 ):
     prepared = prepare_qa(
         question,
@@ -1695,7 +1714,7 @@ def get_qa_stream(
         try:
 
             for chunk in (
-                get_llm()
+                get_llm(temperature)
                 .stream(
                     messages
                 )
