@@ -1485,38 +1485,48 @@ if st.session_state.pending_question:
 
 
 # ============================================================
-# CHAT INPUT / FILE ATTACHMENTS
+# CHAT INPUT AND ATTACHMENTS
 # ============================================================
 
-chat_input_signature = inspect.signature(
+chat_input_parameters = inspect.signature(
     st.chat_input
-)
-
-chat_input_parameters = (
-    chat_input_signature.parameters
-)
+).parameters
 
 supports_accept_file = (
-    "accept_file"
-    in chat_input_parameters
+    "accept_file" in chat_input_parameters
 )
 
 supports_file_type = (
-    "file_type"
-    in chat_input_parameters
+    "file_type" in chat_input_parameters
 )
 
 supports_max_uploads = (
-    "max_uploads"
-    in chat_input_parameters
+    "max_uploads" in chat_input_parameters
 )
 
+
+# ============================================================
+# MODERN STREAMLIT COMPOSER
+# ============================================================
 
 if supports_accept_file:
 
     chat_input_kwargs = {
         "placeholder": "Message AI Support..."
     }
+
+
+    if supports_accept_file:
+
+        if supports_max_uploads:
+
+            chat_input_kwargs["accept_file"] = "multiple"
+            chat_input_kwargs["max_uploads"] = 10
+
+        else:
+
+            chat_input_kwargs["accept_file"] = True
+
 
     if supports_file_type:
 
@@ -1531,15 +1541,6 @@ if supports_accept_file:
             "webp",
         ]
 
-    if supports_max_uploads:
-
-        chat_input_kwargs["accept_file"] = "multiple"
-        chat_input_kwargs["max_uploads"] = 10
-
-    else:
-
-        chat_input_kwargs["accept_file"] = True
-
 
     composer = st.chat_input(
         **chat_input_kwargs
@@ -1552,17 +1553,16 @@ if supports_accept_file:
         composer_files = []
 
 
-        # Newer Streamlit versions return an object
-        # containing text and files.
+        # ----------------------------------------------------
+        # GET TEXT AND FILES
+        # ----------------------------------------------------
 
         if isinstance(
             composer,
             str,
         ):
 
-            composer_text = (
-                composer.strip()
-            )
+            composer_text = composer.strip()
 
         else:
 
@@ -1575,6 +1575,7 @@ if supports_accept_file:
                 or ""
             ).strip()
 
+
             composer_files = list(
                 getattr(
                     composer,
@@ -1586,11 +1587,10 @@ if supports_accept_file:
 
 
         # ----------------------------------------------------
-        # PROCESS ATTACHED DOCUMENTS
+        # SEPARATE DOCUMENTS AND IMAGES
         # ----------------------------------------------------
 
         document_files = []
-
         image_files = []
 
 
@@ -1606,9 +1606,9 @@ if supports_accept_file:
 
 
             extension = (
-                Path(
-                    filename
-                ).suffix.lower()
+                Path(filename)
+                .suffix
+                .lower()
             )
 
 
@@ -1623,6 +1623,7 @@ if supports_accept_file:
                     uploaded_file
                 )
 
+
             elif extension in {
                 ".png",
                 ".jpg",
@@ -1636,54 +1637,98 @@ if supports_accept_file:
 
 
         # ----------------------------------------------------
-        # ADD DOCUMENTS TO CONVERSATION
+        # PROCESS DOCUMENT ATTACHMENTS
         # ----------------------------------------------------
 
         if document_files:
 
-            signature = (
-                get_attachment_signature(
-                    document_files
+            try:
+
+                signature = (
+                    get_attachment_signature(
+                        document_files
+                    )
+                )
+
+            except Exception:
+
+                signature = "|".join(
+                    sorted(
+                        str(
+                            getattr(
+                                uploaded_file,
+                                "name",
+                                "",
+                            )
+                        )
+                        for uploaded_file
+                        in document_files
+                    )
+                )
+
+
+            previous_signature = (
+                st.session_state.get(
+                    "attachment_signature",
+                    "",
                 )
             )
 
 
             if (
                 signature
-                != st.session_state.get(
-                    "attachment_signature",
-                    "",
-                )
+                != previous_signature
             ):
 
-                result = (
-                    add_conversation_files(
-                        chat["id"],
-                        document_files,
+                try:
+
+                    result = (
+                        add_conversation_files(
+                            chat["id"],
+                            document_files,
+                        )
                     )
-                )
 
 
-                st.session_state.attachment_signature = (
-                    signature
-                )
+                    st.session_state.attachment_signature = (
+                        signature
+                    )
 
 
-                for error in result.get(
-                    "errors",
-                    [],
-                ):
+                    if isinstance(
+                        result,
+                        dict,
+                    ):
+
+                        for error in result.get(
+                            "errors",
+                            [],
+                        ):
+
+                            st.error(
+                                str(error)
+                            )
+
+
+                        if result.get(
+                            "added"
+                        ):
+
+                            st.rerun()
+
+                except Exception as error:
 
                     st.error(
-                        str(error)
+                        "The attached document could not be processed."
                     )
 
+                    with st.expander(
+                        "Technical details"
+                    ):
 
-                if result.get(
-                    "added"
-                ):
-
-                    st.rerun()
+                        st.code(
+                            str(error)
+                        )
 
 
         # ----------------------------------------------------
@@ -1692,16 +1737,19 @@ if supports_accept_file:
 
         if image_files:
 
-            image_names = [
-                str(
-                    getattr(
-                        image,
-                        "name",
-                        "image",
+            image_names = []
+
+            for image in image_files:
+
+                image_names.append(
+                    str(
+                        getattr(
+                            image,
+                            "name",
+                            "image",
+                        )
                     )
                 )
-                for image in image_files
-            ]
 
 
             st.info(
@@ -1710,15 +1758,21 @@ if supports_accept_file:
 
 
             st.caption(
-                "Selected images: "
+                "Selected: "
                 + ", ".join(
                     image_names
                 )
             )
 
 
+            st.caption(
+                "Image understanding is not yet connected "
+                "to the document RAG pipeline."
+            )
+
+
         # ----------------------------------------------------
-        # PROCESS QUESTION
+        # PROCESS MESSAGE
         # ----------------------------------------------------
 
         if composer_text:
@@ -1728,14 +1782,19 @@ if supports_accept_file:
             )
 
 
+# ============================================================
+# OLDER STREAMLIT FALLBACK
+# ============================================================
+
 else:
 
-    # --------------------------------------------------------
-    # FALLBACK FOR OLDER STREAMLIT
-    # --------------------------------------------------------
+    st.markdown(
+        "Attach a file"
+    )
+
 
     fallback_files = st.file_uploader(
-        "Attach files",
+        "Attach documents",
         type=[
             "pdf",
             "docx",
@@ -1750,49 +1809,93 @@ else:
 
     if fallback_files:
 
-        signature = (
-            get_attachment_signature(
-                fallback_files
+        try:
+
+            signature = (
+                get_attachment_signature(
+                    fallback_files
+                )
+            )
+
+        except Exception:
+
+            signature = "|".join(
+                sorted(
+                    str(
+                        getattr(
+                            uploaded_file,
+                            "name",
+                            "",
+                        )
+                    )
+                    for uploaded_file
+                    in fallback_files
+                )
+            )
+
+
+        previous_signature = (
+            st.session_state.get(
+                "attachment_signature",
+                "",
             )
         )
 
 
         if (
             signature
-            != st.session_state.get(
-                "attachment_signature",
-                "",
-            )
+            != previous_signature
         ):
 
-            result = (
-                add_conversation_files(
-                    chat["id"],
-                    fallback_files,
+            try:
+
+                result = (
+                    add_conversation_files(
+                        chat["id"],
+                        fallback_files,
+                    )
                 )
-            )
 
 
-            st.session_state.attachment_signature = (
-                signature
-            )
+                st.session_state.attachment_signature = (
+                    signature
+                )
 
 
-            for error in result.get(
-                "errors",
-                [],
-            ):
+                if isinstance(
+                    result,
+                    dict,
+                ):
+
+                    for error in result.get(
+                        "errors",
+                        [],
+                    ):
+
+                        st.error(
+                            str(error)
+                        )
+
+
+                    if result.get(
+                        "added"
+                    ):
+
+                        st.rerun()
+
+            except Exception as error:
 
                 st.error(
-                    str(error)
+                    "The attached document could not be processed."
                 )
 
+                with st.expander(
+                    "Technical details"
+                ):
 
-            if result.get(
-                "added"
-            ):
-
-                st.rerun()
+                    st.code(
+                        str(error)
+                    )
 
 
     question = st.chat_input(
@@ -1805,6 +1908,19 @@ else:
         process_question(
             question
         )
+
+
+# ============================================================
+# FOOTER
+# ============================================================
+
+st.markdown(
+    "<div class='small-note'>"
+    "AI Support may occasionally make mistakes. "
+    "Verify important information."
+    "</div>",
+    unsafe_allow_html=True,
+)
 
 
 # ============================================================
