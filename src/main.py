@@ -1485,19 +1485,326 @@ if st.session_state.pending_question:
 
 
 # ============================================================
-# CHAT INPUT CAPABILITY CHECK
+# CHAT INPUT / FILE ATTACHMENTS
 # ============================================================
 
-chat_input_parameters = (
-    inspect.signature(
-        st.chat_input
-    ).parameters
+chat_input_signature = inspect.signature(
+    st.chat_input
 )
 
-supports_file_upload = (
+chat_input_parameters = (
+    chat_input_signature.parameters
+)
+
+supports_accept_file = (
     "accept_file"
     in chat_input_parameters
 )
+
+supports_file_type = (
+    "file_type"
+    in chat_input_parameters
+)
+
+supports_max_uploads = (
+    "max_uploads"
+    in chat_input_parameters
+)
+
+
+if supports_accept_file:
+
+    chat_input_kwargs = {
+        "placeholder": "Message AI Support..."
+    }
+
+    if supports_file_type:
+
+        chat_input_kwargs["file_type"] = [
+            "pdf",
+            "docx",
+            "txt",
+            "csv",
+            "png",
+            "jpg",
+            "jpeg",
+            "webp",
+        ]
+
+    if supports_max_uploads:
+
+        chat_input_kwargs["accept_file"] = "multiple"
+        chat_input_kwargs["max_uploads"] = 10
+
+    else:
+
+        chat_input_kwargs["accept_file"] = True
+
+
+    composer = st.chat_input(
+        **chat_input_kwargs
+    )
+
+
+    if composer is not None:
+
+        composer_text = ""
+        composer_files = []
+
+
+        # Newer Streamlit versions return an object
+        # containing text and files.
+
+        if isinstance(
+            composer,
+            str,
+        ):
+
+            composer_text = (
+                composer.strip()
+            )
+
+        else:
+
+            composer_text = str(
+                getattr(
+                    composer,
+                    "text",
+                    "",
+                )
+                or ""
+            ).strip()
+
+            composer_files = list(
+                getattr(
+                    composer,
+                    "files",
+                    [],
+                )
+                or []
+            )
+
+
+        # ----------------------------------------------------
+        # PROCESS ATTACHED DOCUMENTS
+        # ----------------------------------------------------
+
+        document_files = []
+
+        image_files = []
+
+
+        for uploaded_file in composer_files:
+
+            filename = str(
+                getattr(
+                    uploaded_file,
+                    "name",
+                    "",
+                )
+            )
+
+
+            extension = (
+                Path(
+                    filename
+                ).suffix.lower()
+            )
+
+
+            if extension in {
+                ".pdf",
+                ".docx",
+                ".txt",
+                ".csv",
+            }:
+
+                document_files.append(
+                    uploaded_file
+                )
+
+            elif extension in {
+                ".png",
+                ".jpg",
+                ".jpeg",
+                ".webp",
+            }:
+
+                image_files.append(
+                    uploaded_file
+                )
+
+
+        # ----------------------------------------------------
+        # ADD DOCUMENTS TO CONVERSATION
+        # ----------------------------------------------------
+
+        if document_files:
+
+            signature = (
+                get_attachment_signature(
+                    document_files
+                )
+            )
+
+
+            if (
+                signature
+                != st.session_state.get(
+                    "attachment_signature",
+                    "",
+                )
+            ):
+
+                result = (
+                    add_conversation_files(
+                        chat["id"],
+                        document_files,
+                    )
+                )
+
+
+                st.session_state.attachment_signature = (
+                    signature
+                )
+
+
+                for error in result.get(
+                    "errors",
+                    [],
+                ):
+
+                    st.error(
+                        str(error)
+                    )
+
+
+                if result.get(
+                    "added"
+                ):
+
+                    st.rerun()
+
+
+        # ----------------------------------------------------
+        # IMAGE ATTACHMENTS
+        # ----------------------------------------------------
+
+        if image_files:
+
+            image_names = [
+                str(
+                    getattr(
+                        image,
+                        "name",
+                        "image",
+                    )
+                )
+                for image in image_files
+            ]
+
+
+            st.info(
+                "Image attachment received."
+            )
+
+
+            st.caption(
+                "Selected images: "
+                + ", ".join(
+                    image_names
+                )
+            )
+
+
+        # ----------------------------------------------------
+        # PROCESS QUESTION
+        # ----------------------------------------------------
+
+        if composer_text:
+
+            process_question(
+                composer_text
+            )
+
+
+else:
+
+    # --------------------------------------------------------
+    # FALLBACK FOR OLDER STREAMLIT
+    # --------------------------------------------------------
+
+    fallback_files = st.file_uploader(
+        "Attach files",
+        type=[
+            "pdf",
+            "docx",
+            "txt",
+            "csv",
+        ],
+        accept_multiple_files=True,
+        label_visibility="collapsed",
+        key="fallback_file_uploader",
+    )
+
+
+    if fallback_files:
+
+        signature = (
+            get_attachment_signature(
+                fallback_files
+            )
+        )
+
+
+        if (
+            signature
+            != st.session_state.get(
+                "attachment_signature",
+                "",
+            )
+        ):
+
+            result = (
+                add_conversation_files(
+                    chat["id"],
+                    fallback_files,
+                )
+            )
+
+
+            st.session_state.attachment_signature = (
+                signature
+            )
+
+
+            for error in result.get(
+                "errors",
+                [],
+            ):
+
+                st.error(
+                    str(error)
+                )
+
+
+            if result.get(
+                "added"
+            ):
+
+                st.rerun()
+
+
+    question = st.chat_input(
+        "Message AI Support..."
+    )
+
+
+    if question:
+
+        process_question(
+            question
+        )
 
 
 # ============================================================
