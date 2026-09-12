@@ -1377,6 +1377,121 @@ def search_conversation_files(
             return []
 
 
+
+# ============================================================
+# GET ALL CONVERSATION DOCUMENTS
+# ============================================================
+
+def get_conversation_documents(
+    chat_id,
+):
+    vectordb = load_conversation_vector_db(chat_id)
+
+    if vectordb is None:
+        return []
+
+    try:
+        documents = list(vectordb.docstore._dict.values())
+    except Exception as error:
+        logger.warning(
+            "Could not read conversation documents: %s",
+            error,
+        )
+        return []
+
+    return [
+        document
+        for document in documents
+        if isinstance(document, Document)
+    ]
+
+
+# ============================================================
+# FILE OVERVIEW DOCUMENTS
+# ============================================================
+
+def get_conversation_overview_documents(
+    chat_id,
+    max_chunks=10,
+):
+    """Return representative chunks from all files attached to a chat."""
+    documents = get_conversation_documents(chat_id)
+
+    if not documents:
+        return []
+
+    grouped = {}
+    for document in documents:
+        metadata = document.metadata if isinstance(document.metadata, dict) else {}
+        file_name = (
+            metadata.get("source_file")
+            or metadata.get("file_name")
+            or metadata.get("filename")
+            or "unknown"
+        )
+        grouped.setdefault(str(file_name), []).append(document)
+
+    selected = []
+    number_of_files = max(len(grouped), 1)
+    chunks_per_file = max(2, max_chunks // number_of_files)
+
+    for file_name, file_documents in grouped.items():
+        file_documents.sort(
+            key=lambda document: int(
+                document.metadata.get(
+                    "chunk_index",
+                    document.metadata.get("chunk", 0),
+                ) or 0
+            )
+        )
+
+        count = len(file_documents)
+        if count <= chunks_per_file:
+            chosen = file_documents
+        else:
+            indexes = [0]
+
+            # Prefer chunks containing headings/section labels because they
+            # give the model more semantic coverage for broad questions.
+            heading_indexes = []
+            for index, document in enumerate(file_documents):
+                metadata = document.metadata if isinstance(document.metadata, dict) else {}
+                section = str(metadata.get("section") or "").strip()
+                if section:
+                    heading_indexes.append(index)
+
+            for index in heading_indexes:
+                if len(indexes) >= chunks_per_file:
+                    break
+                if index not in indexes:
+                    indexes.append(index)
+
+            remaining = chunks_per_file - len(indexes)
+            if remaining > 0:
+                for i in range(1, remaining + 1):
+                    position = round(
+                        i * (count - 1) / max(remaining, 1)
+                    )
+                    if position not in indexes:
+                        indexes.append(position)
+
+            chosen = [file_documents[index] for index in sorted(set(indexes))]
+
+        total = len(file_documents)
+        for document in chosen:
+            metadata = document.metadata if isinstance(document.metadata, dict) else {}
+            metadata.setdefault("source_file", file_name)
+            metadata.setdefault("file_name", file_name)
+            metadata.setdefault("filename", file_name)
+            metadata["source_type"] = "conversation_file"
+            metadata["retrieval_source"] = "conversation_file"
+            metadata["overview_retrieval"] = True
+            metadata["total_chunks"] = total
+            document.metadata = metadata
+            selected.append(document)
+
+    return selected[:max_chunks]
+
 # ============================================================
 # DELETE ALL FILES FOR ONE CHAT
 # ============================================================
