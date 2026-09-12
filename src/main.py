@@ -1,4 +1,5 @@
 import inspect
+import random
 import time
 from collections import defaultdict
 from pathlib import Path
@@ -30,19 +31,19 @@ from src.langchain_helper import get_qa_stream
 
 
 # ============================================================
-# PAGE
+# PAGE CONFIGURATION
 # ============================================================
 
 st.set_page_config(
     page_title="AI Support",
-    page_icon="AI",
+    page_icon="✦",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
 
 # ============================================================
-# STYLE
+# CUSTOM STYLING
 # ============================================================
 
 st.markdown(
@@ -50,96 +51,208 @@ st.markdown(
 <style>
 
 :root {
-    --accent: #e85d5d;
-    --accent-hover: #d94e4e;
-    --text: #202124;
-    --muted: #777777;
-    --soft: #f7f7f7;
-    --border: #e5e5e5;
+    --accent: #ff6b6b;
+    --accent-dark: #e95757;
+    --text: #171717;
+    --secondary: #666666;
+    --muted: #8d8d8d;
+    --border: #e7e7e7;
+    --surface: #fafafa;
+    --surface-dark: #f4f4f4;
 }
+
+
+/* ----------------------------------------------------------
+   APPLICATION
+---------------------------------------------------------- */
 
 .stApp {
     background: #ffffff;
 }
 
 .block-container {
-    max-width: 1080px;
-    padding-top: 0.4rem;
+    max-width: 1120px;
+    padding-top: 0.8rem;
     padding-bottom: 120px;
 }
 
+
+/* ----------------------------------------------------------
+   SIDEBAR
+---------------------------------------------------------- */
+
 [data-testid="stSidebar"] {
     background: #fbfbfb;
-    border-right: 1px solid var(--border);
+    border-right: 1px solid #e5e5e5;
 }
 
 [data-testid="stSidebarContent"] {
-    padding: 18px 14px;
+    padding: 26px 18px 20px 18px;
 }
 
 [data-testid="stSidebar"] .stButton > button {
-    min-height: 38px;
-    border-radius: 9px;
+    border-radius: 10px;
+    min-height: 40px;
     font-size: 12px;
+    font-weight: 500;
 }
 
 [data-testid="stSidebar"] input {
-    border-radius: 9px;
+    border-radius: 10px;
+    font-size: 12px;
+}
+
+
+/* ----------------------------------------------------------
+   BRAND
+---------------------------------------------------------- */
+
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 2px;
+}
+
+.sidebar-logo {
+    font-size: 21px;
+    line-height: 1;
+    font-weight: 700;
+    color: #111111;
+}
+
+.sidebar-brand-name {
+    font-size: 17px;
+    line-height: 1;
+    font-weight: 750;
+    color: #111111;
+}
+
+.sidebar-subtitle {
+    margin-top: 7px;
+    margin-bottom: 20px;
+    color: #888888;
     font-size: 11px;
 }
 
-.header-title {
-    font-size: 15px;
+
+/* ----------------------------------------------------------
+   TOP BAR
+---------------------------------------------------------- */
+
+.top-title {
+    font-size: 16px;
     font-weight: 700;
     color: var(--text);
+    margin-top: 2px;
 }
 
-.header-subtitle {
-    font-size: 9px;
-    color: #999999;
-    margin-top: -5px;
-}
-
-.empty-state-space {
-    height: 125px;
-}
-
-.empty-state-title {
-    text-align: center;
-    font-size: 28px;
-    font-weight: 750;
-    letter-spacing: -0.6px;
-    color: var(--text);
-}
-
-.empty-state-description {
-    max-width: 540px;
-    margin: 8px auto 0;
-    text-align: center;
-    color: #858585;
-    font-size: 12px;
-    line-height: 1.55;
-}
-
-.suggestion-label {
-    color: #8c8c8c;
+.top-subtitle {
     font-size: 10px;
-    margin-top: 28px;
-    margin-bottom: 7px;
+    color: #929292;
+    margin-top: -4px;
 }
 
-.suggestion-button {
+
+/* ----------------------------------------------------------
+   WELCOME AREA
+---------------------------------------------------------- */
+
+.welcome-container {
+    max-width: 760px;
+    margin: 105px auto 0 auto;
+    text-align: center;
+}
+
+.welcome-logo {
+    width: 58px;
+    height: 58px;
+    margin: 0 auto 20px auto;
+    border-radius: 18px;
+    background: #fff3f3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+    font-size: 31px;
+    font-weight: 700;
+}
+
+.welcome-greeting {
+    font-size: 31px;
+    line-height: 1.2;
+    letter-spacing: -0.9px;
+    font-weight: 750;
+    color: #161616;
+    margin-bottom: 13px;
+}
+
+.welcome-title {
+    font-size: 17px;
+    line-height: 1.5;
+    font-weight: 500;
+    color: #4f4f4f;
+    margin-bottom: 9px;
+}
+
+.welcome-description {
+    max-width: 650px;
+    margin: 0 auto;
+    color: #858585;
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+
+/* ----------------------------------------------------------
+   CAPABILITY CARDS
+---------------------------------------------------------- */
+
+.capabilities {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 30px;
+}
+
+.capability {
+    border: 1px solid #e9e9e9;
+    border-radius: 11px;
+    padding: 11px 17px;
+    background: #ffffff;
+    color: #666666;
     font-size: 11px;
 }
 
+.capability strong {
+    color: #333333;
+    font-weight: 650;
+}
+
+
+/* ----------------------------------------------------------
+   WELCOME FOOTNOTE
+---------------------------------------------------------- */
+
+.welcome-footnote {
+    margin-top: 27px;
+    color: #a0a0a0;
+    font-size: 10px;
+}
+
+
+/* ----------------------------------------------------------
+   CHAT
+---------------------------------------------------------- */
+
 [data-testid="stChatMessage"] {
-    padding-top: 8px;
-    padding-bottom: 8px;
+    padding-top: 10px;
+    padding-bottom: 10px;
 }
 
 [data-testid="stChatMessageContent"] {
-    font-size: 13px;
-    line-height: 1.65;
+    font-size: 14px;
+    line-height: 1.7;
 }
 
 [data-testid="stChatInput"] {
@@ -147,14 +260,64 @@ st.markdown(
 }
 
 [data-testid="stChatInput"] textarea {
-    font-size: 13px !important;
+    font-size: 14px !important;
 }
+
+
+/* ----------------------------------------------------------
+   ATTACHMENTS
+---------------------------------------------------------- */
+
+.attachment-title {
+    font-size: 12px;
+    font-weight: 650;
+    color: #444444;
+    margin-bottom: 7px;
+}
+
+
+/* ----------------------------------------------------------
+   SMALL TEXT
+---------------------------------------------------------- */
 
 .small-note {
     text-align: center;
     color: #aaaaaa;
-    font-size: 9px;
-    margin-top: 7px;
+    font-size: 10px;
+    margin-top: 10px;
+}
+
+
+/* ----------------------------------------------------------
+   RESPONSIVE
+---------------------------------------------------------- */
+
+@media (max-width: 800px) {
+
+    .welcome-container {
+        margin-top: 65px;
+    }
+
+    .welcome-greeting {
+        font-size: 25px;
+    }
+
+    .welcome-title {
+        font-size: 15px;
+    }
+
+    .welcome-description {
+        font-size: 12px;
+        padding: 0 15px;
+    }
+
+    .capabilities {
+        flex-direction: column;
+        max-width: 320px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
 }
 
 </style>
@@ -172,11 +335,14 @@ if "current_chat_id" not in st.session_state:
     chats = load_chats()
 
     if chats:
+
         st.session_state.current_chat_id = chats[0]["id"]
 
     else:
+
         first_chat = create_chat()
         save_chat(first_chat)
+
         st.session_state.current_chat_id = first_chat["id"]
 
 
@@ -202,6 +368,24 @@ if "show_sources" not in st.session_state:
 
 if "show_analytics" not in st.session_state:
     st.session_state.show_analytics = False
+
+
+if "welcome_greeting" not in st.session_state:
+
+    greetings = [
+        "Good to see you — what can I help you with?",
+        "Welcome back — let's get something solved.",
+        "Hey there — your support assistant is ready.",
+        "Ready when you are — ask me anything.",
+        "Hello — let's find the answer together.",
+        "What would you like to figure out today?",
+        "Welcome — your AI support workspace is ready.",
+        "Let's get started — what do you need help with?",
+    ]
+
+    st.session_state.welcome_greeting = random.choice(
+        greetings
+    )
 
 
 # ============================================================
@@ -235,10 +419,26 @@ def create_new_chat():
     save_chat(new_chat)
 
     st.session_state.current_chat_id = new_chat["id"]
+
     st.session_state.pending_question = None
     st.session_state.editing_index = None
     st.session_state.attachment_signature = ""
     st.session_state.show_analytics = False
+
+    greetings = [
+        "Good to see you — what can I help you with?",
+        "Welcome back — let's get something solved.",
+        "Hey there — your support assistant is ready.",
+        "Ready when you are — ask me anything.",
+        "Hello — let's find the answer together.",
+        "What would you like to figure out today?",
+        "Welcome — your AI support workspace is ready.",
+        "Let's get started — what do you need help with?",
+    ]
+
+    st.session_state.welcome_greeting = random.choice(
+        greetings
+    )
 
     st.rerun()
 
@@ -618,11 +818,20 @@ chat = get_current_chat()
 with st.sidebar:
 
     st.markdown(
-        "### AI Support"
+        """
+        <div class="sidebar-brand">
+            <span class="sidebar-logo">✦</span>
+            <span class="sidebar-brand-name">AI Support</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
-    st.caption(
-        "Customer support assistant"
+    st.markdown(
+        '<div class="sidebar-subtitle">'
+        'Intelligent customer service assistant'
+        '</div>',
+        unsafe_allow_html=True,
     )
 
     if st.button(
@@ -641,7 +850,7 @@ with st.sidebar:
     search_text = st.text_input(
         "Search conversations",
         value=st.session_state.search_text,
-        placeholder="Search conversations...",
+        placeholder="Search chats...",
         label_visibility="collapsed",
         key="sidebar_search",
     )
@@ -717,6 +926,7 @@ with st.sidebar:
 
             st.session_state.pending_question = None
             st.session_state.editing_index = None
+            st.session_state.attachment_signature = ""
 
             st.rerun()
 
@@ -733,11 +943,17 @@ header_left, header_right = st.columns(
 with header_left:
 
     st.markdown(
-        f"**{chat.get('title', 'New Chat')}**"
+        f'<div class="top-title">'
+        f'{chat.get("title", "New Chat")}'
+        f'</div>',
+        unsafe_allow_html=True,
     )
 
-    st.caption(
-        "Customer Support"
+    st.markdown(
+        '<div class="top-subtitle">'
+        'Customer Support'
+        '</div>',
+        unsafe_allow_html=True,
     )
 
 
@@ -959,7 +1175,10 @@ attached_files = list_conversation_files(
 if attached_files:
 
     st.markdown(
-        "**Attached files**"
+        '<div class="attachment-title">'
+        'Attached files'
+        '</div>',
+        unsafe_allow_html=True,
     )
 
     file_columns = st.columns(
@@ -1064,7 +1283,7 @@ if attached_files:
 
 
 # ============================================================
-# EMPTY STATE
+# WELCOME / EMPTY CHAT
 # ============================================================
 
 if not chat.get(
@@ -1072,65 +1291,61 @@ if not chat.get(
 ):
 
     st.markdown(
-        "<div class='empty-state-space'></div>",
+        """
+        <div class="welcome-container">
+
+            <div class="welcome-logo">
+                ✦
+            </div>
+
+        """,
         unsafe_allow_html=True,
     )
 
     st.markdown(
-        "<div class='empty-state-title'>"
-        "AI Support"
-        "</div>",
+        f"""
+        <div class="welcome-greeting">
+            {st.session_state.welcome_greeting}
+        </div>
+
+        <div class="welcome-title">
+            AI Support is your intelligent customer service workspace.
+        </div>
+
+        <div class="welcome-description">
+            Ask questions about your support knowledge base,
+            get help with common customer issues, or attach a
+            document and ask questions about its contents.
+        </div>
+
+        <div class="capabilities">
+
+            <div class="capability">
+                ✦ <strong>Knowledge Base</strong>
+                &nbsp;·&nbsp; Support answers
+            </div>
+
+            <div class="capability">
+                📄 <strong>Document Q&A</strong>
+                &nbsp;·&nbsp; Ask about files
+            </div>
+
+            <div class="capability">
+                ◌ <strong>Conversation Context</strong>
+                &nbsp;·&nbsp; Follow-up questions
+            </div>
+
+        </div>
+
+        <div class="welcome-footnote">
+            Attach a document from the composer below whenever
+            you want answers grounded in its contents.
+        </div>
+
+        </div>
+        """,
         unsafe_allow_html=True,
     )
-
-    st.markdown(
-        "<div class='empty-state-description'>"
-        "Ask a support question, or attach a document "
-        "and ask about its contents."
-        "</div>",
-        unsafe_allow_html=True,
-    )
-
-    st.markdown(
-        "<div class='suggestion-label'>"
-        "Suggestions"
-        "</div>",
-        unsafe_allow_html=True,
-    )
-
-    suggestions = [
-        "What information is available?",
-        "How do I solve a common issue?",
-        "What is the code in this file related to?",
-        "What does this document contain?",
-    ]
-
-    suggestion_columns = st.columns(
-        2
-    )
-
-    for index, suggestion in enumerate(
-        suggestions
-    ):
-
-        with suggestion_columns[
-            index % 2
-        ]:
-
-            if st.button(
-                suggestion,
-                use_container_width=True,
-                key=(
-                    "suggestion_"
-                    + str(index)
-                ),
-            ):
-
-                st.session_state.pending_question = (
-                    suggestion
-                )
-
-                st.rerun()
 
 
 # ============================================================
@@ -1181,7 +1396,7 @@ for index, message in enumerate(
                     "edit_text_"
                     + str(index)
                 ),
-                height=90,
+                height=100,
             )
 
             save_column, cancel_column = (
@@ -1243,7 +1458,7 @@ for index, message in enumerate(
             continue
 
         # ----------------------------------------------------
-        # NORMAL MESSAGE
+        # MESSAGE
         # ----------------------------------------------------
 
         st.markdown(
@@ -1429,7 +1644,7 @@ if st.session_state.pending_question:
 
 
 # ============================================================
-# CHAT INPUT AND ATTACHMENTS
+# STREAMLIT CHAT INPUT CAPABILITY DETECTION
 # ============================================================
 
 chat_input_parameters = inspect.signature(
@@ -1450,7 +1665,7 @@ supports_max_uploads = (
 
 
 # ============================================================
-# MODERN STREAMLIT COMPOSER
+# MODERN COMPOSER
 # ============================================================
 
 if supports_accept_file:
@@ -1491,7 +1706,7 @@ if supports_accept_file:
         composer_files = []
 
         # ----------------------------------------------------
-        # GET TEXT AND FILES
+        # EXTRACT TEXT AND FILES
         # ----------------------------------------------------
 
         if isinstance(
@@ -1522,7 +1737,7 @@ if supports_accept_file:
             )
 
         # ----------------------------------------------------
-        # SEPARATE DOCUMENTS AND IMAGES
+        # CLASSIFY FILES
         # ----------------------------------------------------
 
         document_files = []
@@ -1567,7 +1782,7 @@ if supports_accept_file:
                 )
 
         # ----------------------------------------------------
-        # PROCESS DOCUMENT ATTACHMENTS
+        # DOCUMENT PROCESSING
         # ----------------------------------------------------
 
         if document_files:
@@ -1656,24 +1871,21 @@ if supports_accept_file:
                         )
 
         # ----------------------------------------------------
-        # IMAGE ATTACHMENTS
+        # IMAGE PROCESSING
         # ----------------------------------------------------
 
         if image_files:
 
-            image_names = []
-
-            for image in image_files:
-
-                image_names.append(
-                    str(
-                        getattr(
-                            image,
-                            "name",
-                            "image",
-                        )
+            image_names = [
+                str(
+                    getattr(
+                        image,
+                        "name",
+                        "image",
                     )
                 )
+                for image in image_files
+            ]
 
             st.info(
                 "Image attachment received."
@@ -1688,11 +1900,11 @@ if supports_accept_file:
 
             st.caption(
                 "Image understanding is not yet connected "
-                "to the document RAG pipeline."
+                "to the current document RAG pipeline."
             )
 
         # ----------------------------------------------------
-        # PROCESS MESSAGE
+        # QUESTION PROCESSING
         # ----------------------------------------------------
 
         if composer_text:
@@ -1703,7 +1915,7 @@ if supports_accept_file:
 
 
 # ============================================================
-# OLDER STREAMLIT FALLBACK
+# COMPATIBILITY FALLBACK
 # ============================================================
 
 else:
