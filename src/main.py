@@ -58,8 +58,6 @@ st.markdown(
     --border: #e5e5e5;
 }
 
-/* Main application */
-
 .stApp {
     background: #ffffff;
 }
@@ -69,9 +67,6 @@ st.markdown(
     padding-top: 0.4rem;
     padding-bottom: 120px;
 }
-
-
-/* Sidebar */
 
 [data-testid="stSidebar"] {
     background: #fbfbfb;
@@ -93,9 +88,6 @@ st.markdown(
     font-size: 11px;
 }
 
-
-/* Header */
-
 .header-title {
     font-size: 15px;
     font-weight: 700;
@@ -107,9 +99,6 @@ st.markdown(
     color: #999999;
     margin-top: -5px;
 }
-
-
-/* Empty state */
 
 .empty-state-space {
     height: 125px;
@@ -132,9 +121,6 @@ st.markdown(
     line-height: 1.55;
 }
 
-
-/* Suggestions */
-
 .suggestion-label {
     color: #8c8c8c;
     font-size: 10px;
@@ -146,9 +132,6 @@ st.markdown(
     font-size: 11px;
 }
 
-
-/* Messages */
-
 [data-testid="stChatMessage"] {
     padding-top: 8px;
     padding-bottom: 8px;
@@ -159,9 +142,6 @@ st.markdown(
     line-height: 1.65;
 }
 
-
-/* Chat composer */
-
 [data-testid="stChatInput"] {
     border-top: none !important;
 }
@@ -169,9 +149,6 @@ st.markdown(
 [data-testid="stChatInput"] textarea {
     font-size: 13px !important;
 }
-
-
-/* Small text */
 
 .small-note {
     text-align: center;
@@ -412,10 +389,16 @@ def render_sources(sources):
                     f"📄 **{name}**"
                 )
 
+                section_word = (
+                    "section"
+                    if len(items) == 1
+                    else "sections"
+                )
+
                 st.caption(
                     f"Attached file · "
                     f"{len(items)} relevant "
-                    f"{'section' if len(items) == 1 else 'sections'}"
+                    f"{section_word}"
                 )
 
             else:
@@ -424,9 +407,15 @@ def render_sources(sources):
                     "📚 **Knowledge Base**"
                 )
 
+                section_word = (
+                    "section"
+                    if len(items) == 1
+                    else "sections"
+                )
+
                 st.caption(
                     f"{len(items)} relevant "
-                    f"{'section' if len(items) == 1 else 'sections'}"
+                    f"{section_word}"
                 )
 
             for number, (
@@ -645,7 +634,6 @@ with st.sidebar:
 
         create_new_chat()
 
-
     st.markdown(
         "**Search**"
     )
@@ -662,7 +650,6 @@ with st.sidebar:
         search_text
     )
 
-
     chats = load_chats()
 
     if search_text.strip():
@@ -676,18 +663,15 @@ with st.sidebar:
 
         visible_chats = chats
 
-
     st.markdown(
         "**Recent chats**"
     )
-
 
     if not visible_chats:
 
         st.caption(
             "No conversations found."
         )
-
 
     for item in visible_chats:
 
@@ -720,7 +704,6 @@ with st.sidebar:
         else:
 
             button_text = title
-
 
         if st.button(
             button_text,
@@ -777,7 +760,6 @@ with header_right:
             expanded=False,
         )
 
-
     with settings:
 
         st.markdown(
@@ -792,13 +774,11 @@ with header_right:
             )
         )
 
-
         st.divider()
 
         st.markdown(
             "**Conversation**"
         )
-
 
         new_title = st.text_input(
             "Conversation title",
@@ -808,7 +788,6 @@ with header_right:
             ),
             key="settings_title",
         )
-
 
         if st.button(
             "Rename",
@@ -825,7 +804,6 @@ with header_right:
 
                 st.rerun()
 
-
         st.download_button(
             "Export conversation",
             data=export_markdown(chat),
@@ -834,7 +812,6 @@ with header_right:
             use_container_width=True,
             key="settings_export",
         )
-
 
         if st.button(
             "Analytics",
@@ -846,9 +823,7 @@ with header_right:
 
             st.rerun()
 
-
         st.divider()
-
 
         if st.button(
             "Delete conversation",
@@ -890,7 +865,6 @@ with header_right:
             st.session_state.attachment_signature = ""
 
             st.rerun()
-
 
         if st.button(
             "Delete all conversations",
@@ -995,7 +969,6 @@ if attached_files:
         )
     )
 
-
     for index, record in enumerate(
         attached_files
     ):
@@ -1024,7 +997,6 @@ if attached_files:
             )
         )
 
-
         with file_columns[
             index
             % len(file_columns)
@@ -1035,7 +1007,6 @@ if attached_files:
                 f"{size_display} · "
                 f"{chunk_count} sections"
             )
-
 
     with st.expander(
         "Manage attachments"
@@ -1057,18 +1028,15 @@ if attached_files:
                 or "Attached file"
             )
 
-
             left, right = st.columns(
                 [9, 1]
             )
-
 
             with left:
 
                 st.write(
                     f"📄 {filename}"
                 )
-
 
             with right:
 
@@ -1123,14 +1091,12 @@ if not chat.get(
         unsafe_allow_html=True,
     )
 
-
     st.markdown(
         "<div class='suggestion-label'>"
         "Suggestions"
         "</div>",
         unsafe_allow_html=True,
     )
-
 
     suggestions = [
         "What information is available?",
@@ -1139,11 +1105,9 @@ if not chat.get(
         "What does this document contain?",
     ]
 
-
     suggestion_columns = st.columns(
         2
     )
-
 
     for index, suggestion in enumerate(
         suggestions
@@ -1195,11 +1159,9 @@ for index, message in enumerate(
         )
     )
 
-
     with st.chat_message(
         role
     ):
-
 
         # ----------------------------------------------------
         # EDIT USER MESSAGE
@@ -1222,11 +1184,9 @@ for index, message in enumerate(
                 height=90,
             )
 
-
             save_column, cancel_column = (
                 st.columns(2)
             )
-
 
             with save_column:
 
@@ -1243,7 +1203,6 @@ for index, message in enumerate(
                     edited_text = (
                         edited_text.strip()
                     )
-
 
                     if not edited_text:
 
@@ -1266,7 +1225,6 @@ for index, message in enumerate(
 
                         st.rerun()
 
-
             with cancel_column:
 
                 if st.button(
@@ -1282,9 +1240,7 @@ for index, message in enumerate(
 
                     st.rerun()
 
-
             continue
-
 
         # ----------------------------------------------------
         # NORMAL MESSAGE
@@ -1293,7 +1249,6 @@ for index, message in enumerate(
         st.markdown(
             content
         )
-
 
         # ----------------------------------------------------
         # ASSISTANT ACTIONS
@@ -1308,7 +1263,6 @@ for index, message in enumerate(
                 )
             )
 
-
             action_columns = st.columns(
                 [
                     0.55,
@@ -1318,7 +1272,6 @@ for index, message in enumerate(
                     7.8,
                 ]
             )
-
 
             with action_columns[0]:
 
@@ -1339,7 +1292,6 @@ for index, message in enumerate(
 
                     st.rerun()
 
-
             with action_columns[1]:
 
                 if st.button(
@@ -1358,7 +1310,6 @@ for index, message in enumerate(
                     )
 
                     st.rerun()
-
 
             with action_columns[2]:
 
@@ -1379,7 +1330,6 @@ for index, message in enumerate(
                             ]
                         )
 
-
                         if (
                             previous.get(
                                 "role"
@@ -1394,19 +1344,16 @@ for index, message in enumerate(
                                 )
                             )
 
-
                             trim_chat(
                                 chat,
                                 index,
                             )
-
 
                             st.session_state.pending_question = (
                                 previous_question
                             )
 
                             st.rerun()
-
 
             with action_columns[3]:
 
@@ -1427,7 +1374,6 @@ for index, message in enumerate(
                             ]
                         )
 
-
                         if (
                             previous.get(
                                 "role"
@@ -1441,7 +1387,6 @@ for index, message in enumerate(
 
                             st.rerun()
 
-
             with action_columns[4]:
 
                 response_time = (
@@ -1449,7 +1394,6 @@ for index, message in enumerate(
                         "response_time"
                     )
                 )
-
 
                 if response_time is not None:
 
@@ -1515,18 +1459,14 @@ if supports_accept_file:
         "placeholder": "Message AI Support..."
     }
 
+    if supports_max_uploads:
 
-    if supports_accept_file:
+        chat_input_kwargs["accept_file"] = "multiple"
+        chat_input_kwargs["max_uploads"] = 10
 
-        if supports_max_uploads:
+    else:
 
-            chat_input_kwargs["accept_file"] = "multiple"
-            chat_input_kwargs["max_uploads"] = 10
-
-        else:
-
-            chat_input_kwargs["accept_file"] = True
-
+        chat_input_kwargs["accept_file"] = True
 
     if supports_file_type:
 
@@ -1541,17 +1481,14 @@ if supports_accept_file:
             "webp",
         ]
 
-
     composer = st.chat_input(
         **chat_input_kwargs
     )
-
 
     if composer is not None:
 
         composer_text = ""
         composer_files = []
-
 
         # ----------------------------------------------------
         # GET TEXT AND FILES
@@ -1575,7 +1512,6 @@ if supports_accept_file:
                 or ""
             ).strip()
 
-
             composer_files = list(
                 getattr(
                     composer,
@@ -1585,14 +1521,12 @@ if supports_accept_file:
                 or []
             )
 
-
         # ----------------------------------------------------
         # SEPARATE DOCUMENTS AND IMAGES
         # ----------------------------------------------------
 
         document_files = []
         image_files = []
-
 
         for uploaded_file in composer_files:
 
@@ -1604,13 +1538,11 @@ if supports_accept_file:
                 )
             )
 
-
             extension = (
                 Path(filename)
                 .suffix
                 .lower()
             )
-
 
             if extension in {
                 ".pdf",
@@ -1623,7 +1555,6 @@ if supports_accept_file:
                     uploaded_file
                 )
 
-
             elif extension in {
                 ".png",
                 ".jpg",
@@ -1634,7 +1565,6 @@ if supports_accept_file:
                 image_files.append(
                     uploaded_file
                 )
-
 
         # ----------------------------------------------------
         # PROCESS DOCUMENT ATTACHMENTS
@@ -1666,14 +1596,12 @@ if supports_accept_file:
                     )
                 )
 
-
             previous_signature = (
                 st.session_state.get(
                     "attachment_signature",
                     "",
                 )
             )
-
 
             if (
                 signature
@@ -1689,11 +1617,9 @@ if supports_accept_file:
                         )
                     )
 
-
                     st.session_state.attachment_signature = (
                         signature
                     )
-
 
                     if isinstance(
                         result,
@@ -1708,7 +1634,6 @@ if supports_accept_file:
                             st.error(
                                 str(error)
                             )
-
 
                         if result.get(
                             "added"
@@ -1730,7 +1655,6 @@ if supports_accept_file:
                             str(error)
                         )
 
-
         # ----------------------------------------------------
         # IMAGE ATTACHMENTS
         # ----------------------------------------------------
@@ -1751,11 +1675,9 @@ if supports_accept_file:
                     )
                 )
 
-
             st.info(
                 "Image attachment received."
             )
-
 
             st.caption(
                 "Selected: "
@@ -1764,12 +1686,10 @@ if supports_accept_file:
                 )
             )
 
-
             st.caption(
                 "Image understanding is not yet connected "
                 "to the document RAG pipeline."
             )
-
 
         # ----------------------------------------------------
         # PROCESS MESSAGE
@@ -1792,7 +1712,6 @@ else:
         "Attach a file"
     )
 
-
     fallback_files = st.file_uploader(
         "Attach documents",
         type=[
@@ -1805,7 +1724,6 @@ else:
         label_visibility="collapsed",
         key="fallback_file_uploader",
     )
-
 
     if fallback_files:
 
@@ -1833,14 +1751,12 @@ else:
                 )
             )
 
-
         previous_signature = (
             st.session_state.get(
                 "attachment_signature",
                 "",
             )
         )
-
 
         if (
             signature
@@ -1856,11 +1772,9 @@ else:
                     )
                 )
 
-
                 st.session_state.attachment_signature = (
                     signature
                 )
-
 
                 if isinstance(
                     result,
@@ -1875,7 +1789,6 @@ else:
                         st.error(
                             str(error)
                         )
-
 
                     if result.get(
                         "added"
@@ -1897,303 +1810,9 @@ else:
                         str(error)
                     )
 
-
     question = st.chat_input(
         "Message AI Support..."
     )
-
-
-    if question:
-
-        process_question(
-            question
-        )
-
-
-# ============================================================
-# FOOTER
-# ============================================================
-
-st.markdown(
-    "<div class='small-note'>"
-    "AI Support may occasionally make mistakes. "
-    "Verify important information."
-    "</div>",
-    unsafe_allow_html=True,
-)
-
-
-# ============================================================
-# MODERN COMPOSER
-# ============================================================
-
-if supports_file_upload:
-
-    composer = st.chat_input(
-        "Message AI Support...",
-        accept_file="multiple",
-        file_type=[
-            "pdf",
-            "docx",
-            "txt",
-            "csv",
-            "png",
-            "jpg",
-            "jpeg",
-            "webp",
-        ],
-        max_uploads=10,
-    )
-
-
-    if composer is not None:
-
-        composer_text = ""
-        composer_files = []
-
-
-        if isinstance(
-            composer,
-            str,
-        ):
-
-            composer_text = (
-                composer.strip()
-            )
-
-        else:
-
-            composer_text = str(
-                getattr(
-                    composer,
-                    "text",
-                    "",
-                )
-                or ""
-            ).strip()
-
-
-            composer_files = list(
-                getattr(
-                    composer,
-                    "files",
-                    [],
-                )
-                or []
-            )
-
-
-        document_files = []
-        image_files = []
-
-
-        for uploaded_file in composer_files:
-
-            filename = str(
-                getattr(
-                    uploaded_file,
-                    "name",
-                    "",
-                )
-            )
-
-
-            extension = (
-                Path(
-                    filename
-                ).suffix.lower()
-            )
-
-
-            if extension in {
-                ".pdf",
-                ".docx",
-                ".txt",
-                ".csv",
-            }:
-
-                document_files.append(
-                    uploaded_file
-                )
-
-
-            elif extension in {
-                ".png",
-                ".jpg",
-                ".jpeg",
-                ".webp",
-            }:
-
-                image_files.append(
-                    uploaded_file
-                )
-
-
-        # ----------------------------------------------------
-        # DOCUMENT FILES
-        # ----------------------------------------------------
-
-        if document_files:
-
-            signature = (
-                get_attachment_signature(
-                    document_files
-                )
-            )
-
-
-            if (
-                signature
-                != st.session_state.attachment_signature
-            ):
-
-                result = (
-                    add_conversation_files(
-                        chat["id"],
-                        document_files,
-                    )
-                )
-
-
-                st.session_state.attachment_signature = (
-                    signature
-                )
-
-
-                for error in result.get(
-                    "errors",
-                    [],
-                ):
-
-                    st.error(
-                        str(error)
-                    )
-
-
-                if result.get(
-                    "added"
-                ):
-
-                    st.rerun()
-
-
-        # ----------------------------------------------------
-        # IMAGE FILES
-        # ----------------------------------------------------
-
-        if image_files:
-
-            image_names = [
-                str(
-                    getattr(
-                        image,
-                        "name",
-                        "image",
-                    )
-                )
-                for image in image_files
-            ]
-
-
-            st.info(
-                "Image selected successfully. "
-                "The current RAG pipeline indexes PDF, DOCX, "
-                "TXT and CSV documents."
-            )
-
-
-            st.caption(
-                "Selected images: "
-                + ", ".join(
-                    image_names
-                )
-            )
-
-
-        # ----------------------------------------------------
-        # QUESTION
-        # ----------------------------------------------------
-
-        if composer_text:
-
-            process_question(
-                composer_text
-            )
-
-
-# ============================================================
-# COMPATIBILITY COMPOSER
-# ============================================================
-
-else:
-
-    st.caption(
-        "Attach a file"
-    )
-
-
-    fallback_files = st.file_uploader(
-        "Attach files",
-        type=[
-            "pdf",
-            "docx",
-            "txt",
-            "csv",
-        ],
-        accept_multiple_files=True,
-        label_visibility="collapsed",
-        key="fallback_file_uploader",
-    )
-
-
-    if fallback_files:
-
-        signature = (
-            get_attachment_signature(
-                fallback_files
-            )
-        )
-
-
-        if (
-            signature
-            != st.session_state.attachment_signature
-        ):
-
-            result = (
-                add_conversation_files(
-                    chat["id"],
-                    fallback_files,
-                )
-            )
-
-
-            st.session_state.attachment_signature = (
-                signature
-            )
-
-
-            for error in result.get(
-                "errors",
-                [],
-            ):
-
-                st.error(
-                    str(error)
-                )
-
-
-            if result.get(
-                "added"
-            ):
-
-                st.rerun()
-
-
-    question = st.chat_input(
-        "Message AI Support..."
-    )
-
 
     if question:
 
