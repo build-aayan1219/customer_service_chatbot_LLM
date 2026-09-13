@@ -3126,3 +3126,74 @@ ModuleNotFoundError("No module named 'faiss.swigfaiss_avx2'")
 2026-09-12 17:23:05,532 - src.langchain_helper - INFO - Candidate #4 | source=conversation_file | semantic=0.2747 | lexical=0.0000 | phrase=0.0000 | intent=0.0000 | relevance=0.1374
 2026-09-12 17:23:05,532 - src.langchain_helper - INFO - Candidate #5 | source=conversation_file | semantic=0.2453 | lexical=0.0000 | phrase=0.0000 | intent=0.0000 | relevance=0.1226
 2026-09-12 17:23:05,532 - src.langchain_helper - INFO - Retrieved 24 candidates; selected 0 sources
+2026-09-13 14:30:11,360 - src.langchain_helper - INFO - Retrieval started: Can I use Power BI on Mac?
+2026-09-13 14:30:11,408 - sentence_transformers.base.model - INFO - No device provided, using cpu
+2026-09-13 14:30:13,194 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/modules.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-13 14:30:13,216 - huggingface_hub.utils._http - WARNING - Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-09-13 14:30:13,238 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/modules.json "HTTP/1.1 200 OK"
+2026-09-13 14:30:13,599 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config_sentence_transformers.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-13 14:30:13,621 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/config_sentence_transformers.json "HTTP/1.1 200 OK"
+2026-09-13 14:30:13,640 - sentence_transformers.base.model - INFO - Loading SentenceTransformer model from sentence-transformers/all-MiniLM-L6-v2.
+2026-09-13 14:30:13,861 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config_sentence_transformers.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-13 14:30:13,882 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/config_sentence_transformers.json "HTTP/1.1 200 OK"
+2026-09-13 14:30:14,107 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/README.md "HTTP/1.1 307 Temporary Redirect"
+2026-09-13 14:30:14,127 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/README.md "HTTP/1.1 200 OK"
+2026-09-13 14:30:14,475 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/modules.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-13 14:30:14,493 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/modules.json "HTTP/1.1 200 OK"
+2026-09-13 14:30:14,726 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/sentence_bert_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-13 14:30:14,749 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/sentence_bert_config.json "HTTP/1.1 200 OK"
+2026-09-13 14:30:14,981 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/adapter_config.json "HTTP/1.1 404 Not Found"
+2026-09-13 14:30:15,253 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-13 14:30:15,275 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/config.json "HTTP/1.1 200 OK"
+2026-09-13 14:30:17,874 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/processor_config.json "HTTP/1.1 404 Not Found"
+2026-09-13 14:30:18,211 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-09-13 14:30:18,506 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/video_preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-09-13 14:30:18,729 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-09-13 14:30:18,956 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-13 14:30:18,984 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-09-13 14:30:19,225 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-13 14:30:19,249 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/config.json "HTTP/1.1 200 OK"
+2026-09-13 14:30:19,476 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-13 14:30:19,497 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/config.json "HTTP/1.1 200 OK"
+2026-09-13 14:30:19,721 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-13 14:30:19,742 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-09-13 14:30:20,005 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-09-13 14:30:20,235 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-09-13 14:30:21,255 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/1_Pooling/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-09-13 14:30:21,285 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/1_Pooling%2Fconfig.json "HTTP/1.1 200 OK"
+2026-09-13 14:30:21,592 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/2_Normalize/config.json "HTTP/1.1 404 Not Found"
+2026-09-13 14:30:21,915 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2 "HTTP/1.1 200 OK"
+2026-09-13 14:30:21,945 - src.langchain_helper - INFO - Embeddings model loaded
+2026-09-13 14:30:21,971 - faiss.loader - INFO - Loading faiss with AVX2 support.
+2026-09-13 14:30:21,990 - faiss.loader - INFO - Could not load library with AVX2 support due to:
+ModuleNotFoundError("No module named 'faiss.swigfaiss_avx2'")
+2026-09-13 14:30:21,992 - faiss.loader - INFO - Loading faiss.
+2026-09-13 14:30:23,563 - faiss.loader - INFO - Successfully loaded faiss.
+2026-09-13 14:30:23,835 - src.langchain_helper - INFO - Loaded global FAISS index with 108 vectors
+2026-09-13 14:30:27,084 - src.langchain_helper - INFO - Global candidates: 12
+2026-09-13 14:30:27,084 - src.langchain_helper - INFO - Conversation candidates: 0
+2026-09-13 14:30:27,092 - src.langchain_helper - INFO - Candidate #1 | source=global_knowledge | semantic=0.6223 | lexical=0.8571 | phrase=1.0000 | intent=1.0000 | relevance=0.7968
+2026-09-13 14:30:27,092 - src.langchain_helper - INFO - Candidate #2 | source=global_knowledge | semantic=0.7432 | lexical=0.8571 | phrase=0.1667 | intent=1.0000 | relevance=0.6907
+2026-09-13 14:30:27,092 - src.langchain_helper - INFO - Candidate #3 | source=global_knowledge | semantic=0.5499 | lexical=1.0000 | phrase=0.5000 | intent=1.0000 | relevance=0.6749
+2026-09-13 14:30:27,092 - src.langchain_helper - INFO - Candidate #4 | source=global_knowledge | semantic=0.6166 | lexical=0.7143 | phrase=0.3333 | intent=1.0000 | relevance=0.6464
+2026-09-13 14:30:27,093 - src.langchain_helper - INFO - Candidate #5 | source=global_knowledge | semantic=0.5637 | lexical=0.5714 | phrase=0.1667 | intent=1.0000 | relevance=0.5723
+2026-09-13 14:30:27,093 - src.langchain_helper - INFO - Retrieved 12 candidates; selected 4 sources
+2026-09-13 14:30:28,521 - src.langchain_helper - INFO - Gemini LLM initialized
+2026-09-13 14:30:28,626 - google_genai.models - INFO - AFC is enabled with max remote calls: 10.
+2026-09-13 14:30:28,627 - google_genai.models - WARNING - Direct use of automatic function calling (AFC) in Models.generate_content_stream is not recommended. Instead, we recommend to use AFC in Chat.send_message_stream. Similarly, direct use of AFC in Models.generate_content is not recommended. Instead, we recommend to use AFC in Chat.send_message.
+2026-09-13 14:30:34,214 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:streamGenerateContent?alt=sse "HTTP/1.1 200 OK"
+2026-09-13 14:34:22,021 - src.langchain_helper - INFO - Retrieval started: what is present in the attached pdf
+2026-09-13 14:34:22,209 - src.langchain_helper - INFO - File overview mode selected 10 representative chunks
+2026-09-13 14:34:22,213 - google_genai.models - INFO - AFC is enabled with max remote calls: 10.
+2026-09-13 14:34:28,426 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:streamGenerateContent?alt=sse "HTTP/1.1 200 OK"
+2026-09-13 14:40:57,835 - src.langchain_helper - INFO - Retrieval started: What is the warranty period of SmartHome Air Purifier X500?
+2026-09-13 14:40:58,903 - src.langchain_helper - INFO - Global candidates: 12
+2026-09-13 14:40:58,904 - src.langchain_helper - INFO - Conversation candidates: 12
+2026-09-13 14:40:58,916 - src.langchain_helper - INFO - Candidate #1 | source=conversation_file | semantic=0.6401 | lexical=0.5000 | phrase=0.3333 | intent=0.5000 | relevance=0.5367
+2026-09-13 14:40:58,916 - src.langchain_helper - INFO - Candidate #2 | source=global_knowledge | semantic=0.7619 | lexical=0.2000 | phrase=0.0000 | intent=0.0000 | relevance=0.4010
+2026-09-13 14:40:58,916 - src.langchain_helper - INFO - Candidate #3 | source=global_knowledge | semantic=0.6934 | lexical=0.1000 | phrase=0.0000 | intent=0.0000 | relevance=0.3567
+2026-09-13 14:40:58,917 - src.langchain_helper - INFO - Candidate #4 | source=global_knowledge | semantic=0.5277 | lexical=0.1000 | phrase=0.0000 | intent=0.0000 | relevance=0.2738
+2026-09-13 14:40:58,917 - src.langchain_helper - INFO - Candidate #5 | source=global_knowledge | semantic=0.5013 | lexical=0.2000 | phrase=0.0000 | intent=0.0000 | relevance=0.2707
+2026-09-13 14:40:58,917 - src.langchain_helper - INFO - Retrieved 24 candidates; selected 1 sources
+2026-09-13 14:40:58,920 - google_genai.models - INFO - AFC is enabled with max remote calls: 10.
+2026-09-13 14:41:01,319 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:streamGenerateContent?alt=sse "HTTP/1.1 200 OK"
