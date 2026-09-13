@@ -1,13 +1,15 @@
 import logging
 import os
 import re
+
+import pandas as pd
 from functools import lru_cache
 from pathlib import Path
 
 from dotenv import load_dotenv
 
-from langchain_community.document_loaders import CSVLoader
 from langchain_community.vectorstores import FAISS
+from langchain_core.documents import Document
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -532,21 +534,119 @@ def create_vector_db():
             f"{DATASET_PATH}"
         )
 
-    loader = CSVLoader(
-        file_path=str(
-            DATASET_PATH
-        ),
-        source_column=DATASET_CONFIG[
-            "csv_column"
-        ],
-    )
+    # Do not use LangChain CSVLoader here.  The Task 1
+    # production pipeline validates the dataset with pandas,
+    # and the dataset contains multiple columns including
+    # prompt, response, source_file and location.  Building
+    # Documents explicitly avoids CSVLoader's stricter parsing
+    # and source-column loading errors while preserving all
+    # useful dataset information for retrieval.
+    try:
+        dataframe = pd.read_csv(
+            DATASET_PATH,
+            encoding="utf-8",
+        )
+    except UnicodeDecodeError:
+        dataframe = pd.read_csv(
+            DATASET_PATH,
+            encoding="utf-8-sig",
+        )
+    except Exception as error:
+        logger.exception(
+            "Failed to read dataset with pandas: %s",
+            error,
+        )
+        raise RuntimeError(
+            f"Error loading {DATASET_PATH}: {error}"
+        ) from error
 
-    documents = loader.load()
+    if dataframe.empty:
+        raise ValueError(
+            "The dataset does not contain any documents."
+        )
+
+    documents = []
+
+    for index, row in dataframe.iterrows():
+
+        prompt = str(
+            row.get("prompt", "")
+            if pd.notna(row.get("prompt", ""))
+            else ""
+        ).strip()
+
+        response = str(
+            row.get("response", "")
+            if pd.notna(row.get("response", ""))
+            else ""
+        ).strip()
+
+        source_file = str(
+            row.get("source_file", "")
+            if pd.notna(row.get("source_file", ""))
+            else ""
+        ).strip()
+
+        location = str(
+            row.get("location", "")
+            if pd.notna(row.get("location", ""))
+            else ""
+        ).strip()
+
+        # Skip completely empty rows rather than creating an
+        # embedding for an empty string.
+        if not prompt and not response:
+            continue
+
+        # Include both the question and answer in the embedded
+        # text.  This makes retrieval work from either the user's
+        # wording or the stored support answer, while the metadata
+        # keeps source information available to the UI.
+        content_parts = []
+
+        if prompt:
+            content_parts.append(
+                f"Question: {prompt}"
+            )
+
+        if response:
+            content_parts.append(
+                f"Answer: {response}"
+            )
+
+        if source_file:
+            content_parts.append(
+                f"Source file: {source_file}"
+            )
+
+        if location:
+            content_parts.append(
+                f"Location: {location}"
+            )
+
+        metadata = {
+            "source": source_file or str(DATASET_PATH),
+            "source_file": source_file,
+            "location": location,
+            "prompt": prompt,
+            "response": response,
+            "row_index": int(index),
+            "source_type": "global_knowledge",
+            "retrieval_source": "global_knowledge",
+        }
+
+        documents.append(
+            Document(
+                page_content="\\n".join(
+                    content_parts
+                ),
+                metadata=metadata,
+            )
+        )
 
     if not documents:
         raise ValueError(
-            "The dataset does not contain "
-            "any documents."
+            "The dataset does not contain any usable documents."
         )
 
     vectordb = FAISS.from_documents(
@@ -567,8 +667,9 @@ def create_vector_db():
 
     logger.info(
         "Global FAISS database created "
-        "with %d documents",
+        "with %d documents from %d dataset rows",
         len(documents),
+        len(dataframe),
     )
 
     return vectordb
