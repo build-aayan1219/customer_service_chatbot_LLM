@@ -2,6 +2,25 @@
   "SmartHome_Air_Purifier_Test_Knowledge.txt": {
     "hash": "65a2bbe3abd267ea9da6e1c6ee70dd8e55018e2e227cb9cee8e8df556f0bdda8",
     "uploaded_at": "2026-09-07 15:25:14",
-    "active": true
+    "active": true,
+    "signature": "1582:1788774914962271100"
+  },
+  "mrmcw ug 26 fee structure.pdf": {
+    "hash": "fbd319b6972838a5306c842661ffe94b1f75495c9e68c3375bad9ac5874019f1",
+    "signature": "504221:1789125654573895400",
+    "uploaded_at": "2026-09-13 15:07:49",
+    "modified_at": "2026-09-13 15:07:49",
+    "status": "pending",
+    "active": false,
+    "pending_reason": "new or modified document detection"
+  },
+  "normal.txt": {
+    "hash": "af3e552b7406d0d5dca4fa911613dc8525c6e6a7bd35c07182e2c32398ca31c8",
+    "signature": "139:1789290975359606300",
+    "uploaded_at": "2026-09-13 15:07:49",
+    "modified_at": "2026-09-13 15:07:49",
+    "status": "pending",
+    "active": false,
+    "pending_reason": "new or modified document detection"
   }
 }
