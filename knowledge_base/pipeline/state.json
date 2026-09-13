@@ -1,13 +1,28 @@
 {
   "current_version": 0,
-  "pending": true,
-  "pending_since": "2026-09-13T15:07:50",
+  "pending": false,
+  "pending_since": null,
   "attempt": 0,
   "next_retry_at": null,
-  "last_run": "2026-09-13T15:08:40",
-  "last_result": "waiting_for_maintenance_window",
-  "last_error": null,
-  "last_quality": null,
+  "last_run": "2026-09-13T22:30:46",
+  "last_result": "rejected_quality",
+  "last_error": "Quality gate rejected candidate update.",
+  "last_quality": {
+    "candidate": {
+      "accuracy": 1.0,
+      "grounding": 0.1434,
+      "samples": 25
+    },
+    "baseline": {
+      "accuracy": 1.0,
+      "grounding": 0.1434,
+      "samples": 25
+    },
+    "accuracy_threshold": 0.95,
+    "grounding_threshold": 0.3,
+    "accuracy_ok": true,
+    "grounding_ok": false
+  },
   "last_run_id": null,
   "last_scheduled_date": "2026-09-13"
 }
