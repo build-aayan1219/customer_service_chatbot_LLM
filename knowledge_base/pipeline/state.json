@@ -1,0 +1,13 @@
+{
+  "current_version": 0,
+  "pending": true,
+  "pending_since": "2026-09-13T15:07:50",
+  "attempt": 0,
+  "next_retry_at": null,
+  "last_run": "2026-09-13T15:08:40",
+  "last_result": "waiting_for_maintenance_window",
+  "last_error": null,
+  "last_quality": null,
+  "last_run_id": null,
+  "last_scheduled_date": "2026-09-13"
+}
