@@ -59,6 +59,24 @@ RETRIEVER_CONFIG = {
 SIMILARITY_THRESHOLD = 0.7
 
 # ============================================================================
+# KNOWLEDGE BASE PRODUCTION PIPELINE
+# ============================================================================
+
+KB_PIPELINE_CONFIG = {
+    "maintenance_window_start": "02:00",
+    "maintenance_window_end": "04:00",
+    "scheduled_run_time": "01:55",
+    "minimum_accuracy": 0.30,
+    "minimum_grounding": 0.30,
+    "max_accuracy_drop": 0.05,
+    "max_grounding_drop": 0.05,
+    "retry_delays_minutes": [15, 30, 60],
+    "max_retries": 3,
+    "quality_sample_size": 25,
+    "auto_run_on_app_start": True,
+}
+
+# ============================================================================
 # UI SETTINGS
 # ============================================================================
 
