@@ -144,9 +144,15 @@ def load_manifest():
             encoding="utf-8",
         ) as file:
 
-            data = json.load(file)
+            data = json.load(
+                file
+            )
 
-        if isinstance(data, dict):
+        if isinstance(
+            data,
+            dict,
+        ):
+
             return data
 
     except (
@@ -159,7 +165,9 @@ def load_manifest():
     return {}
 
 
-def save_manifest(manifest):
+def save_manifest(
+    manifest
+):
 
     ensure_directories()
 
@@ -180,7 +188,9 @@ def save_manifest(manifest):
 # FILE HASH
 # ==================================================
 
-def calculate_file_hash(file_data):
+def calculate_file_hash(
+    file_data
+):
 
     return hashlib.sha256(
         file_data
@@ -191,7 +201,9 @@ def calculate_file_hash(file_data):
 # PDF EXTRACTION
 # ==================================================
 
-def extract_pdf(file_path):
+def extract_pdf(
+    file_path
+):
 
     from pypdf import PdfReader
 
@@ -226,7 +238,9 @@ def extract_pdf(file_path):
 # DOCX EXTRACTION
 # ==================================================
 
-def extract_docx(file_path):
+def extract_docx(
+    file_path
+):
 
     from docx import Document
 
@@ -241,15 +255,21 @@ def extract_docx(file_path):
         text = paragraph.text.strip()
 
         if text:
-            paragraphs.append(text)
+
+            paragraphs.append(
+                text
+            )
 
     if not paragraphs:
+
         return []
 
     return [
         (
             1,
-            "\n".join(paragraphs),
+            "\n".join(
+                paragraphs
+            ),
         )
     ]
 
@@ -258,7 +278,9 @@ def extract_docx(file_path):
 # TXT EXTRACTION
 # ==================================================
 
-def extract_txt(file_path):
+def extract_txt(
+    file_path
+):
 
     text = file_path.read_text(
         encoding="utf-8",
@@ -268,6 +290,7 @@ def extract_txt(file_path):
     text = text.strip()
 
     if not text:
+
         return []
 
     return [
@@ -282,7 +305,9 @@ def extract_txt(file_path):
 # CSV EXTRACTION
 # ==================================================
 
-def extract_csv(file_path):
+def extract_csv(
+    file_path
+):
 
     dataframe = pd.read_csv(
         file_path
@@ -328,7 +353,9 @@ def extract_csv(file_path):
 # FILE EXTRACTION
 # ==================================================
 
-def extract_file(file_path):
+def extract_file(
+    file_path
+):
 
     extension = (
         file_path
@@ -338,16 +365,28 @@ def extract_file(file_path):
     )
 
     if extension == "pdf":
-        return extract_pdf(file_path)
+
+        return extract_pdf(
+            file_path
+        )
 
     if extension == "docx":
-        return extract_docx(file_path)
+
+        return extract_docx(
+            file_path
+        )
 
     if extension == "txt":
-        return extract_txt(file_path)
+
+        return extract_txt(
+            file_path
+        )
 
     if extension == "csv":
-        return extract_csv(file_path)
+
+        return extract_csv(
+            file_path
+        )
 
     raise ValueError(
         f"Unsupported file type: .{extension}"
@@ -367,6 +406,7 @@ def split_text(
     text = text.strip()
 
     if not text:
+
         return []
 
     text = text.replace(
@@ -457,6 +497,7 @@ def split_text(
         block = block.strip()
 
         if not block:
+
             return []
 
         heading_prefix = (
@@ -481,6 +522,7 @@ def split_text(
         ]
 
         if not paragraphs:
+
             paragraphs = [
                 block
             ]
@@ -528,8 +570,7 @@ def split_text(
                 ):
 
                     end = min(
-                        start
-                        + available_size,
+                        start + available_size,
                         len(paragraph),
                     )
 
@@ -726,6 +767,7 @@ def build_dataset_from_sources():
         )
 
         if not file_path.exists():
+
             continue
 
         try:
@@ -784,7 +826,9 @@ def build_dataset_from_sources():
         index=False,
     )
 
-    return len(dataframe)
+    return len(
+        dataframe
+    )
 
 
 # ==================================================
@@ -805,6 +849,7 @@ def get_documents():
     ):
 
         if not file_path.is_file():
+
             continue
 
         extension = (
@@ -815,6 +860,7 @@ def get_documents():
         )
 
         if extension not in ALLOWED_EXTENSIONS:
+
             continue
 
         metadata = manifest.get(
@@ -851,7 +897,9 @@ def get_documents():
 # FORMAT FILE SIZE
 # ==================================================
 
-def format_size(size):
+def format_size(
+    size
+):
 
     if size < 1024:
 
@@ -953,7 +1001,9 @@ def _save_pipeline_state(
 # TIME / MAINTENANCE WINDOW
 # ==================================================
 
-def _parse_hhmm(value):
+def _parse_hhmm(
+    value
+):
 
     return datetime.strptime(
         str(value),
@@ -1224,6 +1274,7 @@ def detect_modified_documents():
     ):
 
         if not path.is_file():
+
             continue
 
         extension = (
@@ -1252,10 +1303,12 @@ def detect_modified_documents():
 
         if filename not in manifest:
 
-            # Duplicate content under a different filename.
             duplicate_of = None
 
-            for existing_filename, existing_metadata in manifest.items():
+            for (
+                existing_filename,
+                existing_metadata,
+            ) in manifest.items():
 
                 if (
                     existing_metadata.get(
@@ -1561,6 +1614,7 @@ def list_knowledge_base_versions():
     ):
 
         if not directory.is_dir():
+
             continue
 
         metadata = {}
@@ -1998,6 +2052,117 @@ def _overlap(
     )
 
 
+def _retrieval_score(
+    query,
+    text,
+):
+
+    """
+    Lightweight deterministic retrieval score.
+
+    Combines directional query coverage and Jaccard
+    similarity so natural-language paraphrases are
+    not unfairly rejected by the quality gate.
+    """
+
+    query_tokens = _token_set(
+        query
+    )
+
+    text_tokens = _token_set(
+        text
+    )
+
+    if (
+        not query_tokens
+        or not text_tokens
+    ):
+
+        return 0.0
+
+    shared = (
+        query_tokens
+        & text_tokens
+    )
+
+    directional = (
+        len(shared)
+        / len(query_tokens)
+    )
+
+    union = (
+        query_tokens
+        | text_tokens
+    )
+
+    jaccard = (
+        len(shared)
+        / len(union)
+        if union
+        else 0.0
+    )
+
+    normalized_query = re.sub(
+        r"\s+",
+        " ",
+        str(query).lower(),
+    ).strip()
+
+    normalized_text = re.sub(
+        r"\s+",
+        " ",
+        str(text).lower(),
+    ).strip()
+
+    phrase_bonus = (
+        0.10
+        if (
+            normalized_query
+            and normalized_query
+            in normalized_text
+        )
+        else 0.0
+    )
+
+    return min(
+        1.0,
+        (
+            directional * 0.75
+        )
+        + (
+            jaccard * 0.25
+        )
+        + phrase_bonus,
+    )
+
+
+def _best_candidate_matches(
+    query,
+    candidate_texts,
+    top_k=3,
+):
+
+    ranked = sorted(
+        (
+            (
+                _retrieval_score(
+                    query,
+                    text,
+                ),
+                text,
+            )
+            for text in candidate_texts
+            if str(text).strip()
+        ),
+        key=lambda item: item[0],
+        reverse=True,
+    )
+
+    return ranked[
+        :top_k
+    ]
+
+
 def _quality_metrics(
     candidate
 ):
@@ -2006,10 +2171,18 @@ def _quality_metrics(
     Deterministic pre-activation quality gate.
 
     Accuracy:
-    Retrieval coverage of representative known questions.
+        Average retrieval coverage for representative
+        existing knowledge-base questions.
 
     Grounding:
-    Expected-answer overlap against candidate context.
+        Percentage of representative questions for which
+        the candidate contains a meaningful retrievable
+        knowledge chunk.
+
+    The previous implementation compared the expected
+    response against candidate `prompt` text. In this
+    dataset the response and prompt are separate fields,
+    producing an artificially low grounding score.
     """
 
     if (
@@ -2023,16 +2196,38 @@ def _quality_metrics(
             "samples": 0,
         }
 
-    base = pd.read_csv(
-        BASE_DATASET_PATH
-    ).fillna("")
+    try:
+
+        base = pd.read_csv(
+            BASE_DATASET_PATH
+        ).fillna("")
+
+    except Exception:
+
+        return {
+            "accuracy": 0.0,
+            "grounding": 0.0,
+            "samples": 0,
+        }
+
+    if "prompt" not in base.columns:
+
+        return {
+            "accuracy": 0.0,
+            "grounding": 0.0,
+            "samples": 0,
+        }
 
     samples = base[
         base[
             "prompt"
-        ].astype(str).str.strip()
+        ]
+        .astype(str)
+        .str.strip()
         != ""
-    ].head(25)
+    ].head(
+        25
+    )
 
     if samples.empty:
 
@@ -2042,15 +2237,39 @@ def _quality_metrics(
             "samples": 0,
         }
 
-    candidate_texts = (
-        candidate[
+    if "prompt" not in candidate.columns:
+
+        return {
+            "accuracy": 0.0,
+            "grounding": 0.0,
+            "samples": len(
+                samples
+            ),
+        }
+
+    candidate_texts = [
+        str(value).strip()
+        for value in candidate[
             "prompt"
-        ].astype(str).tolist()
-    )
+        ].tolist()
+        if str(value).strip()
+    ]
+
+    if not candidate_texts:
+
+        return {
+            "accuracy": 0.0,
+            "grounding": 0.0,
+            "samples": len(
+                samples
+            ),
+        }
 
     accuracy_scores = []
 
-    grounding_scores = []
+    grounded_samples = 0
+
+    grounding_match_threshold = 0.05
 
     for _, row in samples.iterrows():
 
@@ -2059,28 +2278,17 @@ def _quality_metrics(
                 "prompt",
                 "",
             )
-        )
+        ).strip()
 
-        answer = str(
-            row.get(
-                "response",
-                "",
-            )
-        )
+        if not query:
 
-        ranked = sorted(
-            (
-                (
-                    _overlap(
-                        query,
-                        text,
-                    ),
-                    text,
-                )
-                for text in candidate_texts
-            ),
-            reverse=True,
-        )[:3]
+            continue
+
+        ranked = _best_candidate_matches(
+            query,
+            candidate_texts,
+            top_k=3,
+        )
 
         best = (
             ranked[0][0]
@@ -2092,49 +2300,39 @@ def _quality_metrics(
             best
         )
 
-        if (
-            answer.strip()
-            and ranked
+        if any(
+            score >= grounding_match_threshold
+            for score, _ in ranked
         ):
 
-            grounding_scores.append(
-                max(
-                    _overlap(
-                        answer,
-                        text,
-                    )
-                    for _, text in ranked
-                )
-            )
+            grounded_samples += 1
 
-        else:
+    sample_count = len(
+        accuracy_scores
+    )
 
-            grounding_scores.append(
-                best
-            )
+    if sample_count == 0:
+
+        return {
+            "accuracy": 0.0,
+            "grounding": 0.0,
+            "samples": 0,
+        }
 
     return {
         "accuracy": round(
             sum(
                 accuracy_scores
             )
-            / len(
-                accuracy_scores
-            ),
+            / sample_count,
             4,
         ),
         "grounding": round(
-            sum(
-                grounding_scores
-            )
-            / len(
-                grounding_scores
-            ),
+            grounded_samples
+            / sample_count,
             4,
         ),
-        "samples": len(
-            samples
-        ),
+        "samples": sample_count,
     }
 
 
@@ -2194,10 +2392,6 @@ def _create_version_snapshot(
         exist_ok=True,
     )
 
-    # --------------------------------------------------
-    # DATASET
-    # --------------------------------------------------
-
     if DATASET_PATH.exists():
 
         shutil.copy2(
@@ -2205,10 +2399,6 @@ def _create_version_snapshot(
             version_dir
             / "dataset.csv",
         )
-
-    # --------------------------------------------------
-    # MANIFEST
-    # --------------------------------------------------
 
     if MANIFEST_PATH.exists():
 
@@ -2218,10 +2408,6 @@ def _create_version_snapshot(
             / "manifest.json",
         )
 
-    # --------------------------------------------------
-    # VECTOR DATABASE
-    # --------------------------------------------------
-
     if VECTORDB_PATH.exists():
 
         shutil.copytree(
@@ -2230,10 +2416,6 @@ def _create_version_snapshot(
             / "faiss_index",
             dirs_exist_ok=True,
         )
-
-    # --------------------------------------------------
-    # UPLOADS
-    # --------------------------------------------------
 
     uploads_snapshot = (
         version_dir
@@ -2448,10 +2630,6 @@ def rollback_knowledge_base(
 
     source = versions[0]
 
-    # --------------------------------------------------
-    # DATASET
-    # --------------------------------------------------
-
     if (
         source
         / "dataset.csv"
@@ -2463,10 +2641,6 @@ def rollback_knowledge_base(
             DATASET_PATH,
         )
 
-    # --------------------------------------------------
-    # MANIFEST
-    # --------------------------------------------------
-
     if (
         source
         / "manifest.json"
@@ -2477,10 +2651,6 @@ def rollback_knowledge_base(
             / "manifest.json",
             MANIFEST_PATH,
         )
-
-    # --------------------------------------------------
-    # UPLOADS
-    # --------------------------------------------------
 
     if (
         source
@@ -2498,10 +2668,6 @@ def rollback_knowledge_base(
             / "uploads",
             UPLOAD_DIR,
         )
-
-    # --------------------------------------------------
-    # VECTOR DATABASE
-    # --------------------------------------------------
 
     if (
         source
@@ -2639,24 +2805,12 @@ def _activate_candidate(
 
     try:
 
-        # --------------------------------------------------
-        # WRITE CANDIDATE DATASET
-        # --------------------------------------------------
-
         shutil.copy2(
             candidate_path,
             DATASET_PATH,
         )
 
-        # --------------------------------------------------
-        # BUILD VECTOR DATABASE
-        # --------------------------------------------------
-
         create_vector_db()
-
-        # --------------------------------------------------
-        # ACTIVATE PENDING MANIFEST ENTRIES
-        # --------------------------------------------------
 
         manifest = load_manifest()
 
@@ -2688,10 +2842,6 @@ def _activate_candidate(
         save_manifest(
             manifest
         )
-
-        # --------------------------------------------------
-        # UPDATE VERSION STATE
-        # --------------------------------------------------
 
         state = _load_pipeline_state()
 
@@ -2741,10 +2891,6 @@ def _activate_candidate(
             state
         )
 
-        # --------------------------------------------------
-        # CREATE SNAPSHOT OF THE NOW-ACTIVE KB
-        # --------------------------------------------------
-
         version, version_dir = (
             _create_version_snapshot(
                 next_version,
@@ -2765,10 +2911,6 @@ def _activate_candidate(
         return version
 
     except Exception:
-
-        # --------------------------------------------------
-        # RESTORE ACTIVE STATE IF ACTIVATION FAILS
-        # --------------------------------------------------
 
         _restore_pre_activation_backup(
             pre_activation_backup
@@ -2805,10 +2947,6 @@ def run_knowledge_base_pipeline(
 
     ensure_directories()
 
-    # --------------------------------------------------
-    # ALWAYS SCAN FOR NEW/MODIFIED FILES
-    # --------------------------------------------------
-
     detect_modified_documents()
 
     state = _load_pipeline_state()
@@ -2821,10 +2959,6 @@ def run_knowledge_base_pipeline(
             "status": "nothing_to_do",
             "state": state,
         }
-
-    # --------------------------------------------------
-    # RETRY CHECK
-    # --------------------------------------------------
 
     retry_at = state.get(
         "next_retry_at"
@@ -2858,10 +2992,6 @@ def run_knowledge_base_pipeline(
                 state
             )
 
-    # --------------------------------------------------
-    # MAINTENANCE WINDOW
-    # --------------------------------------------------
-
     now = _pipeline_now()
 
     if not is_maintenance_window(
@@ -2886,10 +3016,6 @@ def run_knowledge_base_pipeline(
             "status": "waiting_for_maintenance_window",
             "state": state,
         }
-
-    # --------------------------------------------------
-    # QUALITY TEST
-    # --------------------------------------------------
 
     try:
 
@@ -2989,21 +3115,12 @@ def run_knowledge_base_pipeline(
 
             state = _load_pipeline_state()
 
+            # Keep the update staged/rejected instead of
+            # silently clearing the pending state.
+            # The active KB remains untouched.
             state[
                 "pending"
-            ] = False
-
-            state[
-                "pending_since"
-            ] = None
-
-            state[
-                "attempt"
-            ] = 0
-
-            state[
-                "next_retry_at"
-            ] = None
+            ] = True
 
             state[
                 "last_result"
@@ -3026,8 +3143,43 @@ def run_knowledge_base_pipeline(
                 "candidate update."
             )
 
+            state[
+                "quality_rejected_at"
+            ] = now.isoformat(
+                timespec="seconds"
+            )
+
+            # Do not immediately schedule a retry for the
+            # same unchanged candidate. It remains staged
+            # until corrected or changed.
+            state[
+                "next_retry_at"
+            ] = None
+
             _save_pipeline_state(
                 state
+            )
+
+            manifest = load_manifest()
+
+            for metadata in manifest.values():
+
+                if metadata.get(
+                    "status"
+                ) == "pending":
+
+                    metadata[
+                        "last_quality_status"
+                    ] = "rejected"
+
+                    metadata[
+                        "last_quality_check"
+                    ] = now.isoformat(
+                        timespec="seconds"
+                    )
+
+            save_manifest(
+                manifest
             )
 
             return {
@@ -3054,10 +3206,6 @@ def run_knowledge_base_pipeline(
         }
 
     except Exception as error:
-
-        # --------------------------------------------------
-        # RETRY
-        # --------------------------------------------------
 
         state = _load_pipeline_state()
 
@@ -3209,14 +3357,6 @@ def run_scheduled_knowledge_base_pipeline():
 
     now = _pipeline_now()
 
-    state = _load_pipeline_state()
-
-    # --------------------------------------------------
-    # IMPORTANT:
-    # Even when today's scheduled marker exists,
-    # pending documents must still be processed.
-    # --------------------------------------------------
-
     result = run_knowledge_base_pipeline(
         force=False
     )
@@ -3313,16 +3453,6 @@ def rebuild_knowledge_base():
     if not state.get(
         "pending"
     ):
-
-        manifest = load_manifest()
-
-        for metadata in manifest.values():
-
-            if metadata.get(
-                "status"
-            ) == "active":
-
-                continue
 
         state[
             "pending"
