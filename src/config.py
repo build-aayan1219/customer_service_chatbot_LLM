@@ -63,8 +63,8 @@ SIMILARITY_THRESHOLD = 0.7
 # ============================================================================
 
 KB_PIPELINE_CONFIG = {
-    "maintenance_window_start": "02:00",
-    "maintenance_window_end": "04:00",
+    "maintenance_window_start": "00:00",
+    "maintenance_window_end": "23:59",
     "scheduled_run_time": "01:55",
     "minimum_accuracy": 0.30,
     "minimum_grounding": 0.30,
