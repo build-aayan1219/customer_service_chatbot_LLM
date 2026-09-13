@@ -1,0 +1,6 @@
+PRODUCT TEST DOCUMENT
+
+Product: SmartHome Air Purifier X500
+Warranty: 3 years
+Replacement filter: 6 years
+Support number: 1800-123-456
