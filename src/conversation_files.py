@@ -11,6 +11,9 @@ from langchain_core.documents import Document
 from langchain_community.vectorstores import FAISS
 
 from src.langchain_helper import get_embeddings
+from src.evidence_processor import extract_evidence, compare_message_with_evidence, build_evidence_document
+from src.task2_security import validate_file_bytes, file_sha256, mask_sensitive_data
+from src.config import TASK2_CONFIG
 
 
 # ============================================================
@@ -35,6 +38,10 @@ ALLOWED_EXTENSIONS = {
     "docx",
     "txt",
     "csv",
+    "png",
+    "jpg",
+    "jpeg",
+    "webp",
 }
 
 MAX_FILE_SIZE_MB = 25
@@ -922,233 +929,139 @@ def list_conversation_files(
 # ADD CONVERSATION FILES
 # ============================================================
 
-def add_conversation_files(
-    chat_id,
-    uploaded_files,
-):
-    ensure_chat_directories(
-        chat_id
-    )
+def _process_payloads(chat_id, payloads):
+    ensure_chat_directories(chat_id)
+    manifest = load_manifest(chat_id)
+    result = {"added": [], "skipped": [], "errors": [], "security_rejected": []}
+    existing_count = len(manifest)
 
-    manifest = load_manifest(
-        chat_id
-    )
+    for payload in payloads:
+        file_name = sanitize_filename(payload.get("name", ""))
+        data = payload.get("data", b"")
+        extension = Path(file_name).suffix.lower().lstrip(".")
 
-    result = {
-        "added": [],
-        "skipped": [],
-        "errors": [],
-    }
-
-    if not uploaded_files:
-        return result
-
-    existing_count = len(
-        manifest
-    )
-
-    for uploaded_file in uploaded_files:
-
-        file_name = sanitize_filename(
-            uploaded_file.name
+        valid, reason = validate_file_bytes(
+            file_name,
+            data,
+            max_mb=int(TASK2_CONFIG.get("max_evidence_file_size_mb", MAX_FILE_SIZE_MB)),
         )
-
-        extension = (
-            Path(file_name)
-            .suffix
-            .lower()
-            .lstrip(".")
-        )
-
-        if extension not in ALLOWED_EXTENSIONS:
-
-            result["errors"].append(
-                f"{file_name}: "
-                f"Unsupported file type."
+        if not valid:
+            result["security_rejected" if "Unsafe" in reason or "unsafe" in reason or "injection" in reason else "errors"].append(
+                {"file_name": file_name, "reason": reason} if "Unsafe" in reason else f"{file_name}: {reason}"
             )
-
             continue
 
-        try:
-
-            file_data = (
-                uploaded_file.getvalue()
-            )
-
-        except Exception as error:
-
-            result["errors"].append(
-                f"{file_name}: "
-                f"Could not read file ({error})."
-            )
-
-            continue
-
-        size_bytes = len(
-            file_data
-        )
-
-        if (
-            size_bytes
-            > MAX_FILE_SIZE_MB
-            * 1024
-            * 1024
-        ):
-
-            result["errors"].append(
-                f"{file_name}: "
-                f"File exceeds the "
-                f"{MAX_FILE_SIZE_MB} MB limit."
-            )
-
-            continue
-
-        file_hash = (
-            calculate_file_hash(
-                file_data
-            )
-        )
-
-        duplicate = False
-
-        for record in manifest.values():
-
-            if (
-                record.get(
-                    "file_hash"
-                )
-                == file_hash
-            ):
-
-                duplicate = True
-                break
-
+        file_hash = file_sha256(data)
+        duplicate = next((record for record in manifest.values() if record.get("file_hash") == file_hash), None)
         if duplicate:
-
-            result["skipped"].append(
-                {
-                    "name": file_name,
-                    "reason": "duplicate",
-                }
-            )
-
+            result["skipped"].append({"name": file_name, "reason": "duplicate"})
             continue
-
-        if (
-            existing_count
-            >= MAX_FILES_PER_CHAT
-        ):
-
-            result["errors"].append(
-                f"Maximum of "
-                f"{MAX_FILES_PER_CHAT} "
-                f"files per conversation "
-                f"is allowed."
-            )
-
+        if existing_count >= MAX_FILES_PER_CHAT:
+            result["errors"].append(f"Maximum of {MAX_FILES_PER_CHAT} files per conversation is allowed.")
             break
 
         file_id = file_hash[:16]
-
-        file_path = (
-            get_files_directory(
-                chat_id
-            )
-            / file_name
-        )
+        file_path = get_files_directory(chat_id) / file_name
+        evidence_result = None
+        documents = []
 
         try:
+            with file_path.open("wb") as file:
+                file.write(data)
 
-            with file_path.open(
-                "wb"
-            ) as file:
+            if extension in {"png", "jpg", "jpeg", "webp"} or extension == "pdf":
+                evidence_result = extract_evidence(file_name, data)
+                if evidence_result.get("status") == "rejected_security":
+                    file_path.unlink(missing_ok=True)
+                    result["security_rejected"].append({
+                        "file_name": file_name,
+                        "reason": evidence_result.get("reason", "Unsafe instructions detected."),
+                    })
+                    continue
+                if evidence_result.get("status") != "processed":
+                    file_path.unlink(missing_ok=True)
+                    result["errors"].append(f"{file_name}: Evidence could not be processed.")
+                    continue
+                evidence_doc = build_evidence_document(evidence_result, chat_id)
+                documents = [evidence_doc]
+            else:
+                documents = create_documents(file_path, chat_id)
+                if not documents:
+                    file_path.unlink(missing_ok=True)
+                    result["errors"].append(f"{file_name}: No readable text was found.")
+                    continue
 
-                file.write(
-                    file_data
-                )
-
-            documents = create_documents(
-                file_path,
-                chat_id,
-            )
-
-            if not documents:
-
-                file_path.unlink(
-                    missing_ok=True
-                )
-
-                result["errors"].append(
-                    f"{file_name}: "
-                    f"No readable text was found."
-                )
-
-                continue
-
-            add_documents_to_index(
-                chat_id,
-                documents,
-            )
-
-            uploaded_at = (
-                datetime.utcnow()
-                .isoformat()
-                + "Z"
-            )
-
+            add_documents_to_index(chat_id, documents)
+            uploaded_at = datetime.utcnow().isoformat() + "Z"
             record = {
                 "file_name": file_name,
-                "original_name": uploaded_file.name,
+                "original_name": payload.get("original_name", file_name),
                 "file_hash": file_hash,
-                "size_bytes": size_bytes,
-                "size_display": format_file_size(
-                    size_bytes
-                ),
-                "chunk_count": len(
-                    documents
-                ),
+                "size_bytes": len(data),
+                "size_display": format_file_size(len(data)),
+                "chunk_count": len(documents),
                 "uploaded_at": uploaded_at,
                 "extension": extension,
+                "evidence_type": "image_or_pdf" if extension in {"png", "jpg", "jpeg", "webp", "pdf"} else "document",
+                "evidence_fields": (evidence_result or {}).get("fields", {}),
+                "evidence_quality": (evidence_result or {}).get("quality", 1.0),
+                "low_quality": (evidence_result or {}).get("low_quality", False),
             }
-
             manifest[file_id] = record
-
             existing_count += 1
-
-            result["added"].append(
-                {
-                    "id": file_id,
-                    **record,
-                }
-            )
-
+            result["added"].append({"id": file_id, **record})
         except Exception as error:
-
-            logger.exception(
-                "Failed processing conversation file %s",
-                file_name,
-            )
-
+            logger.exception("Failed processing conversation file %s", file_name)
             try:
-
-                file_path.unlink(
-                    missing_ok=True
-                )
-
+                file_path.unlink(missing_ok=True)
             except Exception:
                 pass
+            result["errors"].append(f"{file_name}: Processing failed: {mask_sensitive_data(str(error))}")
 
-            result["errors"].append(
-                f"{file_name}: "
-                f"Processing failed: {error}"
-            )
-
-    save_manifest(
-        chat_id,
-        manifest,
-    )
-
+    save_manifest(chat_id, manifest)
     return result
+
+
+def add_conversation_file_payloads(chat_id, payloads):
+    return _process_payloads(chat_id, payloads)
+
+
+def add_conversation_files(chat_id, uploaded_files):
+    payloads = []
+    for uploaded_file in uploaded_files or []:
+        try:
+            payloads.append({
+                "name": uploaded_file.name,
+                "original_name": uploaded_file.name,
+                "data": uploaded_file.getvalue(),
+            })
+        except Exception as error:
+            logger.warning("Could not read uploaded file: %s", mask_sensitive_data(str(error)))
+    return add_conversation_file_payloads(chat_id, payloads)
+
+
+def compare_uploaded_evidence_with_message(chat_id, message):
+    records = list_conversation_files(chat_id)
+    comparisons = []
+    for record in records:
+        fields = record.get("evidence_fields") or {}
+        if not fields:
+            continue
+        comparisons.append({
+            "file_name": record.get("file_name", ""),
+            **compare_message_with_evidence(message, {"fields": fields}),
+            "low_quality": bool(record.get("low_quality", False)),
+            "quality": record.get("evidence_quality", 1.0),
+        })
+    conflicts = [item for item in comparisons if item.get("has_conflict")]
+    low_quality = [item for item in comparisons if item.get("low_quality")]
+    return {
+        "comparisons": comparisons,
+        "has_conflict": bool(conflicts),
+        "has_low_quality": bool(low_quality),
+        "conflicts": conflicts,
+        "low_quality": low_quality,
+    }
 
 
 # ============================================================

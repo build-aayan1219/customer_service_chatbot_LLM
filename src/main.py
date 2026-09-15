@@ -30,13 +30,17 @@ from src.chat_manager import (
 from src.langchain_helper import get_qa_stream
 from src.conversation_files import (
     add_conversation_files,
+    add_conversation_file_payloads,
+    compare_uploaded_evidence_with_message,
     delete_all_conversation_files,
     delete_conversation_files,
     get_attachment_signature,
     list_conversation_files,
     remove_conversation_file,
 )
-from src.config import LLM_CONFIG, SUGGESTED_QUESTIONS, KB_PIPELINE_CONFIG
+from src.config import LLM_CONFIG, SUGGESTED_QUESTIONS, KB_PIPELINE_CONFIG, TASK2_CONFIG
+from src.background_queue import get_job, run_with_timeout, cleanup_old_jobs
+from src.retention_manager import cleanup_expired_files
 from src.knowledge_base import run_scheduled_knowledge_base_pipeline
 
 st.set_page_config(
@@ -91,6 +95,8 @@ def init_state():
         st.session_state.pending_regenerate = None
     if "temperature" not in st.session_state:
         st.session_state.temperature = float(LLM_CONFIG.get("temperature", 0.1))
+    if "task2_jobs" not in st.session_state:
+        st.session_state.task2_jobs = []
 
 
 if KB_PIPELINE_CONFIG.get("auto_run_on_app_start", True):
@@ -100,6 +106,13 @@ if KB_PIPELINE_CONFIG.get("auto_run_on_app_start", True):
         pass
 
 init_state()
+
+# Task 2 maintenance: retention cleanup and old background-job cleanup.
+try:
+    cleanup_expired_files()
+    cleanup_old_jobs(int(TASK2_CONFIG.get("background_job_retention_hours", 24)))
+except Exception:
+    pass
 current_chat = find_chat(st.session_state.chats, st.session_state.current_chat_id)
 if current_chat is None:
     current_chat = create_chat()
@@ -370,12 +383,15 @@ if files:
         for record in files:
             file_id = record.get("id")
             name = record.get("file_name", "Attached file")
-            size = record.get("size", 0)
+            size = record.get("size_bytes", record.get("size", 0))
             chunks = record.get("chunk_count", 0)
             col1, col2 = st.columns([5, 1])
             with col1:
                 st.markdown(f"**📄 {name}**")
-                st.caption(f"{size / 1024:.1f} KB · {chunks} chunks")
+                quality = record.get("evidence_quality")
+                quality_text = f" · evidence quality {quality}" if quality is not None else ""
+                low_text = " · ⚠️ low quality" if record.get("low_quality") else ""
+                st.caption(f"{size / 1024:.1f} KB · {chunks} chunks{quality_text}{low_text}")
             with col2:
                 if st.button("Remove", key=f"remove_file_{file_id}"):
                     remove_conversation_file(current_chat_id, file_id)
@@ -463,27 +479,53 @@ if st.session_state.get("copy_text"):
 # File upload composer area
 with st.expander("＋ Attach files", expanded=False):
     uploaded_files = st.file_uploader(
-        "PDF, DOCX, TXT or CSV",
-        type=["pdf", "docx", "txt", "csv"],
+        "PDF, DOCX, TXT, CSV, PNG, JPG, JPEG or WEBP",
+        type=["pdf", "docx", "txt", "csv", "png", "jpg", "jpeg", "webp"],
         accept_multiple_files=True,
         label_visibility="collapsed",
-        help="Files are processed automatically and scoped to this conversation.",
+        help="Attach documents, screenshots, invoices or product images. Evidence is processed and scoped to this conversation.",
     )
     if uploaded_files:
         signature = get_attachment_signature(uploaded_files)
         key = f"processed_upload_{current_chat_id}"
         if st.session_state.get(key) != signature:
             st.session_state[key] = signature
-            with st.spinner("Processing attached files..."):
-                result = add_conversation_files(current_chat_id, uploaded_files)
-            for record in result.get("added", []):
-                st.success(f"📄 {record['file_name']} is ready.")
-            for record in result.get("skipped", []):
-                st.info(f"📄 {record['name']} is already attached.")
-            for error in result.get("errors", []):
-                st.error(error)
-            if result.get("added"):
-                st.rerun()
+            payloads = []
+            for item in uploaded_files:
+                payloads.append({
+                    "name": item.name,
+                    "original_name": item.name,
+                    "data": item.getvalue(),
+                })
+            with st.spinner("Processing evidence..."):
+                job = run_with_timeout(
+                    add_conversation_file_payloads,
+                    current_chat_id,
+                    payloads,
+                    timeout_seconds=int(TASK2_CONFIG.get("processing_timeout_seconds", 30)),
+                    description="Customer evidence processing",
+                )
+            if job.get("status") == "queued":
+                if job.get("id") not in st.session_state.task2_jobs:
+                    st.session_state.task2_jobs.append(job.get("id"))
+                st.info("⏳ Processing is taking longer than 30 seconds. Your files have been moved to the background queue and will continue automatically.")
+                st.caption(f"Background job: `{job.get('id', '')}`")
+            elif job.get("status") == "completed":
+                result = job.get("result") or {}
+                for record in result.get("added", []):
+                    quality = record.get("evidence_quality", 1.0)
+                    suffix = " · ⚠️ low image quality" if record.get("low_quality") else ""
+                    st.success(f"📎 {record['file_name']} is ready · evidence quality {quality}{suffix}")
+                for record in result.get("skipped", []):
+                    st.info(f"📎 {record['name']} is already attached.")
+                for item in result.get("security_rejected", []):
+                    st.error(f"🛡️ {item.get('file_name', 'File')}: {item.get('reason', 'Security policy rejected this file.')}")
+                for error in result.get("errors", []):
+                    st.error(error)
+                if result.get("added"):
+                    st.rerun()
+            else:
+                st.error(f"Evidence processing failed: {job.get('error', 'Unknown error')}")
 
 
 def process_question(question, save_user=True):
@@ -495,17 +537,37 @@ def process_question(question, save_user=True):
     start = time.perf_counter()
     try:
         with st.chat_message("assistant"):
-            stream, sources = get_qa_stream(
-                question,
-                chat_history=current_chat["messages"][:-1] if save_user else current_chat["messages"],
-                chat_id=current_chat_id,
-                temperature=st.session_state.temperature,
-            )
-            answer = st.write_stream(stream)
-            answer = str(answer or "").strip()
+            evidence_context = compare_uploaded_evidence_with_message(current_chat_id, question)
+            clarification = None
+            if evidence_context.get("has_conflict"):
+                clarification = (
+                    "I found conflicting information between your message and the uploaded evidence. "
+                    "Please confirm the correct order ID, date, amount, product, or error code."
+                )
+            elif evidence_context.get("has_low_quality"):
+                clarification = (
+                    "The uploaded evidence appears too unclear to verify reliably. "
+                    "Please upload a clearer image or a higher-quality copy."
+                )
+
+            if clarification:
+                answer = clarification
+                sources = []
+            else:
+                stream, sources = get_qa_stream(
+                    question,
+                    chat_history=current_chat["messages"][:-1] if save_user else current_chat["messages"],
+                    chat_id=current_chat_id,
+                    temperature=st.session_state.temperature,
+                )
+                answer = st.write_stream(stream)
+                answer = str(answer or "").strip()
+                if sources:
+                    render_sources(sources)
+
             elapsed = time.perf_counter() - start
-            if sources:
-                render_sources(sources)
+            st.caption(f"Processed in {elapsed:.2f}s")
+
         add_message(current_chat, "assistant", answer, sources=sources, response_time=elapsed)
         refresh_chats()
     except Exception as error:
