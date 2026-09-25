@@ -53,20 +53,218 @@ st.set_page_config(
 st.markdown(
     """
 <style>
-#MainMenu {visibility:hidden;}
-footer {visibility:hidden;}
-header {visibility:hidden;}
-.block-container {padding-top:1.25rem; padding-bottom:7rem; max-width:1180px;}
-.title {font-size:2rem;font-weight:750;letter-spacing:-.03em;margin:0;}
-.subtitle {color:#777;margin-top:2px;margin-bottom:18px;}
-.welcome {max-width:760px;margin:70px auto 24px;padding:44px 28px;text-align:center;border:1px solid rgba(128,128,128,.18);border-radius:24px;background:rgba(128,128,128,.045);}
-.welcome-icon {font-size:42px}.welcome-title {font-size:28px;font-weight:750;margin:10px 0}.welcome-text{color:#777;line-height:1.6}
-.source-group {border:1px solid rgba(128,128,128,.20);border-radius:14px;padding:13px 15px;margin:8px 0;background:rgba(128,128,128,.035);}
-.source-file {font-weight:700}.source-meta{font-size:12px;color:#777;margin-top:3px}.source-section{font-size:13px;margin-top:9px;padding-top:8px;border-top:1px solid rgba(128,128,128,.13)}
-.file-card {border:1px solid rgba(128,128,128,.18);border-radius:13px;padding:12px;margin:6px 0;background:rgba(128,128,128,.035);}
-.small-muted {font-size:12px;color:#777;}
-.stat-card {padding:18px;border:1px solid rgba(128,128,128,.18);border-radius:16px;background:rgba(128,128,128,.04);}
-.sidebar-brand {font-size:19px;font-weight:750;margin-bottom:12px;}
+#MainMenu { visibility: hidden; }
+footer { visibility: hidden; }
+header { visibility: hidden; }
+
+html, body, [class*="css"] {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #0F172A;
+}
+
+.block-container {
+    padding-top: 1.5rem;
+    padding-bottom: 6.5rem;
+    max-width: 1000px;
+}
+
+/* Header & Title */
+.title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: #0F172A;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.subtitle {
+    color: #64748B;
+    font-size: 0.875rem;
+    margin-top: 2px;
+    margin-bottom: 16px;
+    font-weight: 400;
+}
+
+/* Sidebar Styling */
+section[data-testid="stSidebar"] {
+    background-color: #F8FAFC;
+    border-right: 1px solid #E2E8F0;
+}
+
+.sidebar-brand {
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #0F172A;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+section[data-testid="stSidebar"] h3 {
+    font-size: 0.72rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748B !important;
+    font-weight: 600 !important;
+    margin-top: 16px !important;
+    margin-bottom: 8px !important;
+}
+
+section[data-testid="stSidebar"] div.stButton > button {
+    border-radius: 8px;
+    border: 1px solid #E2E8F0;
+    background-color: #FFFFFF;
+    color: #1E293B;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.15s ease;
+}
+
+section[data-testid="stSidebar"] div.stButton > button:hover {
+    background-color: #F1F5F9;
+    border-color: #CBD5E1;
+    color: #0F172A;
+}
+
+section[data-testid="stSidebar"] div.stButton > button[kind="primary"] {
+    background-color: #0F172A;
+    color: #FFFFFF;
+    border: none;
+    font-weight: 600;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+section[data-testid="stSidebar"] div.stButton > button[kind="primary"]:hover {
+    background-color: #1E293B;
+    color: #FFFFFF;
+}
+
+/* Welcome Hero Container */
+.welcome {
+    max-width: 660px;
+    margin: 36px auto 24px;
+    padding: 36px 28px;
+    text-align: center;
+    border: 1px solid #E2E8F0;
+    border-radius: 20px;
+    background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.welcome-icon {
+    font-size: 38px;
+    margin-bottom: 10px;
+    display: inline-block;
+}
+
+.welcome-title {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: #0F172A;
+    letter-spacing: -0.025em;
+    margin: 6px 0;
+}
+
+.welcome-text {
+    color: #64748B;
+    font-size: 0.9rem;
+    line-height: 1.55;
+}
+
+/* Source Group & Citations */
+.source-group {
+    border: 1px solid #E2E8F0;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin: 8px 0;
+    background-color: #F8FAFC;
+}
+
+.source-file {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #1E293B;
+}
+
+.source-meta {
+    font-size: 0.75rem;
+    color: #64748B;
+    margin-top: 2px;
+}
+
+.source-section {
+    font-size: 0.8rem;
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px solid #E2E8F0;
+}
+
+/* File Cards */
+.file-card {
+    border: 1px solid #E2E8F0;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin: 6px 0;
+    background-color: #FFFFFF;
+}
+
+.small-muted {
+    font-size: 0.75rem;
+    color: #64748B;
+}
+
+.stat-card {
+    padding: 16px;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    background-color: #FFFFFF;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+
+/* Chat Messages */
+div[data-testid="stChatMessage"] {
+    padding: 16px 20px;
+    border-radius: 16px;
+    margin-bottom: 14px;
+    border: 1px solid #E2E8F0;
+    background-color: #FFFFFF;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+div[data-testid="stChatMessage"]:has(div[aria-label="Chat message from user"]) {
+    background-color: #F8FAFC;
+    border-color: #E2E8F0;
+}
+
+/* Modern Input Composer */
+div[data-testid="stChatInput"] {
+    border-radius: 14px;
+    border: 1px solid #CBD5E1;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+div[data-testid="stChatInput"]:focus-within {
+    border-color: #2563EB;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+/* Custom button touch target & hover transitions */
+div.stButton > button {
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.15s ease-in-out;
+}
+
+div.stButton > button:hover {
+    border-color: #CBD5E1;
+    background-color: #F8FAFC;
+}
 </style>
 """,
     unsafe_allow_html=True,
