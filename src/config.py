@@ -62,9 +62,24 @@ SIMILARITY_THRESHOLD = 0.7
 # KNOWLEDGE BASE PRODUCTION PIPELINE
 # ============================================================================
 
+TASK2_CONFIG = {
+    "enable_evidence_analysis": True,
+    "enable_gemini_vision": True,
+    "vision_model": "gemini-3.6-flash",
+    "minimum_image_quality": 0.55,
+    "processing_timeout_seconds": 30,
+    "retention_hours": 24,
+    "max_evidence_file_size_mb": 25,
+    "background_job_retention_hours": 24,
+}
+
+# ============================================================================
+# KNOWLEDGE BASE PRODUCTION PIPELINE
+# ============================================================================
+
 KB_PIPELINE_CONFIG = {
-    "maintenance_window_start": "00:00",
-    "maintenance_window_end": "23:59",
+    "maintenance_window_start": "02:00",
+    "maintenance_window_end": "04:00",
     "scheduled_run_time": "01:55",
     "minimum_accuracy": 0.30,
     "minimum_grounding": 0.30,
