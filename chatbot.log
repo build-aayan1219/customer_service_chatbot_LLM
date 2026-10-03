@@ -3340,3 +3340,161 @@ ModuleNotFoundError("No module named 'faiss.swigfaiss_avx2'")
 2026-09-13 23:06:16,832 - google_genai.models - INFO - AFC is enabled with max remote calls: 10.
 2026-09-13 23:06:16,833 - google_genai.models - WARNING - Direct use of automatic function calling (AFC) in Models.generate_content_stream is not recommended. Instead, we recommend to use AFC in Chat.send_message_stream. Similarly, direct use of AFC in Models.generate_content is not recommended. Instead, we recommend to use AFC in Chat.send_message.
 2026-09-13 23:06:21,303 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:streamGenerateContent?alt=sse "HTTP/1.1 200 OK"
+2026-09-15 23:25:27,611 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-09-15 23:25:27,702 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-09-15 23:34:59,463 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-09-15 23:34:59,463 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-09-15 23:35:00,460 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-09-15 23:35:00,460 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-09-16 00:13:37,202 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-09-16 00:13:37,273 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-09-25 20:02:41,837 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-09-25 20:02:41,880 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-09-25 20:03:30,523 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-09-25 20:03:30,523 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-09-25 20:03:31,399 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-09-25 20:03:31,400 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-09-25 20:03:32,012 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-09-25 20:03:32,013 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-09-25 20:03:33,081 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-09-25 20:03:33,082 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-09-25 20:03:36,083 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-09-25 20:03:36,084 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-09-25 20:03:36,398 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-09-25 20:03:36,399 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-09-25 20:03:51,910 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-09-25 20:03:51,911 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-09-25 20:03:52,297 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-09-25 20:03:52,298 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-09-26 00:32:24,875 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-09-26 00:32:24,899 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 21:58:17,748 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 21:58:17,937 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 22:43:34,531 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 22:43:34,534 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 22:54:40,329 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 22:54:40,329 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 22:54:41,008 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 22:54:41,009 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 22:54:41,728 - src.langchain_helper - INFO - Retrieval started: Tableau vs Power BI?
+2026-10-03 22:54:42,062 - sentence_transformers.base.model - INFO - No device provided, using cpu
+2026-10-03 22:54:45,493 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/agent-harnesses "HTTP/1.1 200 OK"
+2026-10-03 22:54:45,884 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/modules.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-03 22:54:46,005 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/modules.json "HTTP/1.1 200 OK"
+2026-10-03 22:54:46,533 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config_sentence_transformers.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-03 22:54:46,533 - huggingface_hub.utils._http - WARNING - Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-10-03 22:54:46,647 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/config_sentence_transformers.json "HTTP/1.1 200 OK"
+2026-10-03 22:54:46,671 - sentence_transformers.base.model - INFO - Loading SentenceTransformer model from sentence-transformers/all-MiniLM-L6-v2.
+2026-10-03 22:54:47,037 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config_sentence_transformers.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-03 22:54:47,129 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/config_sentence_transformers.json "HTTP/1.1 200 OK"
+2026-10-03 22:54:47,480 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/README.md "HTTP/1.1 307 Temporary Redirect"
+2026-10-03 22:54:47,558 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/README.md "HTTP/1.1 200 OK"
+2026-10-03 22:54:48,985 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/modules.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-03 22:54:49,165 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/modules.json "HTTP/1.1 200 OK"
+2026-10-03 22:54:49,597 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/sentence_bert_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-03 22:54:49,692 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/sentence_bert_config.json "HTTP/1.1 200 OK"
+2026-10-03 22:54:50,077 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/adapter_config.json "HTTP/1.1 404 Not Found"
+2026-10-03 22:54:50,459 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-03 22:54:50,566 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/config.json "HTTP/1.1 200 OK"
+2026-10-03 22:54:55,027 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/processor_config.json "HTTP/1.1 404 Not Found"
+2026-10-03 22:54:55,639 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-10-03 22:54:56,045 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/video_preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-10-03 22:54:56,450 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-10-03 22:54:56,862 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-03 22:54:57,069 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-10-03 22:54:57,475 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-03 22:54:57,685 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/config.json "HTTP/1.1 200 OK"
+2026-10-03 22:54:58,094 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-03 22:54:58,296 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/config.json "HTTP/1.1 200 OK"
+2026-10-03 22:54:58,705 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-03 22:54:58,810 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-10-03 22:55:00,351 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-10-03 22:55:00,756 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-10-03 22:55:02,287 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/1_Pooling/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-10-03 22:55:02,497 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/1110a243fdf4706b3f48f1d95db1a4f5529b4d41/1_Pooling%2Fconfig.json "HTTP/1.1 200 OK"
+2026-10-03 22:55:03,006 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/2_Normalize/config.json "HTTP/1.1 404 Not Found"
+2026-10-03 22:55:03,417 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2 "HTTP/1.1 200 OK"
+2026-10-03 22:55:03,490 - src.langchain_helper - INFO - Embeddings model loaded
+2026-10-03 22:55:03,568 - faiss.loader - INFO - Loading faiss with AVX2 support.
+2026-10-03 22:55:03,568 - faiss.loader - INFO - Could not load library with AVX2 support due to:
+ModuleNotFoundError("No module named 'faiss.swigfaiss_avx2'")
+2026-10-03 22:55:03,568 - faiss.loader - INFO - Loading faiss.
+2026-10-03 22:55:18,784 - faiss.loader - INFO - Successfully loaded faiss.
+2026-10-03 22:55:20,608 - src.langchain_helper - INFO - Loaded global FAISS index with 111 vectors
+2026-10-03 22:55:41,559 - src.langchain_helper - INFO - Global candidates: 12
+2026-10-03 22:55:41,559 - src.langchain_helper - INFO - Conversation candidates: 0
+2026-10-03 22:55:41,598 - src.langchain_helper - INFO - Candidate #1 | source=global_knowledge | semantic=0.8361 | lexical=0.7500 | phrase=0.3333 | intent=1.0000 | relevance=0.7597
+2026-10-03 22:55:41,598 - src.langchain_helper - INFO - Candidate #2 | source=global_knowledge | semantic=0.8166 | lexical=0.7500 | phrase=0.3333 | intent=1.0000 | relevance=0.7500
+2026-10-03 22:55:41,598 - src.langchain_helper - INFO - Candidate #3 | source=global_knowledge | semantic=0.8162 | lexical=0.7500 | phrase=0.3333 | intent=1.0000 | relevance=0.7497
+2026-10-03 22:55:41,598 - src.langchain_helper - INFO - Candidate #4 | source=global_knowledge | semantic=0.2483 | lexical=0.5000 | phrase=0.3333 | intent=1.0000 | relevance=0.4408
+2026-10-03 22:55:41,598 - src.langchain_helper - INFO - Candidate #5 | source=global_knowledge | semantic=0.2136 | lexical=0.5000 | phrase=0.3333 | intent=1.0000 | relevance=0.4234
+2026-10-03 22:55:41,598 - src.langchain_helper - INFO - Retrieved 12 candidates; selected 3 sources
+2026-10-03 22:55:51,307 - src.langchain_helper - INFO - Gemini LLM initialized
+2026-10-03 22:55:51,594 - google_genai.models - INFO - AFC is enabled with max remote calls: 10.
+2026-10-03 22:55:51,594 - google_genai.models - WARNING - Direct use of automatic function calling (AFC) in Models.generate_content_stream is not recommended. Instead, we recommend to use AFC in Chat.send_message_stream. Similarly, direct use of AFC in Models.generate_content is not recommended. Instead, we recommend to use AFC in Chat.send_message.
+2026-10-03 22:55:58,922 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:streamGenerateContent?alt=sse "HTTP/1.1 200 OK"
+2026-10-03 22:56:04,478 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 22:56:04,478 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 22:58:39,273 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 22:58:39,275 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 22:58:46,767 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 22:58:46,767 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 22:58:51,345 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 22:58:51,345 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 22:58:52,057 - src.langchain_helper - INFO - Retrieval started: inspect the attached pdf
+2026-10-03 22:58:54,976 - src.langchain_helper - INFO - Global candidates: 12
+2026-10-03 22:58:54,976 - src.langchain_helper - INFO - Conversation candidates: 1
+2026-10-03 22:58:55,183 - src.langchain_helper - INFO - Candidate #1 | source=global_knowledge | semantic=0.9166 | lexical=0.2500 | phrase=0.0000 | intent=0.0000 | relevance=0.4833
+2026-10-03 22:58:55,183 - src.langchain_helper - INFO - Candidate #2 | source=global_knowledge | semantic=0.9148 | lexical=0.2500 | phrase=0.0000 | intent=0.0000 | relevance=0.4824
+2026-10-03 22:58:55,183 - src.langchain_helper - INFO - Candidate #3 | source=global_knowledge | semantic=0.9119 | lexical=0.2500 | phrase=0.0000 | intent=0.0000 | relevance=0.4809
+2026-10-03 22:58:55,183 - src.langchain_helper - INFO - Candidate #4 | source=global_knowledge | semantic=0.3521 | lexical=0.2500 | phrase=0.0000 | intent=0.0000 | relevance=0.2010
+2026-10-03 22:58:55,183 - src.langchain_helper - INFO - Candidate #5 | source=global_knowledge | semantic=0.2799 | lexical=0.2500 | phrase=0.0000 | intent=0.0000 | relevance=0.1650
+2026-10-03 22:58:55,183 - src.langchain_helper - INFO - Retrieved 13 candidates; selected 3 sources
+2026-10-03 22:58:55,459 - google_genai.models - INFO - AFC is enabled with max remote calls: 10.
+2026-10-03 22:59:00,675 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:streamGenerateContent?alt=sse "HTTP/1.1 200 OK"
+2026-10-03 22:59:02,238 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 22:59:02,246 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 23:26:16,060 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 23:26:16,139 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 23:27:22,902 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 23:27:22,902 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 23:27:23,691 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 23:27:23,691 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 23:27:47,275 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 23:27:47,282 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 23:27:48,466 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 23:27:48,466 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 23:27:48,584 - src.langchain_helper - INFO - Retrieval started: inspect the attached pdf
+2026-10-03 23:27:56,751 - src.langchain_helper - INFO - Global candidates: 12
+2026-10-03 23:27:56,751 - src.langchain_helper - INFO - Conversation candidates: 1
+2026-10-03 23:27:56,900 - src.langchain_helper - INFO - Candidate #1 | source=global_knowledge | semantic=0.9180 | lexical=0.2500 | phrase=0.0000 | intent=0.0000 | relevance=0.4840
+2026-10-03 23:27:56,900 - src.langchain_helper - INFO - Candidate #2 | source=global_knowledge | semantic=0.9166 | lexical=0.2500 | phrase=0.0000 | intent=0.0000 | relevance=0.4833
+2026-10-03 23:27:56,900 - src.langchain_helper - INFO - Candidate #3 | source=global_knowledge | semantic=0.9078 | lexical=0.2500 | phrase=0.0000 | intent=0.0000 | relevance=0.4789
+2026-10-03 23:27:56,900 - src.langchain_helper - INFO - Candidate #4 | source=global_knowledge | semantic=0.3522 | lexical=0.2500 | phrase=0.0000 | intent=0.0000 | relevance=0.2011
+2026-10-03 23:27:56,900 - src.langchain_helper - INFO - Candidate #5 | source=global_knowledge | semantic=0.2802 | lexical=0.2500 | phrase=0.0000 | intent=0.0000 | relevance=0.1651
+2026-10-03 23:27:56,900 - src.langchain_helper - INFO - Retrieved 13 candidates; selected 3 sources
+2026-10-03 23:27:57,258 - google_genai.models - INFO - AFC is enabled with max remote calls: 10.
+2026-10-03 23:28:02,724 - httpx - INFO - HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:streamGenerateContent?alt=sse "HTTP/1.1 200 OK"
+2026-10-03 23:28:03,647 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 23:28:03,655 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 23:28:06,604 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 23:28:06,612 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 23:28:07,829 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 23:28:07,829 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 23:28:24,504 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 23:28:24,504 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 23:28:30,379 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 23:28:30,379 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 23:28:33,695 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 23:28:33,695 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 23:28:33,969 - src.langchain_helper - INFO - Retrieval started: inspect the attached pdf
+2026-10-03 23:28:34,752 - src.langchain_helper - INFO - Global candidates: 12
+2026-10-03 23:28:34,752 - src.langchain_helper - INFO - Conversation candidates: 1
+2026-10-03 23:28:34,782 - src.langchain_helper - INFO - Candidate #1 | source=global_knowledge | semantic=0.0000 | lexical=0.5000 | phrase=0.3333 | intent=0.0000 | relevance=0.1167
+2026-10-03 23:28:34,782 - src.langchain_helper - INFO - Candidate #2 | source=conversation_file | semantic=0.0000 | lexical=0.5000 | phrase=0.0000 | intent=0.0000 | relevance=0.0500
+2026-10-03 23:28:34,782 - src.langchain_helper - INFO - Candidate #3 | source=global_knowledge | semantic=0.0000 | lexical=0.2500 | phrase=0.0000 | intent=0.0000 | relevance=0.0250
+2026-10-03 23:28:34,782 - src.langchain_helper - INFO - Candidate #4 | source=global_knowledge | semantic=0.0000 | lexical=0.2500 | phrase=0.0000 | intent=0.0000 | relevance=0.0250
+2026-10-03 23:28:34,782 - src.langchain_helper - INFO - Candidate #5 | source=global_knowledge | semantic=0.0000 | lexical=0.2500 | phrase=0.0000 | intent=0.0000 | relevance=0.0250
+2026-10-03 23:28:34,782 - src.langchain_helper - INFO - Retrieved 13 candidates; selected 0 sources
+2026-10-03 23:28:36,042 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
+2026-10-03 23:28:36,044 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
