@@ -1,6 +1,8 @@
 import hashlib
 import logging
 import re
+import zipfile
+import io
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -45,17 +47,38 @@ PERSONAL_PATTERNS = [
 
 
 def is_safe_filename(filename: str) -> tuple[bool, str]:
-    name = Path(str(filename or "")).name
+    raw_name = str(filename or "")
+    name = Path(raw_name).name
     ext = Path(name).suffix.lower().lstrip(".")
-    if not name or name in {".", ".."}:
+    if not raw_name or name in {".", ".."}:
         return False, "Invalid filename."
+    if any(part in raw_name.lower().replace("/", "\\") for part in ("..\\", ":\\")) or "/" in raw_name or "\\" in raw_name:
+        return False, "Unsafe filename/path detected."
     if ext in UNSAFE_EXTENSIONS:
         return False, f"Unsafe file type '.{ext}' is not allowed."
     if ext not in ALLOWED_EVIDENCE_EXTENSIONS:
         return False, f"Unsupported evidence file type '.{ext}'."
-    if any(part in name.lower() for part in ("..", "\\", "/")):
-        return False, "Unsafe filename/path detected."
     return True, ""
+
+
+def _signature_matches(extension: str, data: bytes) -> bool:
+    if extension == "pdf":
+        return data.startswith(b"%PDF-")
+    if extension in {"jpg", "jpeg"}:
+        return data.startswith(b"\xff\xd8\xff")
+    if extension == "png":
+        return data.startswith(b"\x89PNG\r\n\x1a\n")
+    if extension == "webp":
+        return data.startswith(b"RIFF") and data[8:12] == b"WEBP"
+    if extension == "docx":
+        if not data.startswith(b"PK"):
+            return False
+        try:
+            with zipfile.ZipFile(io.BytesIO(data)) as archive:
+                return "[Content_Types].xml" in archive.namelist() and "word/document.xml" in archive.namelist()
+        except Exception:
+            return False
+    return True
 
 
 def validate_file_bytes(filename: str, data: bytes, max_mb: int = 25) -> tuple[bool, str]:
@@ -66,6 +89,9 @@ def validate_file_bytes(filename: str, data: bytes, max_mb: int = 25) -> tuple[b
         return False, "The uploaded file is empty."
     if len(data) > max_mb * 1024 * 1024:
         return False, f"File exceeds the {max_mb} MB limit."
+    extension = Path(filename).suffix.lower().lstrip(".")
+    if not _signature_matches(extension, data):
+        return False, f"File content does not match the '.{extension}' file type."
     return True, ""
 
 
