@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import streamlit as st
 from dotenv import load_dotenv
@@ -23,9 +24,54 @@ st.set_page_config(
 load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 
 # 4. Safe imports (works with both 'src.' and direct imports)
-from langchain_helper import get_qa_chain, create_vector_db
-from sentiment_analyzer import analyze_sentiment
-from knowledge_retriever import search_knowledge_base
+from langchain_helper import (
+    create_vector_db,
+    get_qa_chain,
+    retrieve_documents,
+)
+
+
+def analyze_sentiment(text):
+    """Return the sentiment contract expected by the chat UI."""
+    positive_words = {
+        "amazing", "awesome", "excellent", "good", "great", "happy",
+        "helpful", "love", "perfect", "thanks", "thank", "wonderful",
+    }
+    negative_words = {
+        "angry", "bad", "broken", "disappointed", "error", "hate",
+        "issue", "poor", "problem", "refund", "sad", "terrible",
+    }
+    words = set(re.findall(r"\b[a-z]+\b", str(text).lower()))
+    positive_score = len(words & positive_words)
+    negative_score = len(words & negative_words)
+
+    if negative_score > positive_score:
+        sentiment = "Negative"
+    elif positive_score > negative_score:
+        sentiment = "Positive"
+    else:
+        sentiment = "Neutral"
+
+    return sentiment, {
+        "Positive": positive_score,
+        "Negative": negative_score,
+        "Neutral": int(sentiment == "Neutral"),
+    }
+
+
+def search_knowledge_base(query, top_k=3):
+    """Adapt the shared document retriever to the UI's source format."""
+    results = []
+    for document in retrieve_documents(query):
+        metadata = getattr(document, "metadata", {}) or {}
+        results.append({
+            "content": getattr(document, "page_content", ""),
+            "source": metadata.get("source_file") or metadata.get("source") or "Unknown",
+            "score": metadata.get("relevance_score", 0.0),
+        })
+        if len(results) >= top_k:
+            break
+    return results
 
 
 # 5. Sidebar Controls
