@@ -23,17 +23,10 @@ st.set_page_config(
 load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 
 # 4. Safe imports (works with both 'src.' and direct imports)
-try:
-    from langchain_helper import get_qa_chain, create_vector_db
-except ModuleNotFoundError:
-    from src.langchain_helper import get_qa_chain, create_vector_db
-
-try:
-    from sentiment_analyzer import analyze_sentiment
-except ModuleNotFoundError:
-    from src.sentiment_analyzer import analyze_sentiment
-
+from langchain_helper import get_qa_chain, create_vector_db
+from sentiment_analyzer import analyze_sentiment
 from knowledge_retriever import search_knowledge_base
+
 
 # 5. Sidebar Controls
 with st.sidebar:
