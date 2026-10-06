@@ -3,112 +3,95 @@ import sys
 import streamlit as st
 from dotenv import load_dotenv
 
-# 1. Page Configuration (must be called first so the UI displays immediately)
+# 1. Ensure Python can find all project folders (fixes 'No module named src')
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(CURRENT_DIR, ".."))
+KNOWLEDGE_BASE_DIR = os.path.join(PROJECT_ROOT, "knowledge_base")
+
+for p in [CURRENT_DIR, PROJECT_ROOT, KNOWLEDGE_BASE_DIR]:
+    if p not in sys.path:
+        sys.path.insert(0, p)
+
+# 2. Page Configuration (displays instantly)
 st.set_page_config(
-    page_title="Customer Service AI",
-    page_icon="💬",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    page_title="Customer Service Chatbot",
+    page_icon="🤖",
+    layout="wide"
 )
 
-# 2. Environment & Path Setup
-load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
+# 3. Load .env file
+load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 
-KNOWLEDGE_BASE_PATH = os.path.join(os.path.dirname(__file__), "..", "knowledge_base")
-if KNOWLEDGE_BASE_PATH not in sys.path:
-    sys.path.append(KNOWLEDGE_BASE_PATH)
-
-# 3. Custom Styling
-st.markdown("""
-<style>
-    .stChatMessage { border-radius: 12px; margin-bottom: 0.75rem; }
-    .sentiment-badge {
-        display: inline-flex; align-items: center; padding: 3px 10px;
-        border-radius: 9999px; font-size: 0.8rem; font-weight: 600; margin-bottom: 8px;
-    }
-    .sentiment-positive { background-color: rgba(34, 197, 94, 0.15); color: #15803d; border: 1px solid rgba(34, 197, 94, 0.3); }
-    .sentiment-negative { background-color: rgba(239, 68, 68, 0.15); color: #b91c1c; border: 1px solid rgba(239, 68, 68, 0.3); }
-    .sentiment-neutral  { background-color: rgba(100, 116, 139, 0.15); color: #475569; border: 1px solid rgba(100, 116, 139, 0.3); }
-</style>
-""", unsafe_allow_html=True)
-
-# 4. Cached / Lazy Model Loading
-@st.cache_resource(show_spinner="Loading NLP & Embedding models (this may take a moment on first launch)...")
-def load_modules():
+# 4. Safe imports (works with both 'src.' and direct imports)
+try:
     from langchain_helper import get_qa_chain, create_vector_db
-    from sentiment_analyzer import analyze_sentiment
-    from knowledge_retriever import search_knowledge_base
-    return get_qa_chain, create_vector_db, analyze_sentiment, search_knowledge_base
+except ModuleNotFoundError:
+    from src.langchain_helper import get_qa_chain, create_vector_db
 
 try:
-    get_qa_chain, create_vector_db, analyze_sentiment, search_knowledge_base = load_modules()
-except Exception as e:
-    st.error(f"Error loading models or environment variables: {e}")
-    st.info("Make sure your `.env` file has `GOOGLE_API_KEY` set.")
-    st.stop()
+    from sentiment_analyzer import analyze_sentiment
+except ModuleNotFoundError:
+    from src.sentiment_analyzer import analyze_sentiment
+
+from knowledge_retriever import search_knowledge_base
 
 # 5. Sidebar Controls
 with st.sidebar:
-    st.title("CustomerAI 🧑‍💻")
-    st.caption("Intelligent support powered by dynamic RAG & sentiment analysis")
+    st.header("⚙️ Knowledge Base")
+    st.write("Manage your local vector store:")
+    if st.button("Create / Rebuild Knowledgebase", use_container_width=True):
+        with st.spinner("Building vector database..."):
+            try:
+                create_vector_db()
+                st.success("Knowledgebase created successfully!")
+            except Exception as e:
+                st.error(f"Failed to create database: {e}")
+
     st.divider()
-
-    st.subheader("Knowledge Base")
-    if st.button("🔄 Rebuild Knowledge Base", use_container_width=True):
-        with st.spinner("Indexing documents and building vector store..."):
-            create_vector_db()
-        st.success("Knowledge base index created successfully!")
-
-    st.divider()
-    st.subheader("Retrieval Settings")
-    top_k_val = st.slider("Dynamic KB Top Matches", min_value=1, max_value=5, value=3)
-
-    if st.button("🗑️ Clear Conversation", use_container_width=True):
-        st.session_state.messages = []
+    if st.button("Clear Chat History", use_container_width=True):
+        st.session_state.chat_history = []
         st.rerun()
 
-# 6. Session State for Chat History
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+# 6. Main Chat Header
+st.title("CUSTOMER SERVICE CHATBOT 🤖")
+st.caption("Ask questions about products, courses, or services.")
 
-# 7. Header
-st.title("Customer Service Chatbot")
-st.caption("Ask questions about policies, courses, or technical details.")
+# 7. Initialize Chat History in Session State
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
 
-# 8. Render Chat History
-for msg in st.session_state.messages:
+# 8. Render conversation history
+for msg in st.session_state.chat_history:
     with st.chat_message(msg["role"]):
-        if msg["role"] == "assistant":
-            sentiment = msg.get("sentiment", "Neutral")
-            badge_class = f"sentiment-{sentiment.lower()}"
-            st.markdown(
-                f'<span class="sentiment-badge {badge_class}">Detected Sentiment: {sentiment}</span>',
-                unsafe_allow_html=True
-            )
-            st.write(msg["content"])
-            if msg.get("kb_result"):
-                kb = msg["kb_result"]
-                with st.expander("🔍 Knowledge Base Retrieval Details"):
-                    st.markdown(f"**Retrieved Content:**\n\n>{kb['content']}")
-                    cols = st.columns(3)
-                    cols[0].metric("Source", kb.get("source", "N/A"))
-                    cols[1].metric("Relevance Score", f"{kb.get('score', 0):.4f}" if isinstance(kb.get('score'), float) else str(kb.get('score')))
-                    cols[2].metric("Last Updated", kb.get("updated_at", "N/A"))
-        else:
-            st.write(msg["content"])
+        st.markdown(msg["content"])
+        if msg.get("sentiment"):
+            st.caption(f"**Detected Sentiment:** {msg['sentiment']}")
+        if msg.get("kb_result"):
+            kb = msg["kb_result"]
+            with st.expander("📚 Retrieved Knowledge Source"):
+                st.markdown(f"**Content:** {kb['content']}")
+                st.markdown(f"**Source:** {kb['source']} | **Relevance:** {kb['score']}")
 
-# 9. Handle User Question
-if prompt := st.chat_input("Type your question here..."):
-    st.session_state.messages.append({"role": "user", "content": prompt})
+# 9. User Input Box
+user_prompt = st.chat_input("Type your question here...")
+
+if user_prompt:
+    # 1. Add user message to UI
+    st.session_state.chat_history.append({"role": "user", "content": user_prompt})
     with st.chat_message("user"):
-        st.write(prompt)
+        st.markdown(user_prompt)
 
+    # 2. Generate assistant response
     with st.chat_message("assistant"):
-        with st.spinner("Analyzing sentiment and retrieving answer..."):
-            sentiment, scores = analyze_sentiment(prompt)
-            kb_results = search_knowledge_base(prompt, top_k=top_k_val)
+        with st.spinner("Thinking..."):
+            # Task 1: Sentiment Analysis
+            sentiment, scores = analyze_sentiment(user_prompt)
+
+            # Task 3: Dynamic Knowledge Base Retrieval
+            kb_results = search_knowledge_base(user_prompt, top_k=3)
             best_kb = kb_results[0] if kb_results else None
 
+            # Sentiment-aware prefix
             if sentiment == "Negative":
                 prefix = "I'm sorry that you're experiencing an issue. Here's the information that may help:\n\n"
             elif sentiment == "Positive":
@@ -116,26 +99,25 @@ if prompt := st.chat_input("Type your question here..."):
             else:
                 prefix = "Here's the information related to your question:\n\n"
 
-            chain = get_qa_chain()
-            response = chain(prompt)
-            answer_text = prefix + response.get("result", "")
+            # Task 2: QA Chain Answer (loaded on demand)
+            try:
+                chain = get_qa_chain()
+                response = chain(user_prompt)
+                answer_text = prefix + response.get("result", "")
+            except Exception as e:
+                answer_text = prefix + f"Could not retrieve answer from QA chain: {e}"
 
-            badge_class = f"sentiment-{sentiment.lower()}"
-            st.markdown(
-                f'<span class="sentiment-badge {badge_class}">Detected Sentiment: {sentiment}</span>',
-                unsafe_allow_html=True
-            )
-            st.write(answer_text)
+            # Display response
+            st.markdown(answer_text)
+            st.caption(f"**Detected Sentiment:** {sentiment}")
 
             if best_kb:
-                with st.expander("🔍 Knowledge Base Retrieval Details"):
-                    st.markdown(f"**Retrieved Content:**\n\n>{best_kb['content']}")
-                    cols = st.columns(3)
-                    cols[0].metric("Source", best_kb.get("source", "N/A"))
-                    cols[1].metric("Relevance Score", f"{best_kb.get('score', 0):.4f}" if isinstance(best_kb.get('score'), float) else str(best_kb.get('score')))
-                    cols[2].metric("Last Updated", best_kb.get("updated_at", "N/A"))
+                with st.expander("📚 Retrieved Knowledge Source"):
+                    st.markdown(f"**Content:** {best_kb['content']}")
+                    st.markdown(f"**Source:** {best_kb['source']} | **Relevance:** {best_kb['score']}")
 
-            st.session_state.messages.append({
+            # Save assistant message in history
+            st.session_state.chat_history.append({
                 "role": "assistant",
                 "content": answer_text,
                 "sentiment": sentiment,
