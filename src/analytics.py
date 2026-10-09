@@ -35,25 +35,28 @@ UNKNOWN_RESPONSE = (
 st.markdown(
     """
     <style>
-
     .dashboard-title {
-        font-size: 2.3rem;
+        font-size: 2rem;
         font-weight: 700;
-        margin-bottom: 5px;
+        letter-spacing: -0.02em;
+        color: #0F172A;
+        margin-bottom: 4px;
     }
 
     .dashboard-subtitle {
-        color: #777;
-        margin-bottom: 25px;
+        color: #64748B;
+        font-size: 0.95rem;
+        margin-bottom: 24px;
     }
 
     .section-title {
-        font-size: 1.35rem;
+        font-size: 1.2rem;
         font-weight: 650;
-        margin-top: 30px;
-        margin-bottom: 15px;
+        letter-spacing: -0.01em;
+        color: #1E293B;
+        margin-top: 28px;
+        margin-bottom: 14px;
     }
-
     </style>
     """,
     unsafe_allow_html=True,

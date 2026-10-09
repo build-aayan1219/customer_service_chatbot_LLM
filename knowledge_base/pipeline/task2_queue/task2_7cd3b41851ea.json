@@ -1,0 +1,63 @@
+{
+  "id": "task2_7cd3b41851ea",
+  "status": "completed",
+  "description": "Customer evidence processing",
+  "created_at": "2026-10-03T17:58:24.732828+00:00",
+  "started_at": "2026-10-03T17:58:25.775449+00:00",
+  "result": {
+    "added": [
+      {
+        "id": "2808eb0161ce54a5",
+        "file_name": "PAS.pdf",
+        "original_name": "PAS.pdf",
+        "file_hash": "2808eb0161ce54a5110799f9f9885b6ed60755252b7b11bc659795b21eb96f62",
+        "size_bytes": 32728,
+        "size_display": "32.0 KB",
+        "chunk_count": 1,
+        "uploaded_at": "2026-10-03T17:58:29.583559Z",
+        "extension": "pdf",
+        "evidence_type": "image_or_pdf",
+        "evidence_fields": {
+          "order_ids": [
+            "does",
+            "inal",
+            "ering",
+            "ered",
+            "Ordinal",
+            "ordering",
+            "ordered"
+          ],
+          "dates": [],
+          "amounts": [
+            "$4000",
+            "$1000",
+            "$500",
+            "$5000",
+            "$1,666.67",
+            "$5",
+            "$1,000,",
+            "$100",
+            "$1000,",
+            "$995",
+            "$100,",
+            "$95",
+            "$0,",
+            "$3.00",
+            "$3"
+          ],
+          "products": [
+            "data (e",
+            "categories"
+          ],
+          "error_codes": []
+        },
+        "evidence_quality": 1.0,
+        "low_quality": false
+      }
+    ],
+    "skipped": [],
+    "errors": [],
+    "security_rejected": []
+  },
+  "finished_at": "2026-10-03T17:58:29.583559+00:00"
+}

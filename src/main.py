@@ -53,20 +53,235 @@ st.set_page_config(
 st.markdown(
     """
 <style>
-#MainMenu {visibility:hidden;}
-footer {visibility:hidden;}
-header {visibility:hidden;}
-.block-container {padding-top:1.25rem; padding-bottom:7rem; max-width:1180px;}
-.title {font-size:2rem;font-weight:750;letter-spacing:-.03em;margin:0;}
-.subtitle {color:#777;margin-top:2px;margin-bottom:18px;}
-.welcome {max-width:760px;margin:70px auto 24px;padding:44px 28px;text-align:center;border:1px solid rgba(128,128,128,.18);border-radius:24px;background:rgba(128,128,128,.045);}
-.welcome-icon {font-size:42px}.welcome-title {font-size:28px;font-weight:750;margin:10px 0}.welcome-text{color:#777;line-height:1.6}
-.source-group {border:1px solid rgba(128,128,128,.20);border-radius:14px;padding:13px 15px;margin:8px 0;background:rgba(128,128,128,.035);}
-.source-file {font-weight:700}.source-meta{font-size:12px;color:#777;margin-top:3px}.source-section{font-size:13px;margin-top:9px;padding-top:8px;border-top:1px solid rgba(128,128,128,.13)}
-.file-card {border:1px solid rgba(128,128,128,.18);border-radius:13px;padding:12px;margin:6px 0;background:rgba(128,128,128,.035);}
-.small-muted {font-size:12px;color:#777;}
-.stat-card {padding:18px;border:1px solid rgba(128,128,128,.18);border-radius:16px;background:rgba(128,128,128,.04);}
-.sidebar-brand {font-size:19px;font-weight:750;margin-bottom:12px;}
+#MainMenu { visibility: hidden; }
+footer { visibility: hidden; }
+header { visibility: hidden; }
+
+html, body, [class*="css"] {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    color: #0F172A;
+    background-color: #FAFAFC;
+}
+
+.block-container {
+    padding-top: 1.25rem;
+    padding-bottom: 7rem;
+    max-width: 920px;
+}
+
+/* Status Indicator Dot */
+.status-dot {
+    height: 8px;
+    width: 8px;
+    background-color: #22C55E;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+}
+
+/* App Bar & Title */
+.title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: #0F172A;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.subtitle {
+    color: #64748B;
+    font-size: 0.825rem;
+    margin-top: 2px;
+    margin-bottom: 16px;
+    font-weight: 400;
+}
+
+/* Sidebar Drawer */
+section[data-testid="stSidebar"] {
+    background-color: #F8FAFC;
+    border-right: 1px solid #E2E8F0;
+}
+
+.sidebar-brand {
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #0F172A;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+section[data-testid="stSidebar"] h3 {
+    font-size: 0.7rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #64748B !important;
+    font-weight: 600 !important;
+    margin-top: 18px !important;
+    margin-bottom: 8px !important;
+}
+
+section[data-testid="stSidebar"] div.stButton > button {
+    border-radius: 10px;
+    border: 1px solid #E2E8F0;
+    background-color: #FFFFFF;
+    color: #1E293B;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.15s ease;
+    padding: 8px 12px;
+}
+
+section[data-testid="stSidebar"] div.stButton > button:hover {
+    background-color: #F1F5F9;
+    border-color: #CBD5E1;
+    color: #0F172A;
+}
+
+section[data-testid="stSidebar"] div.stButton > button[kind="primary"] {
+    background-color: #0F172A;
+    color: #FFFFFF;
+    border: none;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+section[data-testid="stSidebar"] div.stButton > button[kind="primary"]:hover {
+    background-color: #1E293B;
+}
+
+/* ChatGPT / Claude Empty State Home */
+.welcome-hero {
+    max-width: 620px;
+    margin: 40px auto 28px;
+    text-align: center;
+}
+
+.welcome-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background-color: #F1F5F9;
+    border: 1px solid #E2E8F0;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 14px;
+}
+
+.welcome-title {
+    font-size: 1.75rem;
+    font-weight: 750;
+    color: #0F172A;
+    letter-spacing: -0.03em;
+    margin: 8px 0;
+    line-height: 1.25;
+}
+
+.welcome-text {
+    color: #64748B;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+
+/* Chat Messages */
+div[data-testid="stChatMessage"] {
+    padding: 16px 20px;
+    border-radius: 16px;
+    margin-bottom: 14px;
+    border: 1px solid #E2E8F0;
+    background-color: #FFFFFF;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+div[data-testid="stChatMessage"]:has(div[aria-label="Chat message from user"]) {
+    background-color: #F8FAFC;
+    border-color: #E2E8F0;
+}
+
+/* Modern Input Composer */
+div[data-testid="stChatInput"] {
+    border-radius: 16px;
+    border: 1px solid #CBD5E1;
+    background-color: #FFFFFF;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+div[data-testid="stChatInput"]:focus-within {
+    border-color: #2563EB;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+/* Source Group & Citations */
+.source-group {
+    border: 1px solid #E2E8F0;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin: 8px 0;
+    background-color: #F8FAFC;
+}
+
+.source-file {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #1E293B;
+}
+
+.source-meta {
+    font-size: 0.75rem;
+    color: #64748B;
+    margin-top: 2px;
+}
+
+.source-section {
+    font-size: 0.8rem;
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px solid #E2E8F0;
+}
+
+/* File Cards */
+.file-card {
+    border: 1px solid #E2E8F0;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin: 6px 0;
+    background-color: #FFFFFF;
+}
+
+.small-muted {
+    font-size: 0.75rem;
+    color: #64748B;
+}
+
+.stat-card {
+    padding: 16px;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    background-color: #FFFFFF;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+
+/* Custom button touch target & hover transitions */
+div.stButton > button {
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.15s ease-in-out;
+}
+
+div.stButton > button:hover {
+    border-color: #CBD5E1;
+    background-color: #F8FAFC;
+}
 </style>
 """,
     unsafe_allow_html=True,
@@ -399,10 +614,14 @@ if files:
 
 if not current_chat["messages"]:
     st.markdown(
-        '<div class="welcome"><div class="welcome-icon">💬</div><div class="welcome-title">How can I help you?</div><div class="welcome-text">Ask about available information or attach a PDF, DOCX, TXT or CSV and ask questions about it.</div></div>',
+        '<div class="welcome-hero">'
+        '<div class="welcome-badge">✨ RAG Assistant Active</div>'
+        '<div class="welcome-title">How can I help you?</div>'
+        '<div class="welcome-text">Ask questions about courses, services, and policies, or attach documents to search your knowledge base.</div>'
+        '</div>',
         unsafe_allow_html=True,
     )
-    st.markdown("### 💡 Try asking")
+    st.caption("SUGGESTIONS")
     suggestion_items = SUGGESTED_QUESTIONS[:4]
     cols = st.columns(2)
     for i, item in enumerate(suggestion_items):
