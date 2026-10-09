@@ -133,10 +133,18 @@ def _extract_pdf(data: bytes) -> tuple[str, float, dict]:
         reader = PdfReader(io.BytesIO(data))
         pages = []
         for page in reader.pages:
-            pages.append(page.extract_text() or "")
-        text = "\n".join(pages).strip()
-        quality = 1.0 if text else 0.35
-        return text, quality, {"available": True, "pages": len(reader.pages), "ocr_fallback": not bool(text)}
+            pages.append((page.extract_text() or "").strip())
+        text = "\n".join(page for page in pages if page).strip()
+        page_count = len(reader.pages)
+        extracted_chars = len(text)
+        average_chars = extracted_chars / max(page_count, 1)
+        quality = 1.0 if average_chars >= 80 else (0.65 if extracted_chars else 0.25)
+        return text, quality, {
+            "available": True,
+            "pages": page_count,
+            "extracted_chars": extracted_chars,
+            "ocr_fallback": average_chars < 80,
+        }
     except Exception as exc:
         return "", 0.0, {"available": False, "reason": str(exc)}
 
@@ -220,11 +228,14 @@ def extract_evidence(file_name: str, data: bytes) -> dict:
                 extraction["vision_fallback"] = True
     elif extension == "pdf":
         text, quality, extraction = _extract_pdf(data)
-        if not text and data:
+        if data and (not text or extraction.get("ocr_fallback")):
             ocr_text, ocr_quality, ocr_meta = _ocr_pdf_pages(data)
-            if ocr_text:
-                text, quality, extraction = ocr_text, ocr_quality, ocr_meta
-            else:
+            if ocr_text and len(ocr_text) > len(text):
+                text = ocr_text
+                quality = max(quality, ocr_quality)
+                extraction.update(ocr_meta)
+                extraction["ocr_used"] = True
+            elif not text:
                 extraction["ocr_required"] = True
     else:
         try:

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="NONE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="a998fd7b-5466-470f-b2b0-ac79de3c90f8" name="Changes" comment="Update UI styling and welcome screen layout for Streamlit chat interface" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "build-aayan1219"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/build-aayan1219/customer_service_chatbot_LLM.git",
+    "accountId": "c56d608b-700d-4d8f-9880-51fcbe4456af"
+  }
+}]]></component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 5,
+  "fromUser": false
+}]]></component>
+  <component name="ProjectId" id="3JotVQ9KyBwF3k6mM38q21E2KQT" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "git-widget-placeholder": "main",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "E:/customer_service_chatbot_LLM",
+    "settings.editor.selected.configurable": "vcs.Git"
+  }
+}]]></component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="a998fd7b-5466-470f-b2b0-ac79de3c90f8" name="Changes" comment="" />
+      <created>1790339273294</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1790339273294</updated>
+    </task>
+    <task id="LOCAL-00001" summary="Update CSS styles for dashboard titles and subtitles in analytics">
+      <option name="closed" value="true" />
+      <created>1790347214633</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1790347214633</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Update UI custom CSS styles for sidebar, chat messages, and components in `src/main.py`">
+      <option name="closed" value="true" />
+      <created>1790347283177</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1790347283177</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Add detailed project documentation to README.md and update knowledge base pipeline state date">
+      <option name="closed" value="true" />
+      <created>1790347327205</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1790347327205</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Add IntelliJ IDEA project configuration files">
+      <option name="closed" value="true" />
+      <created>1790347775161</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1790347775161</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Update UI styling and welcome screen layout for Streamlit chat interface">
+      <option name="closed" value="true" />
+      <created>1790363069181</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1790363069181</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
+    <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Update CSS styles for dashboard titles and subtitles in analytics" />
+    <MESSAGE value="Update UI custom CSS styles for sidebar, chat messages, and components in `src/main.py`" />
+    <MESSAGE value="Add detailed project documentation to README.md and update knowledge base pipeline state date" />
+    <MESSAGE value="Add IntelliJ IDEA project configuration files" />
+    <MESSAGE value="Update UI styling and welcome screen layout for Streamlit chat interface" />
+    <option name="LAST_COMMIT_MESSAGE" value="Update UI styling and welcome screen layout for Streamlit chat interface" />
+  </component>
+</project>

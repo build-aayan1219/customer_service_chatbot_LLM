@@ -3,17 +3,15 @@ import json
 import logging
 import re
 import shutil
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
 from langchain_core.documents import Document
 from langchain_community.vectorstores import FAISS
 
-from src.langchain_helper import get_embeddings
-from src.evidence_processor import extract_evidence, compare_message_with_evidence, build_evidence_document
-from src.task2_security import validate_file_bytes, file_sha256, mask_sensitive_data
-from src.config import TASK2_CONFIG
+from src.task2_security import validate_file_bytes, safe_log
+from src.evidence_processor import extract_evidence
 
 
 # ============================================================
@@ -34,14 +32,7 @@ CONVERSATIONS_DIR = (
 # ============================================================
 
 ALLOWED_EXTENSIONS = {
-    "pdf",
-    "docx",
-    "txt",
-    "csv",
-    "png",
-    "jpg",
-    "jpeg",
-    "webp",
+    "pdf", "png", "jpg", "jpeg", "webp", "docx", "txt", "csv"
 }
 
 MAX_FILE_SIZE_MB = 25
@@ -50,12 +41,8 @@ MAX_FILES_PER_CHAT = 10
 CHUNK_SIZE = 1800
 CHUNK_OVERLAP = 250
 
-MAX_RETRIEVAL_CANDIDATES = 8
+MAX_RETRIEVAL_CANDIDATES = 12
 
-
-# ============================================================
-# LOGGING
-# ============================================================
 
 logger = logging.getLogger(__name__)
 
@@ -65,31 +52,19 @@ logger = logging.getLogger(__name__)
 # ============================================================
 
 def get_chat_directory(chat_id):
-    return (
-        CONVERSATIONS_DIR
-        / str(chat_id)
-    )
+    return CONVERSATIONS_DIR / str(chat_id)
 
 
 def get_files_directory(chat_id):
-    return (
-        get_chat_directory(chat_id)
-        / "files"
-    )
+    return get_chat_directory(chat_id) / "files"
 
 
 def get_index_directory(chat_id):
-    return (
-        get_chat_directory(chat_id)
-        / "index"
-    )
+    return get_chat_directory(chat_id) / "index"
 
 
 def get_manifest_path(chat_id):
-    return (
-        get_chat_directory(chat_id)
-        / "manifest.json"
-    )
+    return get_chat_directory(chat_id) / "manifest.json"
 
 
 def ensure_chat_directories(chat_id):
@@ -111,13 +86,13 @@ def ensure_chat_directories(chat_id):
 def load_manifest(chat_id):
     ensure_chat_directories(chat_id)
 
-    manifest_path = get_manifest_path(chat_id)
+    path = get_manifest_path(chat_id)
 
-    if not manifest_path.exists():
+    if not path.exists():
         return {}
 
     try:
-        with manifest_path.open(
+        with path.open(
             "r",
             encoding="utf-8",
         ) as file:
@@ -126,11 +101,20 @@ def load_manifest(chat_id):
         if isinstance(data, dict):
             return data
 
-    except (
-        json.JSONDecodeError,
-        OSError,
-    ) as error:
+        if isinstance(data, list):
+            normalized = {}
+            for index, record in enumerate(data):
+                if not isinstance(record, dict):
+                    continue
+                file_id = str(record.get("id") or record.get("file_id") or f"legacy_{index}")
+                record = dict(record)
+                record.pop("id", None)
+                record.pop("file_id", None)
+                normalized[file_id] = record
+            save_manifest(chat_id, normalized)
+            return normalized
 
+    except Exception as error:
         logger.warning(
             "Could not load conversation manifest: %s",
             error,
@@ -142,13 +126,12 @@ def load_manifest(chat_id):
 def save_manifest(chat_id, manifest):
     ensure_chat_directories(chat_id)
 
-    manifest_path = get_manifest_path(chat_id)
+    path = get_manifest_path(chat_id)
 
-    with manifest_path.open(
+    with path.open(
         "w",
         encoding="utf-8",
     ) as file:
-
         json.dump(
             manifest,
             file,
@@ -158,23 +141,15 @@ def save_manifest(chat_id, manifest):
 
 
 # ============================================================
-# FILE HASH
+# FILE HELPERS
 # ============================================================
 
 def calculate_file_hash(file_data):
-    return hashlib.sha256(
-        file_data
-    ).hexdigest()
+    return hashlib.sha256(file_data).hexdigest()
 
-
-# ============================================================
-# SAFE FILE NAME
-# ============================================================
 
 def sanitize_filename(filename):
-    filename = Path(
-        str(filename)
-    ).name
+    filename = Path(str(filename)).name
 
     filename = re.sub(
         r"[^A-Za-z0-9._() -]",
@@ -184,15 +159,8 @@ def sanitize_filename(filename):
 
     filename = filename.strip()
 
-    if not filename:
-        filename = "uploaded_file"
+    return filename or "uploaded_file"
 
-    return filename
-
-
-# ============================================================
-# FILE SIZE
-# ============================================================
 
 def format_file_size(size_bytes):
     if size_bytes < 1024:
@@ -210,32 +178,30 @@ def format_file_size(size_bytes):
 
 def extract_pdf(file_path):
     from pypdf import PdfReader
-
-    reader = PdfReader(
-        str(file_path)
-    )
-
-    pages = []
-
-    for page_number, page in enumerate(
-        reader.pages,
-        start=1,
-    ):
-
-        text = (
-            page.extract_text()
-            or ""
-        ).strip()
-
+    reader = PdfReader(str(file_path))
+    results = []
+    extracted_chars = 0
+    for page_number, page in enumerate(reader.pages, start=1):
+        text = (page.extract_text() or "").strip()
+        extracted_chars += len(text)
         if text:
-            pages.append(
-                (
-                    page_number,
-                    text,
-                )
-            )
+            results.append((page_number, text))
+    if results and extracted_chars / max(len(reader.pages), 1) >= 80:
+        return results
+    try:
+        from src.evidence_processor import _ocr_pdf_pages
+        ocr_text, _, _ = _ocr_pdf_pages(file_path.read_bytes())
+        if ocr_text and len(ocr_text) > extracted_chars:
+            return [(1, ocr_text)]
+    except Exception as error:
+        safe_log(logger, "debug", "PDF OCR fallback unavailable: %s", error)
+    return results
 
-    return pages
+
+def extract_image(file_path):
+    from src.evidence_processor import _ocr_image
+    text, _, _ = _ocr_image(file_path.read_bytes())
+    return [(1, text)] if text.strip() else []
 
 
 # ============================================================
@@ -245,91 +211,104 @@ def extract_pdf(file_path):
 def extract_docx(file_path):
     from docx import Document as DocxDocument
 
-    document = DocxDocument(
-        str(file_path)
-    )
+    document = DocxDocument(str(file_path))
 
-    sections = []
-    current_section = []
+    results = []
+
     current_heading = None
+    current_lines = []
+
+    def flush_paragraph_block():
+        nonlocal current_heading
+        nonlocal current_lines
+
+        if current_lines:
+            text = "\n".join(
+                current_lines
+            ).strip()
+
+            if current_heading:
+                text = (
+                    f"{current_heading}\n"
+                    f"{text}"
+                )
+
+            if text:
+                results.append(
+                    (
+                        1,
+                        text,
+                    )
+                )
+
+        current_heading = None
+        current_lines = []
+
+    # --------------------------------------------------------
+    # Paragraphs
+    # --------------------------------------------------------
 
     for paragraph in document.paragraphs:
-
         text = paragraph.text.strip()
 
         if not text:
             continue
 
-        style_name = ""
-
         try:
             style_name = (
-                paragraph.style.name
-                or ""
+                paragraph.style.name or ""
             ).lower()
         except Exception:
-            pass
+            style_name = ""
 
         is_heading = (
             "heading" in style_name
+            or is_probable_heading(text)
         )
 
         if is_heading:
-
-            if current_section:
-
-                sections.append(
-                    (
-                        current_heading,
-                        "\n".join(
-                            current_section
-                        ),
-                    )
-                )
+            flush_paragraph_block()
 
             current_heading = text
-            current_section = []
 
         else:
+            current_lines.append(text)
 
-            current_section.append(
-                text
+    flush_paragraph_block()
+
+    # --------------------------------------------------------
+    # Tables
+    # --------------------------------------------------------
+
+    for table_index, table in enumerate(
+        document.tables,
+        start=1,
+    ):
+        table_lines = []
+
+        for row in table.rows:
+            cells = []
+
+            for cell in row.cells:
+                cell_text = " ".join(
+                    cell.text.split()
+                ).strip()
+
+                if cell_text:
+                    cells.append(cell_text)
+
+            if cells:
+                table_lines.append(
+                    " | ".join(cells)
+                )
+
+        if table_lines:
+            results.append(
+                (
+                    f"Table {table_index}",
+                    "\n".join(table_lines),
+                )
             )
-
-    if current_section:
-
-        sections.append(
-            (
-                current_heading,
-                "\n".join(
-                    current_section
-                ),
-            )
-        )
-
-    if not sections:
-        return []
-
-    results = []
-
-    for heading, text in sections:
-
-        if heading:
-
-            combined = (
-                f"{heading}\n{text}"
-            )
-
-        else:
-
-            combined = text
-
-        results.append(
-            (
-                1,
-                combined.strip(),
-            )
-        )
 
     return results
 
@@ -341,7 +320,7 @@ def extract_docx(file_path):
 def extract_txt(file_path):
     text = file_path.read_text(
         encoding="utf-8",
-        errors="ignore",
+        errors="replace",
     ).strip()
 
     if not text:
@@ -361,77 +340,65 @@ def extract_txt(file_path):
 
 def extract_csv(file_path):
     dataframe = pd.read_csv(
-        file_path
+        file_path,
+        dtype=str,
     )
-
-    rows = []
 
     dataframe = dataframe.fillna("")
 
-    for row_number, row in dataframe.iterrows():
+    results = []
 
+    for row_number, row in dataframe.iterrows():
         parts = []
 
         for column in dataframe.columns:
-
             value = str(
                 row[column]
             ).strip()
 
             if value:
-
                 parts.append(
                     f"{column}: {value}"
                 )
 
-        text = "\n".join(
-            parts
-        ).strip()
+        text = "\n".join(parts).strip()
 
         if text:
-
-            rows.append(
+            results.append(
                 (
                     row_number + 2,
                     text,
                 )
             )
 
-    return rows
+    return results
 
 
 # ============================================================
-# FILE EXTRACTION
+# GENERIC EXTRACTION
 # ============================================================
 
 def extract_file(file_path):
-
     extension = (
-        file_path
-        .suffix
+        file_path.suffix
         .lower()
         .lstrip(".")
     )
 
     if extension == "pdf":
-        return extract_pdf(
-            file_path
-        )
+        return extract_pdf(file_path)
 
     if extension == "docx":
-        return extract_docx(
-            file_path
-        )
+        return extract_docx(file_path)
 
     if extension == "txt":
-        return extract_txt(
-            file_path
-        )
+        return extract_txt(file_path)
 
     if extension == "csv":
-        return extract_csv(
-            file_path
-        )
+        return extract_csv(file_path)
+
+    if extension in {"png", "jpg", "jpeg", "webp"}:
+        return extract_image(file_path)
 
     raise ValueError(
         f"Unsupported file type: .{extension}"
@@ -439,29 +406,11 @@ def extract_file(file_path):
 
 
 # ============================================================
-# TEXT NORMALIZATION
-# ============================================================
-
-def normalize_text(text):
-    text = str(
-        text or ""
-    )
-
-    text = re.sub(
-        r"\s+",
-        " ",
-        text,
-    )
-
-    return text.strip()
-
-
-# ============================================================
 # HEADING DETECTION
 # ============================================================
 
 def is_probable_heading(line):
-    line = line.strip()
+    line = str(line or "").strip()
 
     if not line:
         return False
@@ -469,26 +418,28 @@ def is_probable_heading(line):
     if len(line) > 120:
         return False
 
+    # Numbered headings:
+    # 1. Introduction
+    # 1.1 Database
+    # 5) Conclusion
     if re.match(
-        r"^\d+[\.\)]\s+",
+        r"^\d+(?:\.\d+)*[\.\)]?\s+",
         line,
     ):
         return True
 
+    # Short title-like lines
     if re.match(
-        r"^[A-Z][A-Za-z0-9\s\-:&/]{2,80}:?$",
+        r"^[A-Z][A-Za-z0-9\s\-:&/()]{2,100}:?$",
         line,
-    ) and len(
-        line.split()
-    ) <= 12:
-
+    ) and len(line.split()) <= 14:
         return True
 
     return False
 
 
 # ============================================================
-# CHUNKING
+# TEXT CHUNKING
 # ============================================================
 
 def split_text(
@@ -496,9 +447,7 @@ def split_text(
     chunk_size=CHUNK_SIZE,
     overlap=CHUNK_OVERLAP,
 ):
-    text = str(
-        text or ""
-    ).strip()
+    text = str(text or "").strip()
 
     if not text:
         return []
@@ -512,17 +461,18 @@ def split_text(
     if not lines:
         return []
 
+    # --------------------------------------------------------
+    # Build semantic sections
+    # --------------------------------------------------------
+
     sections = []
 
     current_heading = None
     current_lines = []
 
     for line in lines:
-
         if is_probable_heading(line):
-
             if current_lines:
-
                 sections.append(
                     (
                         current_heading,
@@ -536,13 +486,9 @@ def split_text(
             current_lines = []
 
         else:
-
-            current_lines.append(
-                line
-            )
+            current_lines.append(line)
 
     if current_lines:
-
         sections.append(
             (
                 current_heading,
@@ -553,7 +499,6 @@ def split_text(
         )
 
     if not sections:
-
         sections = [
             (
                 None,
@@ -563,24 +508,25 @@ def split_text(
 
     chunks = []
 
+    # --------------------------------------------------------
+    # Split each semantic section
+    # --------------------------------------------------------
+
     for heading, section_text in sections:
 
         if not section_text:
             continue
 
         if heading:
-
             section_text = (
                 f"{heading}\n"
                 f"{section_text}"
             )
 
         if len(section_text) <= chunk_size:
-
             chunks.append(
-                section_text
+                section_text.strip()
             )
-
             continue
 
         words = section_text.split()
@@ -590,13 +536,11 @@ def split_text(
         while start < len(words):
 
             current_words = []
-
             current_length = 0
 
             index = start
 
             while index < len(words):
-
                 word = words[index]
 
                 additional_length = (
@@ -615,12 +559,9 @@ def split_text(
                     + additional_length
                     > chunk_size
                 ):
-
                     break
 
-                current_words.append(
-                    word
-                )
+                current_words.append(word)
 
                 current_length += (
                     additional_length
@@ -633,19 +574,22 @@ def split_text(
             ).strip()
 
             if chunk:
-                chunks.append(
-                    chunk
-                )
+                chunks.append(chunk)
 
             if index >= len(words):
                 break
 
+            # Approximate overlap in words
             overlap_words = max(
                 1,
                 int(
                     overlap
                     / max(
-                        len(words[index - 1]),
+                        len(
+                            words[
+                                index - 1
+                            ]
+                        ),
                         1,
                     )
                 ),
@@ -657,19 +601,20 @@ def split_text(
             )
 
     return [
-        chunk.strip()
+        chunk
         for chunk in chunks
         if chunk.strip()
     ]
 
 
 # ============================================================
-# LANGCHAIN DOCUMENT CREATION
+# CREATE LANGCHAIN DOCUMENTS
 # ============================================================
 
 def create_documents(
     file_path,
     chat_id,
+    file_id=None,
 ):
     extracted = extract_file(
         file_path
@@ -679,58 +624,72 @@ def create_documents(
 
     file_name = file_path.name
 
-    chunk_counter = 0
+    if not file_id:
+        file_id = (
+            calculate_file_hash(
+                file_path.read_bytes()
+            )[:16]
+        )
+
+    global_chunk_number = 0
 
     for location, text in extracted:
 
-        chunks = split_text(
-            text
-        )
+        chunks = split_text(text)
 
         for chunk in chunks:
 
-            chunk_counter += 1
+            global_chunk_number += 1
 
             lines = [
                 line.strip()
-                for line
-                in chunk.splitlines()
+                for line in chunk.splitlines()
                 if line.strip()
             ]
 
             section = ""
 
-            if lines:
-
-                first_line = lines[0]
-
-                if (
-                    len(first_line) <= 120
-                    and (
-                        is_probable_heading(
-                            first_line
-                        )
-                        or re.match(
-                            r"^\d+[\.\)]",
-                            first_line,
-                        )
-                    )
-                ):
-
-                    section = first_line
+            if (
+                lines
+                and len(lines[0]) <= 120
+                and is_probable_heading(
+                    lines[0]
+                )
+            ):
+                section = lines[0]
 
             metadata = {
                 "source_file": file_name,
                 "file_name": file_name,
                 "filename": file_name,
-                "source_type": "conversation_file",
+
+                "source_type": (
+                    "conversation_file"
+                ),
+
+                "retrieval_source": (
+                    "conversation_file"
+                ),
+
                 "chat_id": str(chat_id),
+                "file_id": str(file_id),
+
                 "location": (
                     f"Page/row {location}, "
-                    f"chunk {chunk_counter}"
+                    f"chunk {global_chunk_number}"
                 ),
+
+                "page_or_row": location,
+
                 "section": section,
-                "chunk": chunk_counter,
+
+                "chunk": (
+                    global_chunk_number
+                ),
+
+                "chunk_index": (
+                    global_chunk_number - 1
+                ),
             }
 
             documents.append(
@@ -740,18 +699,48 @@ def create_documents(
                 )
             )
 
+    total_chunks = len(documents)
+
+    for document in documents:
+        document.metadata[
+            "total_chunks"
+        ] = total_chunks
+
     return documents
+
+
+# ============================================================
+# EMBEDDINGS
+# ============================================================
+
+def _get_embeddings():
+    """
+    Lazy import prevents circular imports.
+
+    conversation_files
+        -> langchain_helper
+        -> conversation_files
+    """
+
+    from src.langchain_helper import (
+        get_embeddings
+    )
+
+    return get_embeddings()
 
 
 # ============================================================
 # LOAD CONVERSATION VECTOR DB
 # ============================================================
 
-def load_conversation_vector_db(chat_id):
+def load_conversation_vector_db(
+    chat_id,
+):
+    if not chat_id:
+        return None
+
     index_directory = (
-        get_index_directory(
-            chat_id
-        )
+        get_index_directory(chat_id)
     )
 
     index_file = (
@@ -768,24 +757,19 @@ def load_conversation_vector_db(chat_id):
         not index_file.exists()
         or not pickle_file.exists()
     ):
-
         return None
 
     try:
-
-        vectordb = FAISS.load_local(
+        return FAISS.load_local(
             str(index_directory),
-            get_embeddings(),
+            _get_embeddings(),
             allow_dangerous_deserialization=True,
         )
 
-        return vectordb
-
     except Exception as error:
-
-        logger.error(
-            "Could not load conversation FAISS for %s: %s",
-            chat_id,
+        logger.exception(
+            "Could not load conversation "
+            "FAISS index: %s",
             error,
         )
 
@@ -793,7 +777,7 @@ def load_conversation_vector_db(chat_id):
 
 
 # ============================================================
-# SAVE / UPDATE CONVERSATION VECTOR DB
+# ADD DOCUMENTS TO INDEX
 # ============================================================
 
 def add_documents_to_index(
@@ -807,25 +791,17 @@ def add_documents_to_index(
         chat_id
     )
 
-    index_directory = (
-        get_index_directory(
-            chat_id
-        )
-    )
-
     existing_db = (
         load_conversation_vector_db(
             chat_id
         )
     )
 
-    embeddings = get_embeddings()
-
     if existing_db is None:
 
         vectordb = FAISS.from_documents(
             documents,
-            embeddings,
+            _get_embeddings(),
         )
 
     else:
@@ -837,7 +813,11 @@ def add_documents_to_index(
         vectordb = existing_db
 
     vectordb.save_local(
-        str(index_directory)
+        str(
+            get_index_directory(
+                chat_id
+            )
+        )
     )
 
     return vectordb
@@ -848,7 +828,7 @@ def add_documents_to_index(
 # ============================================================
 
 def get_attachment_signature(
-    uploaded_files
+    uploaded_files,
 ):
     if not uploaded_files:
         return ""
@@ -858,7 +838,6 @@ def get_attachment_signature(
     for uploaded_file in uploaded_files:
 
         try:
-
             data = uploaded_file.getvalue()
 
             file_hash = (
@@ -874,7 +853,6 @@ def get_attachment_signature(
             )
 
         except Exception:
-
             parts.append(
                 str(
                     uploaded_file.name
@@ -891,7 +869,7 @@ def get_attachment_signature(
 # ============================================================
 
 def list_conversation_files(
-    chat_id
+    chat_id,
 ):
     manifest = load_manifest(
         chat_id
@@ -915,8 +893,7 @@ def list_conversation_files(
         )
 
     records.sort(
-        key=lambda item:
-        item.get(
+        key=lambda item: item.get(
             "uploaded_at",
             "",
         )
@@ -929,143 +906,282 @@ def list_conversation_files(
 # ADD CONVERSATION FILES
 # ============================================================
 
-def _process_payloads(chat_id, payloads):
-    ensure_chat_directories(chat_id)
-    manifest = load_manifest(chat_id)
-    result = {"added": [], "skipped": [], "errors": [], "security_rejected": []}
-    existing_count = len(manifest)
+def add_conversation_files(
+    chat_id,
+    uploaded_files,
+):
+    ensure_chat_directories(
+        chat_id
+    )
 
-    for payload in payloads:
-        file_name = sanitize_filename(payload.get("name", ""))
-        data = payload.get("data", b"")
-        extension = Path(file_name).suffix.lower().lstrip(".")
+    manifest = load_manifest(
+        chat_id
+    )
 
-        valid, reason = validate_file_bytes(
-            file_name,
-            data,
-            max_mb=int(TASK2_CONFIG.get("max_evidence_file_size_mb", MAX_FILE_SIZE_MB)),
+    result = {
+        "added": [],
+        "skipped": [],
+        "errors": [],
+    }
+
+    if not uploaded_files:
+        return result
+
+    existing_count = len(
+        manifest
+    )
+
+    for uploaded_file in uploaded_files:
+
+        if (
+            existing_count
+            >= MAX_FILES_PER_CHAT
+        ):
+            result["errors"].append(
+                f"Maximum of "
+                f"{MAX_FILES_PER_CHAT} "
+                f"files per conversation "
+                f"is allowed."
+            )
+            break
+
+        original_name = str(
+            uploaded_file.name
         )
-        if not valid:
-            result["security_rejected" if "Unsafe" in reason or "unsafe" in reason or "injection" in reason else "errors"].append(
-                {"file_name": file_name, "reason": reason} if "Unsafe" in reason else f"{file_name}: {reason}"
+
+        file_name = sanitize_filename(
+            original_name
+        )
+
+        extension = (
+            Path(file_name)
+            .suffix
+            .lower()
+            .lstrip(".")
+        )
+
+        if (
+            extension
+            not in ALLOWED_EXTENSIONS
+        ):
+            result["errors"].append(
+                f"{file_name}: "
+                f"Unsupported file type."
             )
             continue
 
-        file_hash = file_sha256(data)
-        duplicate = next((record for record in manifest.values() if record.get("file_hash") == file_hash), None)
-        if duplicate:
-            result["skipped"].append({"name": file_name, "reason": "duplicate"})
+        try:
+            file_data = (
+                uploaded_file.getvalue()
+            )
+
+        except Exception as error:
+
+            result["errors"].append(
+                f"{file_name}: "
+                f"Could not read file "
+                f"({error})."
+            )
+
             continue
-        if existing_count >= MAX_FILES_PER_CHAT:
-            result["errors"].append(f"Maximum of {MAX_FILES_PER_CHAT} files per conversation is allowed.")
-            break
+
+        valid, validation_reason = validate_file_bytes(file_name, file_data, MAX_FILE_SIZE_MB)
+        if not valid:
+            result["errors"].append(f"{file_name}: {validation_reason}")
+            continue
+
+        size_bytes = len(
+            file_data
+        )
+
+        if (
+            size_bytes
+            > MAX_FILE_SIZE_MB
+            * 1024
+            * 1024
+        ):
+            result["errors"].append(
+                f"{file_name}: "
+                f"File exceeds the "
+                f"{MAX_FILE_SIZE_MB} MB "
+                f"limit."
+            )
+
+            continue
+
+        file_hash = (
+            calculate_file_hash(
+                file_data
+            )
+        )
+
+        duplicate = any(
+            record.get("file_hash")
+            == file_hash
+            for record in manifest.values()
+            if isinstance(
+                record,
+                dict,
+            )
+        )
+
+        if duplicate:
+
+            result["skipped"].append(
+                {
+                    "name": file_name,
+                    "reason": "duplicate",
+                }
+            )
+
+            continue
 
         file_id = file_hash[:16]
-        file_path = get_files_directory(chat_id) / file_name
-        evidence_result = None
-        documents = []
+
+        file_path = (
+            get_files_directory(
+                chat_id
+            )
+            / file_name
+        )
+
+        if file_path.exists():
+
+            file_path = (
+                get_files_directory(
+                    chat_id
+                )
+                / (
+                    f"{file_hash[:8]}_"
+                    f"{file_name}"
+                )
+            )
 
         try:
-            with file_path.open("wb") as file:
-                file.write(data)
 
-            if extension in {"png", "jpg", "jpeg", "webp"} or extension == "pdf":
-                evidence_result = extract_evidence(file_name, data)
-                if evidence_result.get("status") == "rejected_security":
-                    file_path.unlink(missing_ok=True)
-                    result["security_rejected"].append({
-                        "file_name": file_name,
-                        "reason": evidence_result.get("reason", "Unsafe instructions detected."),
-                    })
-                    continue
-                if evidence_result.get("status") != "processed":
-                    file_path.unlink(missing_ok=True)
-                    result["errors"].append(f"{file_name}: Evidence could not be processed.")
-                    continue
-                evidence_doc = build_evidence_document(evidence_result, chat_id)
-                documents = [evidence_doc]
-            else:
-                documents = create_documents(file_path, chat_id)
-                if not documents:
-                    file_path.unlink(missing_ok=True)
-                    result["errors"].append(f"{file_name}: No readable text was found.")
-                    continue
+            file_path.write_bytes(
+                file_data
+            )
 
-            add_documents_to_index(chat_id, documents)
-            uploaded_at = datetime.utcnow().isoformat() + "Z"
+            documents = (
+                create_documents(
+                    file_path,
+                    chat_id,
+                    file_id=file_id,
+                )
+            )
+
+            if not documents:
+
+                file_path.unlink(
+                    missing_ok=True
+                )
+
+                result["errors"].append(
+                    f"{file_name}: "
+                    f"No readable text "
+                    f"was found."
+                )
+
+                continue
+
+            add_documents_to_index(
+                chat_id,
+                documents,
+            )
+
+            uploaded_at = (
+                datetime.now(
+                    timezone.utc
+                ).isoformat()
+            )
+
             record = {
-                "file_name": file_name,
-                "original_name": payload.get("original_name", file_name),
-                "file_hash": file_hash,
-                "size_bytes": len(data),
-                "size_display": format_file_size(len(data)),
-                "chunk_count": len(documents),
-                "uploaded_at": uploaded_at,
+                "file_name": (
+                    file_path.name
+                ),
+
+                "original_name": (
+                    original_name
+                ),
+
+                "file_hash": (
+                    file_hash
+                ),
+
+                "size_bytes": (
+                    size_bytes
+                ),
+
+                "size_display": (
+                    format_file_size(
+                        size_bytes
+                    )
+                ),
+
+                "chunk_count": (
+                    len(documents)
+                ),
+
+                "uploaded_at": (
+                    uploaded_at
+                ),
+
                 "extension": extension,
-                "evidence_type": "image_or_pdf" if extension in {"png", "jpg", "jpeg", "webp", "pdf"} else "document",
-                "evidence_fields": (evidence_result or {}).get("fields", {}),
-                "evidence_quality": (evidence_result or {}).get("quality", 1.0),
-                "low_quality": (evidence_result or {}).get("low_quality", False),
+                "evidence_quality": evidence.get("quality", 0),
+                "evidence_status": evidence.get("status", "processed"),
+                "evidence_fields": evidence.get("fields", {}),
             }
+
             manifest[file_id] = record
+
             existing_count += 1
-            result["added"].append({"id": file_id, **record})
+
+            result["added"].append(
+                {
+                    "id": file_id,
+                    **record,
+                }
+            )
+
+            logger.info(
+                "Conversation file indexed: "
+                "%s (%d chunks)",
+                file_name,
+                len(documents),
+            )
+
         except Exception as error:
-            logger.exception("Failed processing conversation file %s", file_name)
+
+            logger.exception(
+                "Failed processing "
+                "conversation file %s",
+                file_name,
+            )
+
             try:
-                file_path.unlink(missing_ok=True)
+                file_path.unlink(
+                    missing_ok=True
+                )
             except Exception:
                 pass
-            result["errors"].append(f"{file_name}: Processing failed: {mask_sensitive_data(str(error))}")
 
-    save_manifest(chat_id, manifest)
+            result["errors"].append(
+                f"{file_name}: "
+                f"Processing failed: "
+                f"{error}"
+            )
+
+    save_manifest(
+        chat_id,
+        manifest,
+    )
+
     return result
 
 
-def add_conversation_file_payloads(chat_id, payloads):
-    return _process_payloads(chat_id, payloads)
-
-
-def add_conversation_files(chat_id, uploaded_files):
-    payloads = []
-    for uploaded_file in uploaded_files or []:
-        try:
-            payloads.append({
-                "name": uploaded_file.name,
-                "original_name": uploaded_file.name,
-                "data": uploaded_file.getvalue(),
-            })
-        except Exception as error:
-            logger.warning("Could not read uploaded file: %s", mask_sensitive_data(str(error)))
-    return add_conversation_file_payloads(chat_id, payloads)
-
-
-def compare_uploaded_evidence_with_message(chat_id, message):
-    records = list_conversation_files(chat_id)
-    comparisons = []
-    for record in records:
-        fields = record.get("evidence_fields") or {}
-        if not fields:
-            continue
-        comparisons.append({
-            "file_name": record.get("file_name", ""),
-            **compare_message_with_evidence(message, {"fields": fields}),
-            "low_quality": bool(record.get("low_quality", False)),
-            "quality": record.get("evidence_quality", 1.0),
-        })
-    conflicts = [item for item in comparisons if item.get("has_conflict")]
-    low_quality = [item for item in comparisons if item.get("low_quality")]
-    return {
-        "comparisons": comparisons,
-        "has_conflict": bool(conflicts),
-        "has_low_quality": bool(low_quality),
-        "conflicts": conflicts,
-        "low_quality": low_quality,
-    }
-
-
 # ============================================================
-# REMOVE SINGLE CONVERSATION FILE
+# REMOVE ONE FILE
 # ============================================================
 
 def remove_conversation_file(
@@ -1076,8 +1192,10 @@ def remove_conversation_file(
         chat_id
     )
 
+    file_id = str(file_id)
+
     record = manifest.get(
-        str(file_id)
+        file_id
     )
 
     if not record:
@@ -1097,28 +1215,26 @@ def remove_conversation_file(
         )
 
         try:
-
             file_path.unlink(
                 missing_ok=True
             )
 
         except Exception as error:
-
             logger.warning(
-                "Could not remove file %s: %s",
+                "Could not remove "
+                "%s: %s",
                 file_path,
                 error,
             )
 
-    del manifest[
-        str(file_id)
-    ]
+    del manifest[file_id]
 
     save_manifest(
         chat_id,
         manifest,
     )
 
+    # Internal automatic rebuild.
     rebuild_conversation_index(
         chat_id
     )
@@ -1127,11 +1243,11 @@ def remove_conversation_file(
 
 
 # ============================================================
-# REBUILD CONVERSATION INDEX
+# REBUILD CHAT INDEX
 # ============================================================
 
 def rebuild_conversation_index(
-    chat_id
+    chat_id,
 ):
     ensure_chat_directories(
         chat_id
@@ -1149,7 +1265,13 @@ def rebuild_conversation_index(
         )
     )
 
-    for record in manifest.values():
+    for file_id, record in manifest.items():
+
+        if not isinstance(
+            record,
+            dict,
+        ):
+            continue
 
         file_name = record.get(
             "file_name"
@@ -1168,9 +1290,12 @@ def rebuild_conversation_index(
 
         try:
 
-            documents = create_documents(
-                file_path,
-                chat_id,
+            documents = (
+                create_documents(
+                    file_path,
+                    chat_id,
+                    file_id=file_id,
+                )
             )
 
             all_documents.extend(
@@ -1180,7 +1305,8 @@ def rebuild_conversation_index(
         except Exception as error:
 
             logger.warning(
-                "Could not rebuild %s: %s",
+                "Could not rebuild "
+                "%s: %s",
                 file_name,
                 error,
             )
@@ -1194,7 +1320,6 @@ def rebuild_conversation_index(
     if not all_documents:
 
         if index_directory.exists():
-
             shutil.rmtree(
                 index_directory,
                 ignore_errors=True,
@@ -1209,7 +1334,7 @@ def rebuild_conversation_index(
 
     vectordb = FAISS.from_documents(
         all_documents,
-        get_embeddings(),
+        _get_embeddings(),
     )
 
     vectordb.save_local(
@@ -1246,7 +1371,7 @@ def search_conversation_files(
 
     try:
 
-        results = (
+        return (
             vectordb
             .similarity_search_with_relevance_scores(
                 query,
@@ -1254,12 +1379,11 @@ def search_conversation_files(
             )
         )
 
-        return results
-
     except Exception as error:
 
         logger.warning(
-            "Conversation-file similarity search failed: %s",
+            "Conversation similarity "
+            "search failed: %s",
             error,
         )
 
@@ -1275,20 +1399,31 @@ def search_conversation_files(
             return [
                 (
                     document,
-                    0.5,
+                    max(
+                        0.0,
+                        1.0
+                        - (
+                            index
+                            / max(
+                                len(documents),
+                                1,
+                            )
+                        ),
+                    ),
                 )
-                for document in documents
+                for index, document
+                in enumerate(documents)
             ]
 
         except Exception as fallback_error:
 
             logger.error(
-                "Conversation-file search failed: %s",
+                "Conversation search "
+                "failed: %s",
                 fallback_error,
             )
 
             return []
-
 
 
 # ============================================================
@@ -1298,24 +1433,41 @@ def search_conversation_files(
 def get_conversation_documents(
     chat_id,
 ):
-    vectordb = load_conversation_vector_db(chat_id)
+    vectordb = (
+        load_conversation_vector_db(
+            chat_id
+        )
+    )
 
     if vectordb is None:
         return []
 
     try:
-        documents = list(vectordb.docstore._dict.values())
+
+        documents = list(
+            vectordb
+            .docstore
+            ._dict
+            .values()
+        )
+
     except Exception as error:
+
         logger.warning(
-            "Could not read conversation documents: %s",
+            "Could not read "
+            "conversation documents: %s",
             error,
         )
+
         return []
 
     return [
         document
         for document in documents
-        if isinstance(document, Document)
+        if isinstance(
+            document,
+            Document,
+        )
     ]
 
 
@@ -1327,90 +1479,160 @@ def get_conversation_overview_documents(
     chat_id,
     max_chunks=10,
 ):
-    """Return representative chunks from all files attached to a chat."""
-    documents = get_conversation_documents(chat_id)
+    """
+    Select representative content from every
+    uploaded conversation file.
+
+    This is used for questions such as:
+
+        What is present in this file?
+        What does this document contain?
+        Summarize the attached file.
+        What is inside this document?
+    """
+
+    documents = (
+        get_conversation_documents(
+            chat_id
+        )
+    )
 
     if not documents:
         return []
 
+    # --------------------------------------------------------
+    # Group chunks by file
+    # --------------------------------------------------------
+
     grouped = {}
+
     for document in documents:
-        metadata = document.metadata if isinstance(document.metadata, dict) else {}
-        file_name = (
-            metadata.get("source_file")
-            or metadata.get("file_name")
-            or metadata.get("filename")
-            or "unknown"
+
+        metadata = (
+            document.metadata
+            if isinstance(
+                document.metadata,
+                dict,
+            )
+            else {}
         )
-        grouped.setdefault(str(file_name), []).append(document)
+
+        file_id = str(
+            metadata.get(
+                "file_id",
+                metadata.get(
+                    "source_file",
+                    "unknown",
+                ),
+            )
+        )
+
+        grouped.setdefault(
+            file_id,
+            [],
+        ).append(document)
 
     selected = []
-    number_of_files = max(len(grouped), 1)
-    chunks_per_file = max(2, max_chunks // number_of_files)
 
-    for file_name, file_documents in grouped.items():
+    # Give each file representation.
+    number_of_files = max(
+        len(grouped),
+        1,
+    )
+
+    chunks_per_file = max(
+        2,
+        max_chunks // number_of_files,
+    )
+
+    for file_id, file_documents in grouped.items():
+
         file_documents.sort(
             key=lambda document: int(
                 document.metadata.get(
                     "chunk_index",
-                    document.metadata.get("chunk", 0),
-                ) or 0
+                    document.metadata.get(
+                        "chunk",
+                        0,
+                    ),
+                )
             )
         )
 
-        count = len(file_documents)
+        count = len(
+            file_documents
+        )
+
+        # Small file: use everything.
         if count <= chunks_per_file:
-            chosen = file_documents
-        else:
-            indexes = [0]
 
-            # Prefer chunks containing headings/section labels because they
-            # give the model more semantic coverage for broad questions.
-            heading_indexes = []
-            for index, document in enumerate(file_documents):
-                metadata = document.metadata if isinstance(document.metadata, dict) else {}
-                section = str(metadata.get("section") or "").strip()
-                if section:
-                    heading_indexes.append(index)
+            selected.extend(
+                file_documents
+            )
 
-            for index in heading_indexes:
-                if len(indexes) >= chunks_per_file:
-                    break
-                if index not in indexes:
-                    indexes.append(index)
+            continue
 
-            remaining = chunks_per_file - len(indexes)
-            if remaining > 0:
-                for i in range(1, remaining + 1):
-                    position = round(
-                        i * (count - 1) / max(remaining, 1)
+        # ----------------------------------------------------
+        # Always include beginning
+        # ----------------------------------------------------
+
+        indexes = [
+            0
+        ]
+
+        # ----------------------------------------------------
+        # Add middle/end representative chunks
+        # ----------------------------------------------------
+
+        remaining_slots = (
+            chunks_per_file - 1
+        )
+
+        if remaining_slots > 0:
+
+            for i in range(
+                1,
+                remaining_slots + 1,
+            ):
+
+                position = round(
+                    i
+                    * (count - 1)
+                    / max(
+                        remaining_slots,
+                        1,
                     )
-                    if position not in indexes:
-                        indexes.append(position)
+                )
 
-            chosen = [file_documents[index] for index in sorted(set(indexes))]
+                if position not in indexes:
+                    indexes.append(
+                        position
+                    )
 
-        total = len(file_documents)
-        for document in chosen:
-            metadata = document.metadata if isinstance(document.metadata, dict) else {}
-            metadata.setdefault("source_file", file_name)
-            metadata.setdefault("file_name", file_name)
-            metadata.setdefault("filename", file_name)
-            metadata["source_type"] = "conversation_file"
-            metadata["retrieval_source"] = "conversation_file"
-            metadata["overview_retrieval"] = True
-            metadata["total_chunks"] = total
-            document.metadata = metadata
-            selected.append(document)
+        indexes = sorted(
+            set(indexes)
+        )
 
-    return selected[:max_chunks]
+        selected.extend(
+            file_documents[index]
+            for index in indexes
+        )
+
+    # --------------------------------------------------------
+    # Final safety limit
+    # --------------------------------------------------------
+
+    return selected[
+        :max_chunks
+    ]
+
 
 # ============================================================
 # DELETE ALL FILES FOR ONE CHAT
 # ============================================================
 
 def delete_conversation_files(
-    chat_id
+    chat_id,
 ):
     chat_directory = (
         get_chat_directory(
@@ -1427,11 +1649,11 @@ def delete_conversation_files(
 
 
 # ============================================================
-# DELETE ALL CONVERSATION FILES
+# DELETE FILES FOR ALL CHATS
 # ============================================================
 
 def delete_all_conversation_files(
-    chat_ids=None
+    chat_ids=None,
 ):
     if chat_ids is None:
 
