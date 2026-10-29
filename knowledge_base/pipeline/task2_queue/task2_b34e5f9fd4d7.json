@@ -1,0 +1,39 @@
+{
+  "id": "task2_b34e5f9fd4d7",
+  "status": "completed",
+  "description": "Customer evidence processing",
+  "created_at": "2026-10-29T20:15:42.308444+00:00",
+  "started_at": "2026-10-29T20:15:42.711068+00:00",
+  "exceeded_timeout": true,
+  "customer_notification": "Your file is taking longer than 30 seconds to process. It has been moved to the background queue and will continue automatically.",
+  "result": {
+    "added": [
+      {
+        "id": "4054223bd640948d",
+        "file_name": "PR_Sponsorship_Panels.pdf",
+        "original_name": "PR_Sponsorship_Panels.pdf",
+        "file_hash": "4054223bd640948d825720f349af9e397abb8821aab32ae32ec7e3393273fac6",
+        "size_bytes": 3464,
+        "size_display": "3.4 KB",
+        "chunk_count": 45,
+        "uploaded_at": "2026-10-29T20:17:20.004365+00:00",
+        "extension": "pdf",
+        "evidence_quality": 0.817,
+        "evidence_status": "processed",
+        "evidence_fields": {
+          "order_ids": [],
+          "dates": [],
+          "amounts": [],
+          "products": [],
+          "error_codes": []
+        },
+        "evidence_low_quality": false,
+        "needs_clearer_file": false
+      }
+    ],
+    "skipped": [],
+    "security_rejected": [],
+    "errors": []
+  },
+  "finished_at": "2026-10-29T20:17:21.630042+00:00"
+}
