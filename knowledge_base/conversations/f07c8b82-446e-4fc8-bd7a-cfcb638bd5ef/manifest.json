@@ -1,0 +1,23 @@
+{
+  "4054223bd640948d": {
+    "file_name": "PR_Sponsorship_Panels.pdf",
+    "original_name": "PR_Sponsorship_Panels.pdf",
+    "file_hash": "4054223bd640948d825720f349af9e397abb8821aab32ae32ec7e3393273fac6",
+    "size_bytes": 3464,
+    "size_display": "3.4 KB",
+    "chunk_count": 45,
+    "uploaded_at": "2026-10-29T20:17:20.004365+00:00",
+    "extension": "pdf",
+    "evidence_quality": 0.817,
+    "evidence_status": "processed",
+    "evidence_fields": {
+      "order_ids": [],
+      "dates": [],
+      "amounts": [],
+      "products": [],
+      "error_codes": []
+    },
+    "evidence_low_quality": false,
+    "needs_clearer_file": false
+  }
+}

@@ -24,5 +24,9 @@
     "grounding_ok": true
   },
   "last_run_id": "v0001_activated",
-  "last_scheduled_date": "2026-09-15"
+  "health_status": "stable",
+  "activation_timestamp": null,
+  "monitoring_until": null,
+  "previous_healthy_version": 0,
+  "last_scheduled_date": "2026-10-30"
 }
