@@ -10,7 +10,6 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 BASE_DIR = Path(__file__).resolve().parent.parent
 QUEUE_DIR = BASE_DIR / "knowledge_base" / "pipeline" / "task2_queue"
-QUEUE_DIR.mkdir(parents=True, exist_ok=True)
 
 _executor = ThreadPoolExecutor(max_workers=2)
 _lock = threading.Lock()
@@ -20,8 +19,13 @@ def _now():
     return datetime.now(timezone.utc).isoformat()
 
 
+def _ensure_queue_dir():
+    QUEUE_DIR.mkdir(parents=True, exist_ok=True)
+    return QUEUE_DIR
+
+
 def _path(job_id):
-    return QUEUE_DIR / f"{job_id}.json"
+    return _ensure_queue_dir() / f"{job_id}.json"
 
 
 def _write(job):
@@ -74,19 +78,31 @@ def cleanup_old_jobs(retention_hours=24):
         except Exception:
             pass
 
-def run_with_timeout(fn, *args, timeout_seconds=30, description="Background processing", **kwargs):
+def run_with_timeout(
+    fn,
+    *args,
+    timeout_seconds=30,
+    description="Background processing",
+    clock=None,
+    sleeper=None,
+    **kwargs,
+):
+    clock = clock or time.time
+    sleeper = sleeper or time.sleep
     job = submit(fn, *args, description=description, **kwargs)
-    deadline = time.time() + float(timeout_seconds)
-    while time.time() < deadline:
+    deadline = clock() + float(timeout_seconds)
+    while clock() < deadline:
         current = get_job(job["id"])
         if current and current.get("status") in {"completed", "failed"}:
             return current
-        time.sleep(0.2)
-    current = get_job(job["id"]) or job
-    current["status"] = "queued"
-    current["customer_notification"] = (
-        "Your file is taking longer than 30 seconds to process. "
-        "It has been moved to the background queue and will continue automatically."
-    )
-    _write(current)
+        sleeper(0.2)
+    current = get_job(job["id"]) or dict(job)
+    if current.get("status") not in {"completed", "failed"}:
+        current["status"] = "queued"
+        current["exceeded_timeout"] = True
+        current["customer_notification"] = (
+            "Your file is taking longer than 30 seconds to process. "
+            "It has been moved to the background queue and will continue automatically."
+        )
+        _write(current)
     return current

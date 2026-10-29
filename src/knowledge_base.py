@@ -59,6 +59,7 @@ QUARANTINE_DIR = PIPELINE_DIR / "quarantine"
 VERSIONS_DIR = PIPELINE_DIR / "versions"
 STAGING_DIR = PIPELINE_DIR / "staging"
 PIPELINE_STATE_PATH = PIPELINE_DIR / "state.json"
+OPERATIONAL_METRICS_PATH = PIPELINE_DIR / "operational_metrics.json"
 
 
 
@@ -831,29 +832,113 @@ def _pipeline_now():
 
 def _load_pipeline_state():
     ensure_directories()
+    default_state = {
+        "current_version": 0,
+        "pending": False,
+        "pending_since": None,
+        "attempt": 0,
+        "next_retry_at": None,
+        "last_run": None,
+        "last_result": "never_run",
+        "last_error": None,
+        "last_quality": None,
+        "last_run_id": None,
+        "health_status": "stable",
+        "activation_timestamp": None,
+        "monitoring_until": None,
+        "previous_healthy_version": 0,
+    }
     if not PIPELINE_STATE_PATH.exists():
-        return {
-            "current_version": 0,
-            "pending": False,
-            "pending_since": None,
-            "attempt": 0,
-            "next_retry_at": None,
-            "last_run": None,
-            "last_result": "never_run",
-            "last_error": None,
-            "last_quality": None,
-            "last_run_id": None,
-        }
+        return default_state
     try:
-        return json.loads(PIPELINE_STATE_PATH.read_text(encoding="utf-8"))
+        loaded = json.loads(PIPELINE_STATE_PATH.read_text(encoding="utf-8"))
+        return {**default_state, **loaded}
     except (OSError, json.JSONDecodeError):
-        return {
-            "current_version": 0,
-            "pending": False,
-            "attempt": 0,
-            "next_retry_at": None,
-            "last_result": "state_reset",
-        }
+        return {**default_state, "last_result": "state_reset"}
+
+
+def record_operational_metric(event_type, latency_ms=0.0, status="success", details=None, is_escalation=False, now=None):
+    ensure_directories()
+    now = now or _pipeline_now()
+    from src.task2_security import mask_sensitive_data
+
+    clean_details = {}
+    if details:
+        for k, v in details.items():
+            if isinstance(v, str):
+                clean_details[k] = mask_sensitive_data(v)
+            elif isinstance(v, dict):
+                clean_details[k] = {ik: mask_sensitive_data(str(iv)) if isinstance(iv, str) else iv for ik, iv in v.items()}
+            else:
+                clean_details[k] = v
+
+    entry = {
+        "timestamp": now.isoformat(timespec="seconds"),
+        "event_type": event_type,
+        "latency_ms": round(float(latency_ms), 2),
+        "status": status,
+        "details": clean_details,
+        "is_escalation": bool(is_escalation),
+    }
+
+    metrics_data = {"events": [], "escalations": [], "summary": {}}
+    if OPERATIONAL_METRICS_PATH.exists():
+        try:
+            metrics_data = json.loads(OPERATIONAL_METRICS_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            metrics_data = {"events": [], "escalations": [], "summary": {}}
+
+    events = metrics_data.get("events", [])
+    events.append(entry)
+    metrics_data["events"] = events[-100:]
+
+    escalations = metrics_data.get("escalations", [])
+    if is_escalation:
+        escalations.append(entry)
+    metrics_data["escalations"] = escalations[-50:]
+
+    summary = metrics_data.get("summary", {})
+    summary["total_events"] = len(metrics_data["events"])
+    summary["total_escalations"] = len(metrics_data["escalations"])
+    summary["last_event_time"] = entry["timestamp"]
+    metrics_data["summary"] = summary
+
+    try:
+        OPERATIONAL_METRICS_PATH.write_text(
+            json.dumps(metrics_data, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+    except Exception:
+        pass
+    return entry
+
+
+def get_operational_metrics():
+    ensure_directories()
+    if not OPERATIONAL_METRICS_PATH.exists():
+        return {"events": [], "escalations": [], "summary": {"total_events": 0, "total_escalations": 0}}
+    try:
+        return json.loads(OPERATIONAL_METRICS_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return {"events": [], "escalations": [], "summary": {"total_events": 0, "total_escalations": 0}}
+
+
+def enforce_access_control(user_role=None, action="manage_kb"):
+    from src.config import KB_PIPELINE_CONFIG
+    authorized = set(KB_PIPELINE_CONFIG.get("authorized_roles", ["admin", "kb_manager"]))
+    role = user_role if user_role is not None else KB_PIPELINE_CONFIG.get("default_role", "admin")
+    if role not in authorized:
+        record_operational_metric(
+            event_type="unauthorized_access",
+            status="denied",
+            details={"role": str(role), "action": action},
+            is_escalation=True,
+        )
+        raise PermissionError(
+            f"Access denied: role '{role}' is not authorized to perform '{action}' on the knowledge base."
+        )
+    return True
+
 
 
 def _save_pipeline_state(state):
@@ -958,6 +1043,12 @@ def _quarantine_file(path, reason):
     target = target_dir / path.name
     shutil.move(str(path), str(target))
     (target_dir / "reason.txt").write_text(str(reason), encoding="utf-8")
+    record_operational_metric(
+        event_type="file_quarantined",
+        status="quarantined",
+        details={"file": path.name, "reason": str(reason)},
+        is_escalation=True if "prompt_injection" in str(reason).lower() else False,
+    )
     return target
 
 
@@ -972,9 +1063,18 @@ def _validate_uploaded_file(file_path):
         text = "\n".join(str(item[1]).strip() for item in extracted)
         if len(re.sub(r"\s+", "", text)) < 20:
             return False, "file contains insufficient readable content"
+
+        from src.config import KB_PIPELINE_CONFIG
+        if KB_PIPELINE_CONFIG.get("enable_prompt_injection_quarantine", True):
+            from src.task2_security import detect_prompt_injection
+            hits = detect_prompt_injection(text)
+            if hits:
+                return False, f"prompt_injection_detected: document contains {len(hits)} suspicious pattern(s)"
+
         return True, "valid"
     except Exception as error:
         return False, f"extraction failed: {error}"
+
 
 
 def _set_pending(manifest, reason):
@@ -994,12 +1094,13 @@ def _set_pending(manifest, reason):
     _save_pipeline_state(state)
 
 
-def add_uploaded_files(uploaded_files):
+def add_uploaded_files(uploaded_files, user_role=None):
     """Stage new/modified files for the production KB pipeline.
 
     Files are validated and duplicate-checked, but are not activated immediately.
     Activation happens only through the pipeline during the configured maintenance window.
     """
+    enforce_access_control(user_role, action="upload_documents")
     ensure_directories()
     manifest = load_manifest()
     added = 0
@@ -1081,8 +1182,10 @@ def add_uploaded_files(uploaded_files):
 # ==================================================
 
 def delete_document(
-    filename
+    filename,
+    user_role=None,
 ):
+    enforce_access_control(user_role, action="delete_document")
 
     file_path = (
         UPLOAD_DIR
@@ -1133,6 +1236,10 @@ def _build_candidate_dataset():
         for page_number, text in extracted:
             chunks = split_text(text)
             for chunk_number, chunk in enumerate(chunks, start=1):
+                from src.config import KB_PIPELINE_CONFIG
+                if KB_PIPELINE_CONFIG.get("enable_pii_masking", True):
+                    from src.task2_security import mask_sensitive_data
+                    chunk = mask_sensitive_data(chunk)
                 rows.append({
                     "prompt": chunk,
                     "response": "",
@@ -1198,8 +1305,9 @@ def _active_quality_metrics():
     return _quality_metrics(pd.read_csv(DATASET_PATH).fillna(""))
 
 
-def _create_version_snapshot(label, state=None):
+def _create_version_snapshot(label, state=None, now=None):
     ensure_directories()
+    now = now or _pipeline_now()
     state = state or _load_pipeline_state()
     version = int(state.get("current_version", 0)) + 1
     version_dir = VERSIONS_DIR / f"v{version:04d}_{label}"
@@ -1217,7 +1325,7 @@ def _create_version_snapshot(label, state=None):
 
     metadata = {
         "version": version,
-        "created_at": _pipeline_now().isoformat(timespec="seconds"),
+        "created_at": now.isoformat(timespec="seconds"),
         "label": label,
     }
     (version_dir / "version.json").write_text(
@@ -1227,14 +1335,54 @@ def _create_version_snapshot(label, state=None):
     return version, version_dir
 
 
-def rollback_knowledge_base(version=None):
+def rollback_knowledge_base(version=None, user_role=None, now=None):
+    enforce_access_control(user_role, action="rollback")
     ensure_directories()
+    now = now or _pipeline_now()
     versions = sorted(VERSIONS_DIR.glob("v*"), reverse=True)
+
+    if version is not None and int(version) == 0:
+        if BASE_DATASET_PATH.exists():
+            shutil.copy2(BASE_DATASET_PATH, DATASET_PATH)
+        if UPLOAD_DIR.exists():
+            for f in UPLOAD_DIR.iterdir():
+                if f.is_file():
+                    f.unlink()
+        manifest = load_manifest()
+        for meta in manifest.values():
+            meta["status"] = "pending"
+            meta["active"] = False
+        save_manifest(manifest)
+        try:
+            create_vector_db()
+        except Exception:
+            pass
+        state = _load_pipeline_state()
+        state["current_version"] = 0
+        state["pending"] = False
+        state["attempt"] = 0
+        state["next_retry_at"] = None
+        state["last_result"] = "rolled_back"
+        state["health_status"] = "healthy"
+        state["last_run"] = now.isoformat(timespec="seconds")
+        _save_pipeline_state(state)
+        record_operational_metric("rollback_executed", status="success", details={"target_version": 0}, now=now)
+        try:
+            from src.langchain_helper import load_vector_db
+            load_vector_db.cache_clear()
+        except Exception:
+            pass
+        return "v0000_baseline"
+
     if version is not None:
-        versions = [item for item in versions if item.name.startswith(f"v{int(version):04d}_")]
-    if not versions:
+        target_versions = [item for item in versions if item.name.startswith(f"v{int(version):04d}_")]
+        if not target_versions:
+            raise FileNotFoundError(f"Version {version} is not available for rollback.")
+        source = target_versions[0]
+    elif versions:
+        source = versions[0]
+    else:
         raise FileNotFoundError("No KB version is available for rollback.")
-    source = versions[0]
 
     if (source / "dataset.csv").exists():
         DATASET_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -1251,13 +1399,16 @@ def rollback_knowledge_base(version=None):
         shutil.copytree(source / "faiss_index", VECTORDB_PATH)
 
     state = _load_pipeline_state()
-    state["current_version"] = max(0, int(source.name.split("_")[0][1:]))
+    target_v = max(0, int(source.name.split("_")[0][1:]))
+    state["current_version"] = target_v
     state["pending"] = False
     state["attempt"] = 0
     state["next_retry_at"] = None
     state["last_result"] = "rolled_back"
-    state["last_run"] = _pipeline_now().isoformat(timespec="seconds")
+    state["health_status"] = "healthy"
+    state["last_run"] = now.isoformat(timespec="seconds")
     _save_pipeline_state(state)
+    record_operational_metric("rollback_executed", status="success", details={"target_version": target_v, "source": source.name}, now=now)
     try:
         from src.langchain_helper import load_vector_db
         load_vector_db.cache_clear()
@@ -1266,16 +1417,18 @@ def rollback_knowledge_base(version=None):
     return source.name
 
 
-def _activate_candidate(candidate, quality, label):
+def _activate_candidate(candidate, quality, label, now=None):
+    now = now or _pipeline_now()
     state = _load_pipeline_state()
-    version, version_dir = _create_version_snapshot(label, state)
+    previous_version = int(state.get("current_version", 0))
+    version, version_dir = _create_version_snapshot(label, state, now=now)
     temp_dataset = STAGING_DIR / f"candidate_{version}.csv"
     candidate.to_csv(temp_dataset, index=False)
     shutil.copy2(temp_dataset, DATASET_PATH)
     try:
         create_vector_db()
     except Exception:
-        rollback_knowledge_base(version)
+        rollback_knowledge_base(previous_version, user_role="admin", now=now)
         raise
 
     manifest = load_manifest()
@@ -1283,25 +1436,161 @@ def _activate_candidate(candidate, quality, label):
         if metadata.get("status") == "pending":
             metadata["status"] = "active"
             metadata["active"] = True
-            metadata["activated_at"] = _pipeline_now().isoformat(timespec="seconds")
+            metadata["activated_at"] = now.isoformat(timespec="seconds")
     save_manifest(manifest)
 
+    from src.config import KB_PIPELINE_CONFIG
+    window_seconds = float(KB_PIPELINE_CONFIG.get("health_check_window_seconds", 300))
+    monitoring_until = now + timedelta(seconds=window_seconds)
+
     state["current_version"] = version
+    state["previous_healthy_version"] = previous_version
     state["pending"] = False
     state["attempt"] = 0
     state["next_retry_at"] = None
-    state["last_result"] = "activated"
-    state["last_run"] = _pipeline_now().isoformat(timespec="seconds")
+    state["last_result"] = "activated_monitoring_health"
+    state["health_status"] = "monitoring"
+    state["activation_timestamp"] = now.isoformat(timespec="seconds")
+    state["monitoring_until"] = monitoring_until.isoformat(timespec="seconds")
+    state["last_run"] = now.isoformat(timespec="seconds")
     state["last_error"] = None
     state["last_quality"] = quality
     state["last_run_id"] = version_dir.name
     _save_pipeline_state(state)
+
+    record_operational_metric(
+        event_type="pipeline_activation",
+        status="monitoring_health",
+        details={"version": version, "monitoring_until": state["monitoring_until"], "quality": quality},
+        now=now,
+    )
     return version
 
 
-def run_knowledge_base_pipeline(force=False):
-    """Execute the complete staged KB update lifecycle."""
+def run_post_activation_health_check(now=None, force_fail_reason=None):
+    """
+    Verify knowledge base health within 5 minutes of activation.
+    If health check fails within the 5-minute window, trigger automatic rollback.
+    If 5 minutes pass without failure, promote health status to 'healthy'.
+    """
+    now = now or _pipeline_now()
+    state = _load_pipeline_state()
     from src.config import KB_PIPELINE_CONFIG
+
+    health_status = state.get("health_status")
+    last_result = state.get("last_result")
+
+    if health_status != "monitoring" and last_result != "activated_monitoring_health":
+        return {
+            "status": state.get("health_status", "stable"),
+            "current_version": state.get("current_version", 0),
+            "message": "No active health monitoring window.",
+        }
+
+    monitoring_until_str = state.get("monitoring_until")
+    monitoring_until = None
+    if monitoring_until_str:
+        try:
+            monitoring_until = datetime.fromisoformat(monitoring_until_str)
+        except ValueError:
+            pass
+
+    # Window has expired: promote to healthy
+    if monitoring_until and now >= monitoring_until and not force_fail_reason:
+        state["health_status"] = "healthy"
+        state["last_result"] = "activated_healthy"
+        _save_pipeline_state(state)
+        record_operational_metric(
+            event_type="health_check_promoted",
+            status="healthy",
+            details={"version": state.get("current_version")},
+            now=now,
+        )
+        return {
+            "status": "healthy",
+            "current_version": state.get("current_version"),
+            "message": "Post-activation health check window passed successfully. Version is stable.",
+        }
+
+    # Within the 5-minute window: execute health check probe
+    start_time = time.perf_counter()
+    failure_reason = force_fail_reason
+    if not failure_reason:
+        try:
+            if not DATASET_PATH.exists() or not VECTORDB_PATH.exists():
+                failure_reason = "Dataset or vector database missing."
+            else:
+                from src.langchain_helper import load_vector_db
+                db = load_vector_db()
+                if not db:
+                    failure_reason = "Vector database failed to load."
+                else:
+                    canary_query = KB_PIPELINE_CONFIG.get("canary_query", "courses")
+                    results = db.similarity_search(canary_query, k=1)
+                    if not results:
+                        failure_reason = "Canary vector search returned empty results."
+        except Exception as exc:
+            failure_reason = f"Canary query exception: {exc}"
+
+    latency_ms = round((time.perf_counter() - start_time) * 1000, 2)
+    max_latency = float(KB_PIPELINE_CONFIG.get("health_check_max_latency_seconds", 5.0)) * 1000
+    if not failure_reason and latency_ms > max_latency:
+        failure_reason = f"Health check latency ({latency_ms}ms) exceeded maximum threshold ({max_latency}ms)."
+
+    if failure_reason:
+        # AUTOMATIC ROLLBACK TRIGGERED!
+        prev_version = state.get("previous_healthy_version", 0)
+        record_operational_metric(
+            event_type="health_check_failure_auto_rollback",
+            latency_ms=latency_ms,
+            status="auto_rolled_back",
+            details={
+                "failed_version": state.get("current_version"),
+                "rollback_target": prev_version,
+                "reason": str(failure_reason),
+            },
+            is_escalation=True,
+            now=now,
+        )
+        try:
+            rolled_back_to = rollback_knowledge_base(prev_version, user_role="admin", now=now)
+        except Exception as rb_exc:
+            rolled_back_to = f"rollback_error: {rb_exc}"
+
+        state = _load_pipeline_state()
+        state["last_result"] = "auto_rolled_back_health_failure"
+        state["health_status"] = "rolled_back"
+        state["last_error"] = f"Health check failed within 5m: {failure_reason}"
+        _save_pipeline_state(state)
+
+        return {
+            "status": "auto_rolled_back",
+            "reason": failure_reason,
+            "latency_ms": latency_ms,
+            "rolled_back_to": rolled_back_to,
+        }
+
+    record_operational_metric(
+        event_type="health_check_probe",
+        latency_ms=latency_ms,
+        status="passed",
+        details={"version": state.get("current_version")},
+        now=now,
+    )
+    return {
+        "status": "monitoring_pass",
+        "latency_ms": latency_ms,
+        "monitoring_until": state.get("monitoring_until"),
+        "version": state.get("current_version"),
+    }
+
+
+def run_knowledge_base_pipeline(force=False, user_role=None, now=None):
+    """Execute the complete staged KB update lifecycle."""
+    enforce_access_control(user_role, action="run_pipeline")
+    from src.config import KB_PIPELINE_CONFIG
+    import time
+    start_time = time.perf_counter()
     ensure_base_dataset()
     ensure_directories()
     detect_modified_documents()
@@ -1309,7 +1598,7 @@ def run_knowledge_base_pipeline(force=False):
     if not state.get("pending"):
         return {"status": "nothing_to_do", "state": state}
 
-    now = _pipeline_now()
+    now = now or _pipeline_now()
     retry_at = state.get("next_retry_at")
     if retry_at:
         try:
@@ -1318,17 +1607,26 @@ def run_knowledge_base_pipeline(force=False):
         except ValueError:
             pass
 
-    if not is_maintenance_window(now):
+    if not is_maintenance_window(now) and not force:
         state["last_result"] = "waiting_for_maintenance_window"
         _save_pipeline_state(state)
+        record_operational_metric(
+            event_type="pipeline_waiting_maintenance_window",
+            status="waiting",
+            details={
+                "maintenance_window_start": KB_PIPELINE_CONFIG.get("maintenance_window_start"),
+                "maintenance_window_end": KB_PIPELINE_CONFIG.get("maintenance_window_end"),
+            },
+            now=now,
+        )
         return {"status": "waiting_for_maintenance_window", "state": state}
 
     try:
         candidate = _build_candidate_dataset()
         quality = _quality_metrics(candidate)
         baseline = _active_quality_metrics()
-        min_accuracy = float(KB_PIPELINE_CONFIG["minimum_accuracy"] )
-        min_grounding = float(KB_PIPELINE_CONFIG["minimum_grounding"] )
+        min_accuracy = float(KB_PIPELINE_CONFIG["minimum_accuracy"])
+        min_grounding = float(KB_PIPELINE_CONFIG["minimum_grounding"])
         accuracy_ok = quality["accuracy"] >= max(min_accuracy, baseline["accuracy"] - float(KB_PIPELINE_CONFIG["max_accuracy_drop"]))
         grounding_ok = quality["grounding"] >= max(min_grounding, baseline["grounding"] - float(KB_PIPELINE_CONFIG["max_grounding_drop"]))
 
@@ -1339,23 +1637,52 @@ def run_knowledge_base_pipeline(force=False):
             state["last_run"] = now.isoformat(timespec="seconds")
             state["last_error"] = "Quality gate rejected candidate update."
             _save_pipeline_state(state)
+            record_operational_metric(
+                event_type="quality_gate_rejected",
+                status="rejected",
+                details={"candidate": quality, "baseline": baseline},
+                is_escalation=True,
+                now=now,
+            )
             return {"status": "rejected_quality", "quality": quality, "baseline": baseline, "state": state}
 
-        version = _activate_candidate(candidate, quality, "activated")
+        version = _activate_candidate(candidate, quality, "activated", now=now)
+        latency_ms = (time.perf_counter() - start_time) * 1000
+        record_operational_metric(
+            event_type="pipeline_completed",
+            latency_ms=latency_ms,
+            status="activated",
+            details={"version": version, "quality": quality},
+            now=now,
+        )
         return {"status": "activated", "version": version, "quality": quality, "baseline": baseline}
     except Exception as error:
         attempt = int(state.get("attempt", 0)) + 1
-        delays = [15, 30, 60]
+        delays = KB_PIPELINE_CONFIG.get("retry_delays_minutes", [15, 30, 60])
         if attempt <= len(delays):
+            delay = delays[attempt - 1]
             state["attempt"] = attempt
-            state["next_retry_at"] = (now + timedelta(minutes=delays[attempt - 1])).isoformat(timespec="seconds")
-            state["last_result"] = f"retry_scheduled_{delays[attempt - 1]}m"
+            state["next_retry_at"] = (now + timedelta(minutes=delay)).isoformat(timespec="seconds")
+            state["last_result"] = f"retry_scheduled_{delay}m"
             state["last_error"] = str(error)
+            record_operational_metric(
+                event_type=f"pipeline_retry_scheduled_{delay}m",
+                status="retry_scheduled",
+                details={"attempt": attempt, "delay_minutes": delay, "error": str(error)},
+                now=now,
+            )
         else:
             state["pending"] = False
             state["next_retry_at"] = None
             state["last_result"] = "failed_after_retries"
             state["last_error"] = str(error)
+            record_operational_metric(
+                event_type="pipeline_failed_after_retries",
+                status="failed",
+                details={"attempt": attempt, "error": str(error)},
+                is_escalation=True,
+                now=now,
+            )
         state["last_run"] = now.isoformat(timespec="seconds")
         _save_pipeline_state(state)
         return {"status": state["last_result"], "error": str(error), "state": state}
@@ -1388,17 +1715,21 @@ def get_pipeline_status():
     pending = sum(1 for item in manifest.values() if item.get("status") == "pending")
     quarantined = sum(1 for item in manifest.values() if item.get("status") == "quarantined")
     active = sum(1 for item in manifest.values() if item.get("status", "active") == "active")
+    metrics = get_operational_metrics()
     return {
         **state,
         "pending_documents": pending,
         "active_documents": active,
         "quarantined_documents": quarantined,
         "maintenance_window": is_maintenance_window(),
+        "total_operational_events": len(metrics.get("events", [])),
+        "total_escalations": len(metrics.get("escalations", [])),
     }
 
 
-def rebuild_knowledge_base():
+def rebuild_knowledge_base(user_role=None):
     """Compatibility wrapper: queue and execute only inside maintenance window."""
+    enforce_access_control(user_role, action="rebuild_kb")
     state = _load_pipeline_state()
     if not state.get("pending"):
         manifest = load_manifest()
@@ -1408,7 +1739,7 @@ def rebuild_knowledge_base():
         state["pending"] = True
         state["pending_since"] = _pipeline_now().isoformat(timespec="seconds")
         _save_pipeline_state(state)
-    result = run_knowledge_base_pipeline()
+    result = run_knowledge_base_pipeline(user_role=user_role)
     if result.get("status") != "activated":
         raise RuntimeError(result.get("error") or result.get("status"))
     return len(pd.read_csv(DATASET_PATH))
