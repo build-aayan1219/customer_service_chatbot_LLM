@@ -1,4 +1,4 @@
-﻿import base64
+import base64
 import sys
 import time
 from collections import defaultdict
@@ -56,6 +56,7 @@ st.set_page_config(
 st.markdown(
     """
 <style>
+<<<<<<< HEAD
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap');
 
 html, body, [class*="css"] {
@@ -250,6 +251,236 @@ header {visibility:hidden;}
 .claude-model-select {
     color: #e3e2de;
     font-weight: 500;
+=======
+#MainMenu { visibility: hidden; }
+footer { visibility: hidden; }
+header { visibility: hidden; }
+
+html, body, [class*="css"] {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    color: #0F172A;
+    background-color: #FAFAFC;
+}
+
+.block-container {
+    padding-top: 1.25rem;
+    padding-bottom: 7rem;
+    max-width: 920px;
+}
+
+/* Status Indicator Dot */
+.status-dot {
+    height: 8px;
+    width: 8px;
+    background-color: #22C55E;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+}
+
+/* App Bar & Title */
+.title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: #0F172A;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.subtitle {
+    color: #64748B;
+    font-size: 0.825rem;
+    margin-top: 2px;
+    margin-bottom: 16px;
+    font-weight: 400;
+}
+
+/* Sidebar Drawer */
+section[data-testid="stSidebar"] {
+    background-color: #F8FAFC;
+    border-right: 1px solid #E2E8F0;
+}
+
+.sidebar-brand {
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #0F172A;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+section[data-testid="stSidebar"] h3 {
+    font-size: 0.7rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #64748B !important;
+    font-weight: 600 !important;
+    margin-top: 18px !important;
+    margin-bottom: 8px !important;
+}
+
+section[data-testid="stSidebar"] div.stButton > button {
+    border-radius: 10px;
+    border: 1px solid #E2E8F0;
+    background-color: #FFFFFF;
+    color: #1E293B;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.15s ease;
+    padding: 8px 12px;
+}
+
+section[data-testid="stSidebar"] div.stButton > button:hover {
+    background-color: #F1F5F9;
+    border-color: #CBD5E1;
+    color: #0F172A;
+}
+
+section[data-testid="stSidebar"] div.stButton > button[kind="primary"] {
+    background-color: #0F172A;
+    color: #FFFFFF;
+    border: none;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+section[data-testid="stSidebar"] div.stButton > button[kind="primary"]:hover {
+    background-color: #1E293B;
+}
+
+/* ChatGPT / Claude Empty State Home */
+.welcome-hero {
+    max-width: 620px;
+    margin: 40px auto 28px;
+    text-align: center;
+}
+
+.welcome-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background-color: #F1F5F9;
+    border: 1px solid #E2E8F0;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 14px;
+}
+
+.welcome-title {
+    font-size: 1.75rem;
+    font-weight: 750;
+    color: #0F172A;
+    letter-spacing: -0.03em;
+    margin: 8px 0;
+    line-height: 1.25;
+}
+
+.welcome-text {
+    color: #64748B;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+
+/* Chat Messages */
+div[data-testid="stChatMessage"] {
+    padding: 16px 20px;
+    border-radius: 16px;
+    margin-bottom: 14px;
+    border: 1px solid #E2E8F0;
+    background-color: #FFFFFF;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+div[data-testid="stChatMessage"]:has(div[aria-label="Chat message from user"]) {
+    background-color: #F8FAFC;
+    border-color: #E2E8F0;
+}
+
+/* Modern Input Composer */
+div[data-testid="stChatInput"] {
+    border-radius: 16px;
+    border: 1px solid #CBD5E1;
+    background-color: #FFFFFF;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+div[data-testid="stChatInput"]:focus-within {
+    border-color: #2563EB;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+/* Source Group & Citations */
+.source-group {
+    border: 1px solid #E2E8F0;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin: 8px 0;
+    background-color: #F8FAFC;
+}
+
+.source-file {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #1E293B;
+}
+
+.source-meta {
+    font-size: 0.75rem;
+    color: #64748B;
+    margin-top: 2px;
+}
+
+.source-section {
+    font-size: 0.8rem;
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px solid #E2E8F0;
+}
+
+/* File Cards */
+.file-card {
+    border: 1px solid #E2E8F0;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin: 6px 0;
+    background-color: #FFFFFF;
+}
+
+.small-muted {
+    font-size: 0.75rem;
+    color: #64748B;
+}
+
+.stat-card {
+    padding: 16px;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    background-color: #FFFFFF;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+
+/* Custom button touch target & hover transitions */
+div.stButton > button {
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.15s ease-in-out;
+}
+
+div.stButton > button:hover {
+    border-color: #CBD5E1;
+    background-color: #F8FAFC;
+>>>>>>> 6822f041b6221efdc478e0ee8d93ceae6c3d2c70
 }
 </style>
 """,
@@ -581,7 +812,8 @@ if files:
                     remove_conversation_file(current_chat_id, file_id)
                     st.rerun()
 
-# Conversation history
+# Conversation display
+
 for index, message in enumerate(current_chat.get("messages", [])):
     role = message.get("role", "assistant")
     content = message.get("content", "")

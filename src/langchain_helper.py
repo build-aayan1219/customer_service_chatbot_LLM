@@ -100,59 +100,29 @@ MAX_SOURCES = 5
 
 FILE_OVERVIEW_PATTERNS = [
     r"\bwhat\s+is\s+(?:in|inside|present\s+in)\b",
-
     r"\bwhat(?:'s|\s+is)\s+(?:in|inside)\b",
-
-    r"\bwhat\s+does\s+(?:this|the)\s+"
-    r"(?:file|document)\s+contain\b",
-
-    r"\bwhat\s+is\s+(?:this|the)\s+"
-    r"(?:file|document)\s+about\b",
-
-    r"\bsummar(?:y|ize|ise)\b.*"
-    r"\b(?:file|document)\b",
-
-    r"\b(?:file|document)\b.*"
-    r"\bsummar(?:y|ize|ise)\b",
-
-    r"\bcontents?\s+of\s+"
-    r"(?:this|the)\s+"
-    r"(?:file|document)\b",
-
-    r"\bexplain\s+(?:this|the)\s+"
-    r"(?:file|document)\b",
-
-    r"\bdescribe\s+(?:this|the)\s+"
-    r"(?:file|document)\b",
-
-    r"\battached\s+"
-    r"(?:file|document)\b",
-
-    r"\buploaded\s+"
-    r"(?:file|document)\b",
-
+    r"\bwhat\s+does\s+(?:this|the)\s+(?:file|document|pdf|image|invoice|attachment)\s+contain\b",
+    r"\bwhat\s+is\s+(?:this|the)\s+(?:file|document|pdf|image|invoice|attachment)\s+about\b",
+    r"\bsummar(?:y|ize|ise)\b.*\b(?:file|document|pdf|image|invoice|attachment)\b",
+    r"\b(?:file|document|pdf|image|invoice|attachment)\b.*\bsummar(?:y|ize|ise)\b",
+    r"\bcontents?\s+of\s+(?:this|the)\s+(?:file|document|pdf|image|invoice|attachment)\b",
+    r"\b(?:explain|describe|inspect|analy[sz]e|review|read|look\s+at)\b.*\b(?:attached|uploaded|this|the)\b.*\b(?:file|document|pdf|image|invoice|attachment)\b",
+    r"\b(?:attached|uploaded)\s+(?:file|document|pdf|image|invoice|attachment)\b",
+    r"\b(?:inspect|analy[sz]e|review|read|look\s+at)\b.*\b(?:this|that|it)\b",
     r"\bwhat\s+does\s+this\s+contain\b",
-
-    r"\bwhat\s+is\s+included\s+"
-    r"in\s+(?:this|the)\b",
-
-    r"\bshow\s+me\s+what\s+"
-    r"is\s+in\s+(?:this|the)\b",
-
-    # Broad attached-code/document questions. These are intentionally
-    # interpreted as overview requests only when the current chat has files.
-    r"\bwhat\s+is\s+(?:this\s+)?code\s+(?:about|related\s+to)\b",
-    r"\bwhat\s+does\s+(?:this\s+)?code\s+do\b",
-    r"\bwhat\s+is\s+(?:this\s+)?code\s+for\b",
-    r"\bwhat\s+project\s+is\s+(?:this\s+)?code\s+(?:for|about)\b",
-    r"\bwhat\s+assignment\s+is\s+(?:this\s+)?code\s+(?:for|about)\b",
-    r"\bwhat\s+is\s+the\s+purpose\s+of\s+(?:this\s+)?code\b",
-    r"\bexplain\s+(?:this\s+)?code\b",
-    r"\btell\s+me\s+about\s+(?:this\s+)?code\b",
-    r"\bwhat\s+is\s+this\s+about\b",
-    r"\bwhat\s+is\s+included\s+here\b",
-    r"\bwhat\s+do(?:es)?\s+this\s+file\s+have\b",
+    r"\bwhat\s+is\s+included\s+in\s+(?:this|the)\b",
+    r"\bshow\s+me\s+what\s+is\s+in\s+(?:this|the)\b",
 ]
+
+
+def is_attachment_reference_question(question):
+    value = str(question or "").lower().strip()
+    if not value:
+        return False
+    action = r"(?:inspect|analy[sz]e|review|read|look\s+at|check|examine|summari[sz]e|describe|explain)"
+    target = r"(?:this|that|it|the\s+(?:file|document|pdf|image|invoice|attachment)|the\s+attached\s+(?:file|document|pdf|image|invoice|attachment)|the\s+uploaded\s+(?:file|document|pdf|image|invoice|attachment))"
+    return bool(re.search(rf"\b{action}\b.*\b{target}\b", value, re.IGNORECASE))
+
 
 
 def is_file_overview_question(
@@ -468,8 +438,8 @@ def calculate_combined_relevance(
 # LLM
 # ============================================================
 
-@lru_cache(maxsize=8)
-def get_llm(temperature=None):
+@lru_cache(maxsize=1)
+def get_llm():
 
     api_key = os.getenv(
         "GOOGLE_API_KEY"
@@ -485,12 +455,9 @@ def get_llm(temperature=None):
     llm = ChatGoogleGenerativeAI(
         model=LLM_CONFIG["model"],
         google_api_key=api_key,
-        temperature=(
-            LLM_CONFIG.get("temperature", 0.1)
-            if temperature is None
-            else float(temperature)
-        ),
-        max_tokens=LLM_CONFIG["max_tokens"],
+        max_tokens=LLM_CONFIG[
+            "max_tokens"
+        ],
     )
 
     logger.info(
@@ -804,10 +771,20 @@ def retrieve_documents(
     # FILE OVERVIEW MODE
     # ========================================================
 
+    has_conversation_files = False
+    if chat_id:
+        try:
+            from src.conversation_files import list_conversation_files
+            has_conversation_files = bool(list_conversation_files(chat_id))
+        except Exception as error:
+            logger.debug("Could not inspect conversation attachments: %s", error)
+
     if (
         chat_id
-        and is_file_overview_question(
-            question
+        and has_conversation_files
+        and (
+            is_file_overview_question(question)
+            or is_attachment_reference_question(question)
         )
     ):
 
@@ -820,7 +797,7 @@ def retrieve_documents(
             overview_documents = (
                 get_conversation_overview_documents(
                     chat_id,
-                    max_chunks=10,
+                    max_chunks=24,
                 )
             )
 
@@ -1619,7 +1596,6 @@ def get_qa_chain():
         question,
         chat_history=None,
         chat_id=None,
-        temperature=None,
     ):
 
         prepared = prepare_qa(
@@ -1642,7 +1618,7 @@ def get_qa_chain():
             }
 
         response = (
-            get_llm(temperature)
+            get_llm()
             .invoke(
                 prepared[
                     "messages"
@@ -1676,7 +1652,6 @@ def get_qa_stream(
     question,
     chat_history=None,
     chat_id=None,
-    temperature=None,
 ):
     prepared = prepare_qa(
         question,
@@ -1714,7 +1689,7 @@ def get_qa_stream(
         try:
 
             for chunk in (
-                get_llm(temperature)
+                get_llm()
                 .stream(
                     messages
                 )

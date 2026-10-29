@@ -3368,6 +3368,7 @@ ModuleNotFoundError("No module named 'faiss.swigfaiss_avx2'")
 2026-09-25 20:03:52,298 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
 2026-09-26 00:32:24,875 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
 2026-09-26 00:32:24,899 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
+<<<<<<< HEAD
 2026-10-03 21:58:17,748 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
 2026-10-03 21:58:17,937 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\5d8ee7b4-d254-4432-88cc-aa8ec21ef53d\manifest.json: 'list' object has no attribute 'items'
 2026-10-03 22:43:34,531 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\51e97ebb-3cb6-425c-9e52-e47aede290bd\manifest.json: 'list' object has no attribute 'items'
@@ -3607,3 +3608,5 @@ ModuleNotFoundError("No module named 'faiss.swigfaiss_avx2'")
 ModuleNotFoundError("No module named 'faiss.swigfaiss_avx2'")
 2026-10-30 01:46:56,321 - faiss.loader - INFO - Loading faiss.
 2026-10-30 01:47:18,752 - faiss.loader - INFO - Successfully loaded faiss.
+=======
+>>>>>>> 6822f041b6221efdc478e0ee8d93ceae6c3d2c70
