@@ -30,6 +30,9 @@ INJECTION_PATTERNS = [
     r"run\s+this\s+command",
     r"send\s+.*password",
     r"send\s+.*credit\s+card",
+    r"you\s+are\s+now",
+    r"new\s+system\s+prompt",
+    r"jailbreak",
 ]
 
 PAYMENT_PATTERNS = [
@@ -78,6 +81,12 @@ def _signature_matches(extension: str, data: bytes) -> bool:
                 return "[Content_Types].xml" in archive.namelist() and "word/document.xml" in archive.namelist()
         except Exception:
             return False
+    if extension in {"txt", "csv"}:
+        if data.startswith((b"%PDF-", b"\x89PNG", b"\xff\xd8\xff", b"MZ", b"PK\x03\x04")):
+            return False
+        if b"\x00" in data[:2048]:
+            return False
+        return True
     return True
 
 

@@ -1671,3 +1671,116 @@ def delete_all_conversation_files(
         delete_conversation_files(
             chat_id
         )
+
+
+# ============================================================
+# TASK 2 EVIDENCE PAYLOAD PROCESSING & CONFLICT INTEGRATION
+# ============================================================
+
+def add_conversation_file_payloads(chat_id, payloads):
+    """
+    Process raw file payloads (name, data), validating security, calculating
+    SHA-256 deduplication, running evidence extraction, and indexing into FAISS.
+    """
+    ensure_chat_directories(chat_id)
+    files_dir = get_files_directory(chat_id)
+    manifest = load_manifest(chat_id)
+
+    added = []
+    skipped = []
+    security_rejected = []
+    errors = []
+
+    for item in payloads:
+        name = item.get("name") or "unnamed_file"
+        data = item.get("data") or b""
+
+        # 1. Validation
+        is_safe, reason = validate_file_bytes(name, data)
+        if not is_safe:
+            security_rejected.append({"file_name": name, "reason": reason})
+            continue
+
+        # 2. Duplicate Detection
+        file_hash = calculate_file_hash(data)
+        existing = next((rec for rec in manifest.values() if rec.get("file_hash") == file_hash), None)
+        if existing:
+            skipped.append({"name": name, "reason": "duplicate"})
+            continue
+
+        # 3. Save File
+        file_path = files_dir / name
+        try:
+            file_path.write_bytes(data)
+        except Exception as e:
+            errors.append(f"Failed to write {name}: {e}")
+            continue
+
+        # 4. Extract Evidence & Quality
+        file_id = file_hash[:12]
+        extracted = extract_evidence(file_path, file_id=file_id)
+
+        # 5. Record Manifest
+        record = {
+            "id": file_id,
+            "file_name": name,
+            "file_hash": file_hash,
+            "size_bytes": len(data),
+            "uploaded_at": datetime.now(timezone.utc).isoformat(),
+            "evidence_fields": extracted.get("fields", {}),
+            "evidence_quality": extracted.get("quality", 1.0),
+            "evidence_low_quality": extracted.get("low_quality", False),
+            "needs_clearer_file": extracted.get("needs_clearer_file", False),
+        }
+        manifest[file_id] = record
+
+        # 6. Index Documents
+        try:
+            docs = create_documents(file_path, chat_id, file_id=file_id)
+            if docs:
+                add_documents_to_index(chat_id, docs)
+                record["chunk_count"] = len(docs)
+        except Exception as err:
+            logger.warning("Indexing error for %s: %s", name, err)
+
+        added.append(record)
+
+    save_manifest(chat_id, manifest)
+    return {
+        "added": added,
+        "skipped": skipped,
+        "security_rejected": security_rejected,
+        "errors": errors,
+    }
+
+
+def compare_uploaded_evidence_with_message(chat_id, message_text):
+    """
+    Compare customer's query with evidence fields in the conversation manifest.
+    """
+    from src.evidence_processor import compare_message_with_evidence
+    manifest = load_manifest(chat_id)
+    if not manifest:
+        return {"has_conflict": False, "has_low_quality": False, "conflicts": [], "matched": []}
+
+    combined_fields = {"order_ids": [], "dates": [], "amounts": [], "products": [], "error_codes": []}
+    has_low_quality = False
+
+    for rec in manifest.values():
+        if rec.get("evidence_low_quality") or rec.get("needs_clearer_file"):
+            has_low_quality = True
+        f = rec.get("evidence_fields") or {}
+        for k in combined_fields:
+            combined_fields[k].extend(f.get(k, []))
+
+    for k in combined_fields:
+        combined_fields[k] = list(dict.fromkeys(combined_fields[k]))
+
+    evidence_summary = {
+        "fields": combined_fields,
+        "quality": 0.4 if has_low_quality else 0.9,
+        "low_quality": has_low_quality,
+        "needs_clearer_file": has_low_quality,
+    }
+
+    return compare_message_with_evidence(message_text, evidence_summary)

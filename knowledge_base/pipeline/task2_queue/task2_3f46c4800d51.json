@@ -1,0 +1,11 @@
+{
+  "id": "task2_3f46c4800d51",
+  "status": "completed",
+  "description": "Slow invoice processing",
+  "created_at": "2026-10-29T04:49:56.392579+00:00",
+  "started_at": "2026-10-29T04:49:56.408231+00:00",
+  "result": {
+    "status": "finished"
+  },
+  "finished_at": "2026-10-29T04:49:56.912930+00:00"
+}

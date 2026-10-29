@@ -1,0 +1,21 @@
+{
+  "id": "63dc0f37",
+  "conversation_id": "conv-sla-warn",
+  "created_at": "2026-10-26T09:00:00",
+  "updated_at": "2026-10-26T09:00:00",
+  "status": "open",
+  "priority": "critical",
+  "team": "billing",
+  "is_duplicate": false,
+  "is_high_risk": false,
+  "missing_fields": [],
+  "fingerprint": "ff4a4916cb345c09",
+  "sla_deadline": "2026-10-26T10:00:00",
+  "escalated": false,
+  "escalation_reason": null,
+  "order_ids": [],
+  "customer_contact": "user@example.com",
+  "amounts": [],
+  "issue_summary": "My email is user@example.com. System is down critically",
+  "full_text": "My email is user@example.com. System is down critically"
+}

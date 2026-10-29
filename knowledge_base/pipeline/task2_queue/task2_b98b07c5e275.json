@@ -1,0 +1,13 @@
+{
+  "id": "task2_b98b07c5e275",
+  "status": "completed",
+  "description": "Slow invoice processing",
+  "created_at": "2026-10-29T04:41:08.829840+00:00",
+  "exceeded_timeout": true,
+  "customer_notification": "Your file is taking longer than 30 seconds to process. It has been moved to the background queue and will continue automatically.",
+  "started_at": "2026-10-29T04:41:08.947072+00:00",
+  "result": {
+    "status": "finished"
+  },
+  "finished_at": "2026-10-29T04:41:09.544844+00:00"
+}
