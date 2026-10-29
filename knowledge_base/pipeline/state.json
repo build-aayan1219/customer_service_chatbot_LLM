@@ -1,36 +1,17 @@
 {
-  "current_version": 1,
+  "current_version": 0,
   "pending": false,
   "pending_since": null,
   "attempt": 0,
   "next_retry_at": null,
-  "last_run": "2026-09-13T23:01:32",
-  "last_result": "activated",
+  "last_run": null,
+  "last_result": "state_reset",
   "last_error": null,
-  "last_quality": {
-    "candidate": {
-      "accuracy": 1.0,
-      "grounding": 1.0,
-      "samples": 25
-    },
-    "baseline": {
-      "accuracy": 1.0,
-      "grounding": 1.0,
-      "samples": 25
-    },
-    "accuracy_threshold": 0.95,
-    "grounding_threshold": 0.95,
-    "accuracy_ok": true,
-    "grounding_ok": true
-  },
-  "last_run_id": "v0001_activated",
-<<<<<<< HEAD
+  "last_quality": null,
+  "last_run_id": null,
   "health_status": "stable",
   "activation_timestamp": null,
   "monitoring_until": null,
   "previous_healthy_version": 0,
   "last_scheduled_date": "2026-10-30"
-=======
-  "last_scheduled_date": "2026-10-03"
->>>>>>> 6822f041b6221efdc478e0ee8d93ceae6c3d2c70
 }

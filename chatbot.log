@@ -3610,3 +3610,7 @@ ModuleNotFoundError("No module named 'faiss.swigfaiss_avx2'")
 2026-10-30 01:47:18,752 - faiss.loader - INFO - Successfully loaded faiss.
 =======
 >>>>>>> 6822f041b6221efdc478e0ee8d93ceae6c3d2c70
+2026-10-30 03:50:18,769 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\24b862b5-0b12-44b2-94c8-6c422bf439d2\manifest.json: Expecting value: line 1 column 1 (char 0)
+2026-10-30 03:50:18,866 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\44ca65fc-0e98-4e92-ae76-782f97dddbe2\manifest.json: Expecting value: line 1 column 1 (char 0)
+2026-10-30 04:02:01,017 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\24b862b5-0b12-44b2-94c8-6c422bf439d2\manifest.json: Expecting value: line 1 column 1 (char 0)
+2026-10-30 04:02:01,022 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\44ca65fc-0e98-4e92-ae76-782f97dddbe2\manifest.json: Expecting value: line 1 column 1 (char 0)

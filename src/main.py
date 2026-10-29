@@ -41,451 +41,37 @@ from src.conversation_files import (
 from src.config import LLM_CONFIG, SUGGESTED_QUESTIONS, KB_PIPELINE_CONFIG, TASK2_CONFIG
 from src.background_queue import get_job, run_with_timeout, cleanup_old_jobs
 from src.retention_manager import cleanup_expired_files
-from src.knowledge_base import run_scheduled_knowledge_base_pipeline, render_knowledge_base
+from src.knowledge_base import run_scheduled_knowledge_base_pipeline
 
 st.set_page_config(
-    page_title="Claude",
-    page_icon="✻",
+    page_title="AI Customer Support",
+    page_icon="🤖",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# -----------------------------------------------------------------------------
-# Claude Precise Dark Theme Stylesheet
-# -----------------------------------------------------------------------------
 st.markdown(
     """
 <style>
-<<<<<<< HEAD
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap');
-
-html, body, [class*="css"] {
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-}
-
 #MainMenu {visibility:hidden;}
 footer {visibility:hidden;}
 header {visibility:hidden;}
-
-/* Claude Exact Dark Background */
-.stApp {
-    background-color: #1e1e1e !important;
-    color: #e3e2de !important;
-}
-
-.block-container {
-    padding-top: 1.5rem !important;
-    padding-bottom: 6.5rem !important;
-    max-width: 820px !important;
-}
-
-/* Sidebar Styling: Claude Dark */
-[data-testid="stSidebar"] {
-    background-color: #181818 !important;
-    border-right: 1px solid #282828 !important;
-    padding-top: 1rem !important;
-}
-
-[data-testid="stSidebar"] .stButton > button {
-    background: transparent !important;
-    border: none !important;
-    color: #b5b3ad !important;
-    font-size: 0.9rem !important;
-    font-weight: 500 !important;
-    text-align: left !important;
-    padding: 8px 12px !important;
-    border-radius: 8px !important;
-    transition: all 0.15s ease !important;
-}
-[data-testid="stSidebar"] .stButton > button:hover {
-    background-color: #262626 !important;
-    color: #ffffff !important;
-}
-
-/* Claude Sidebar Brand */
-.claude-brand {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 12px 14px 12px;
-    font-size: 1.15rem;
-    font-weight: 600;
-    color: #f5f5f4;
-    letter-spacing: -0.01em;
-}
-.claude-star-icon {
-    color: #d97757;
-    font-size: 1.25rem;
-}
-
-/* Claude New Chat Button */
-.claude-new-btn button {
-    background-color: #2b2b2b !important;
-    border: 1px solid #3d3d3d !important;
-    color: #f5f5f4 !important;
-    border-radius: 8px !important;
-    font-weight: 600 !important;
-    padding: 8px 14px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
-}
-.claude-new-btn button:hover {
-    background-color: #353535 !important;
-    border-color: #4f4f4f !important;
-}
-
-/* Section Header in Sidebar */
-.claude-section-title {
-    font-size: 0.76rem;
-    font-weight: 600;
-    color: #78756e;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding: 14px 12px 6px 12px;
-}
-
-/* User Profile Badge at Sidebar Bottom */
-.claude-user-profile {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    margin-top: 20px;
-    border-top: 1px solid #282828;
-    color: #b5b3ad;
-    font-size: 0.85rem;
-}
-.claude-avatar {
-    width: 24px;
-    height: 24px;
-    background: #d97757;
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.72rem;
-    font-weight: 700;
-}
-
-/* Claude Hero Screen */
-.claude-hero-container {
-    text-align: center;
-    padding: 7rem 1.5rem 3rem 1.5rem;
-    max-width: 680px;
-    margin: 0 auto;
-}
-.claude-sunburst {
-    color: #d97757;
-    font-size: 2.2rem;
-    display: inline-block;
-    margin-right: 10px;
-    vertical-align: middle;
-}
-.claude-greeting {
-    font-family: 'Newsreader', Georgia, serif;
-    font-size: 2.85rem;
-    font-weight: 400;
-    color: #ecebe6;
-    letter-spacing: -0.02em;
-    display: inline-block;
-    vertical-align: middle;
-}
-
-/* Claude Floating Chat Card */
-.claude-chat-box {
-    background: #2b2a27;
-    border: 1px solid #3c3a35;
-    border-radius: 20px;
-    padding: 20px 24px;
-    margin: 20px auto;
-    max-width: 760px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-}
-
-/* Top Banner Badge */
-.claude-plan-badge {
-    text-align: center;
-    margin-bottom: 24px;
-}
-.claude-plan-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: #2b2a27;
-    border: 1px solid #3d3b36;
-    padding: 4px 14px;
-    border-radius: 20px;
-    font-size: 0.82rem;
-    color: #a39e93;
-}
-.claude-plan-pill a {
-    color: #d97757;
-    text-decoration: none;
-    font-weight: 500;
-}
-
-/* Claude Chat Message Styling */
-[data-testid="stChatMessage"] {
-    background: transparent !important;
-    padding: 1rem 0.5rem !important;
-}
-[data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
-    background: #292825 !important;
-    border-radius: 16px !important;
-    padding: 0.9rem 1.25rem !important;
-    border: 1px solid #383631 !important;
-    margin-bottom: 1.2rem !important;
-}
-
-/* Claude Bottom Status Pill */
-.claude-footer-meta {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 0.78rem;
-    color: #8c8577;
-    padding: 6px 2px;
-}
-.claude-model-select {
-    color: #e3e2de;
-    font-weight: 500;
-=======
-#MainMenu { visibility: hidden; }
-footer { visibility: hidden; }
-header { visibility: hidden; }
-
-html, body, [class*="css"] {
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
-    color: #0F172A;
-    background-color: #FAFAFC;
-}
-
-.block-container {
-    padding-top: 1.25rem;
-    padding-bottom: 7rem;
-    max-width: 920px;
-}
-
-/* Status Indicator Dot */
-.status-dot {
-    height: 8px;
-    width: 8px;
-    background-color: #22C55E;
-    border-radius: 50%;
-    display: inline-block;
-    margin-right: 6px;
-}
-
-/* App Bar & Title */
-.title {
-    font-size: 1.4rem;
-    font-weight: 700;
-    letter-spacing: -0.025em;
-    color: #0F172A;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.subtitle {
-    color: #64748B;
-    font-size: 0.825rem;
-    margin-top: 2px;
-    margin-bottom: 16px;
-    font-weight: 400;
-}
-
-/* Sidebar Drawer */
-section[data-testid="stSidebar"] {
-    background-color: #F8FAFC;
-    border-right: 1px solid #E2E8F0;
-}
-
-.sidebar-brand {
-    font-size: 1.1rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    color: #0F172A;
-    margin-bottom: 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-section[data-testid="stSidebar"] h3 {
-    font-size: 0.7rem !important;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: #64748B !important;
-    font-weight: 600 !important;
-    margin-top: 18px !important;
-    margin-bottom: 8px !important;
-}
-
-section[data-testid="stSidebar"] div.stButton > button {
-    border-radius: 10px;
-    border: 1px solid #E2E8F0;
-    background-color: #FFFFFF;
-    color: #1E293B;
-    font-size: 0.85rem;
-    font-weight: 500;
-    transition: all 0.15s ease;
-    padding: 8px 12px;
-}
-
-section[data-testid="stSidebar"] div.stButton > button:hover {
-    background-color: #F1F5F9;
-    border-color: #CBD5E1;
-    color: #0F172A;
-}
-
-section[data-testid="stSidebar"] div.stButton > button[kind="primary"] {
-    background-color: #0F172A;
-    color: #FFFFFF;
-    border: none;
-    font-weight: 600;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-}
-
-section[data-testid="stSidebar"] div.stButton > button[kind="primary"]:hover {
-    background-color: #1E293B;
-}
-
-/* ChatGPT / Claude Empty State Home */
-.welcome-hero {
-    max-width: 620px;
-    margin: 40px auto 28px;
-    text-align: center;
-}
-
-.welcome-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 12px;
-    border-radius: 20px;
-    background-color: #F1F5F9;
-    border: 1px solid #E2E8F0;
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: #475569;
-    margin-bottom: 14px;
-}
-
-.welcome-title {
-    font-size: 1.75rem;
-    font-weight: 750;
-    color: #0F172A;
-    letter-spacing: -0.03em;
-    margin: 8px 0;
-    line-height: 1.25;
-}
-
-.welcome-text {
-    color: #64748B;
-    font-size: 0.9rem;
-    line-height: 1.6;
-    margin-bottom: 24px;
-}
-
-/* Chat Messages */
-div[data-testid="stChatMessage"] {
-    padding: 16px 20px;
-    border-radius: 16px;
-    margin-bottom: 14px;
-    border: 1px solid #E2E8F0;
-    background-color: #FFFFFF;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-}
-
-div[data-testid="stChatMessage"]:has(div[aria-label="Chat message from user"]) {
-    background-color: #F8FAFC;
-    border-color: #E2E8F0;
-}
-
-/* Modern Input Composer */
-div[data-testid="stChatInput"] {
-    border-radius: 16px;
-    border: 1px solid #CBD5E1;
-    background-color: #FFFFFF;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-
-div[data-testid="stChatInput"]:focus-within {
-    border-color: #2563EB;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
-}
-
-/* Source Group & Citations */
-.source-group {
-    border: 1px solid #E2E8F0;
-    border-radius: 10px;
-    padding: 10px 14px;
-    margin: 8px 0;
-    background-color: #F8FAFC;
-}
-
-.source-file {
-    font-weight: 600;
-    font-size: 0.85rem;
-    color: #1E293B;
-}
-
-.source-meta {
-    font-size: 0.75rem;
-    color: #64748B;
-    margin-top: 2px;
-}
-
-.source-section {
-    font-size: 0.8rem;
-    margin-top: 8px;
-    padding-top: 6px;
-    border-top: 1px solid #E2E8F0;
-}
-
-/* File Cards */
-.file-card {
-    border: 1px solid #E2E8F0;
-    border-radius: 10px;
-    padding: 10px 14px;
-    margin: 6px 0;
-    background-color: #FFFFFF;
-}
-
-.small-muted {
-    font-size: 0.75rem;
-    color: #64748B;
-}
-
-.stat-card {
-    padding: 16px;
-    border: 1px solid #E2E8F0;
-    border-radius: 12px;
-    background-color: #FFFFFF;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-}
-
-/* Custom button touch target & hover transitions */
-div.stButton > button {
-    border-radius: 8px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    transition: all 0.15s ease-in-out;
-}
-
-div.stButton > button:hover {
-    border-color: #CBD5E1;
-    background-color: #F8FAFC;
->>>>>>> 6822f041b6221efdc478e0ee8d93ceae6c3d2c70
-}
+.block-container {padding-top:1.25rem; padding-bottom:7rem; max-width:1180px;}
+.title {font-size:2rem;font-weight:750;letter-spacing:-.03em;margin:0;}
+.subtitle {color:#777;margin-top:2px;margin-bottom:18px;}
+.welcome {max-width:760px;margin:70px auto 24px;padding:44px 28px;text-align:center;border:1px solid rgba(128,128,128,.18);border-radius:24px;background:rgba(128,128,128,.045);}
+.welcome-icon {font-size:42px}.welcome-title {font-size:28px;font-weight:750;margin:10px 0}.welcome-text{color:#777;line-height:1.6}
+.source-group {border:1px solid rgba(128,128,128,.20);border-radius:14px;padding:13px 15px;margin:8px 0;background:rgba(128,128,128,.035);}
+.source-file {font-weight:700}.source-meta{font-size:12px;color:#777;margin-top:3px}.source-section{font-size:13px;margin-top:9px;padding-top:8px;border-top:1px solid rgba(128,128,128,.13)}
+.file-card {border:1px solid rgba(128,128,128,.18);border-radius:13px;padding:12px;margin:6px 0;background:rgba(128,128,128,.035);}
+.small-muted {font-size:12px;color:#777;}
+.stat-card {padding:18px;border:1px solid rgba(128,128,128,.18);border-radius:16px;background:rgba(128,128,128,.04);}
+.sidebar-brand {font-size:19px;font-weight:750;margin-bottom:12px;}
 </style>
 """,
     unsafe_allow_html=True,
 )
+
 
 def init_state():
     if "chats" not in st.session_state:
@@ -501,10 +87,6 @@ def init_state():
         st.session_state.show_archived = False
     if "show_dashboard" not in st.session_state:
         st.session_state.show_dashboard = False
-    if "show_kb" not in st.session_state:
-        st.session_state.show_kb = False
-    if "show_settings_modal" not in st.session_state:
-        st.session_state.show_settings_modal = False
     if "editing_index" not in st.session_state:
         st.session_state.editing_index = None
     if "pending_question" not in st.session_state:
@@ -516,22 +98,21 @@ def init_state():
     if "task2_jobs" not in st.session_state:
         st.session_state.task2_jobs = []
 
-init_state()
 
-# Run maintenance routines once per server startup session
-if "app_startup_done" not in st.session_state:
-    st.session_state.app_startup_done = True
-    if KB_PIPELINE_CONFIG.get("auto_run_on_app_start", False):
-        try:
-            run_scheduled_knowledge_base_pipeline()
-        except Exception:
-            pass
+if KB_PIPELINE_CONFIG.get("auto_run_on_app_start", True):
     try:
-        cleanup_expired_files()
-        cleanup_old_jobs(int(TASK2_CONFIG.get("background_job_retention_hours", 24)))
+        run_scheduled_knowledge_base_pipeline()
     except Exception:
         pass
 
+init_state()
+
+# Task 2 maintenance: retention cleanup and old background-job cleanup.
+try:
+    cleanup_expired_files()
+    cleanup_old_jobs(int(TASK2_CONFIG.get("background_job_retention_hours", 24)))
+except Exception:
+    pass
 current_chat = find_chat(st.session_state.chats, st.session_state.current_chat_id)
 if current_chat is None:
     current_chat = create_chat()
@@ -539,13 +120,16 @@ if current_chat is None:
     st.session_state.current_chat_id = current_chat["id"]
 current_chat_id = current_chat["id"]
 
+
 def refresh_chats():
     st.session_state.chats = load_chats()
+
 
 def clean_source(source):
     if isinstance(source, dict):
         return str(source.get("page_content", "") or "").strip(), source.get("metadata", {}) or {}
     return str(getattr(source, "page_content", "") or "").strip(), getattr(source, "metadata", {}) or {}
+
 
 def source_group_key(metadata):
     source_type = metadata.get("source_type", "global_knowledge")
@@ -553,6 +137,7 @@ def source_group_key(metadata):
         name = metadata.get("source_file") or metadata.get("file_name") or metadata.get("filename") or "Conversation file"
         return ("file", Path(str(name)).name)
     return ("global", "Knowledge Base")
+
 
 def render_sources(sources):
     if not sources:
@@ -564,27 +149,51 @@ def render_sources(sources):
             metadata = {}
         groups[source_group_key(metadata)].append((content, metadata))
 
-    with st.expander(f"📚 Sources · {len(groups)} verified reference{'s' if len(groups) != 1 else ''}"):
+    with st.expander(f"📚 Sources · {len(groups)} source{'s' if len(groups) != 1 else ''}"):
         for (kind, name), items in groups.items():
             icon = "📄" if kind == "file" else "📚"
             section_label = "section" if len(items) == 1 else "sections"
             source_label = "Conversation file" if kind == "file" else "Knowledge Base"
             st.markdown(
-                f'<div style="border: 1px solid #3d3b36; border-radius: 10px; padding: 10px 14px; margin: 6px 0; background: #262522;">'
-                f'<div style="font-weight: 600; color: #ecebe6;">{icon} {name}</div>'
-                f'<div style="font-size: 0.78rem; color: #9c978b;">{len(items)} relevant {section_label} · {source_label}</div>'
-                f'</div>',
+                f'<div class="source-group"><div class="source-file">{icon} {name}</div>'
+                f'<div class="source-meta">{len(items)} relevant {section_label} · {source_label}</div></div>',
                 unsafe_allow_html=True,
             )
             for number, (content, metadata) in enumerate(items, start=1):
                 section = metadata.get("section") or metadata.get("location") or "Relevant section"
                 with st.expander(f"{section}", expanded=False):
                     st.write(content)
+                    extra = []
+                    if metadata.get("location") and metadata.get("location") != section:
+                        extra.append(str(metadata["location"]))
+                    if metadata.get("chunk_index") is not None:
+                        extra.append(f"chunk {metadata['chunk_index']}")
+                    if extra:
+                        st.caption(" · ".join(extra))
+
+
+def copy_button(text, key):
+    encoded = base64.b64encode(text.encode("utf-8")).decode("ascii")
+    components.html(
+        f"""
+        <script>
+        const text = atob('{encoded}');
+        const b = document.createElement('button');
+        b.innerText = 'Copy';
+        b.style.cssText = 'padding:4px 10px;border:1px solid #888;border-radius:8px;background:transparent;cursor:pointer;font-size:12px;';
+        b.onclick = async () => {{ await navigator.clipboard.writeText(text); b.innerText='Copied'; setTimeout(()=>b.innerText='Copy',1200); }};
+        document.body.appendChild(b);
+        </script>
+        """,
+        height=32,
+        key=key,
+    )
+
 
 def export_markdown(chat):
     lines = [f"# {chat.get('title', 'Conversation')}", "", f"Created: {chat.get('created_at', '')}", ""]
     for message in chat.get("messages", []):
-        role = "You" if message.get("role") == "user" else "Claude"
+        role = "You" if message.get("role") == "user" else "AI Customer Support"
         lines.extend([f"## {role}", "", message.get("content", ""), ""])
         sources = message.get("sources", [])
         if sources:
@@ -602,13 +211,14 @@ def export_markdown(chat):
             lines.append("")
     return "\n".join(lines)
 
+
 def new_chat():
     chat = create_chat()
     st.session_state.chats.insert(0, chat)
     st.session_state.current_chat_id = chat["id"]
     st.session_state.show_dashboard = False
-    st.session_state.show_kb = False
     st.rerun()
+
 
 def handle_delete_chat():
     chat_id = current_chat_id
@@ -621,254 +231,302 @@ def handle_delete_chat():
     st.session_state.editing_index = None
     st.rerun()
 
-# -----------------------------------------------------------------------------
-# Claude Precise Sidebar
-# -----------------------------------------------------------------------------
-with st.sidebar:
-    st.markdown(
-        """
-        <div class="claude-brand">
-            <span class="claude-star-icon">✻</span>
-            <span>Claude</span>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
 
-    st.markdown('<div class="claude-new-btn">', unsafe_allow_html=True)
-    if st.button("＋  New chat", key="new_chat_btn", use_container_width=True):
-        new_chat()
-    st.markdown('</div>', unsafe_allow_html=True)
+def dashboard():
+    chats = st.session_state.chats
+    questions = []
+    responses = []
+    response_times = []
+    positive = negative = 0
+    for chat in chats:
+        for message in chat.get("messages", []):
+            if message.get("role") == "user":
+                questions.append(message.get("content", ""))
+            elif message.get("role") == "assistant":
+                responses.append(message.get("content", ""))
+                if isinstance(message.get("response_time"), (int, float)):
+                    response_times.append(message["response_time"])
+                if message.get("feedback") == "positive":
+                    positive += 1
+                elif message.get("feedback") == "negative":
+                    negative += 1
+    unknown = sum("I don't know based on the available information." in r for r in responses)
+    avg_time = sum(response_times) / len(response_times) if response_times else 0
+    feedback_total = positive + negative
+    satisfaction = (positive / feedback_total * 100) if feedback_total else 0
 
-    search = st.text_input("Search", value=st.session_state.search_text, placeholder="🔍 Search...", label_visibility="collapsed")
-    st.session_state.search_text = search
+    st.markdown("# 📊 Dashboard")
+    st.caption("Product usage and assistant performance across saved conversations.")
+    c1, c2, c3, c4, c5 = st.columns(5)
+    c1.metric("Conversations", len(chats))
+    c2.metric("Questions", len(questions))
+    c3.metric("Responses", len(responses))
+    c4.metric("Avg response", f"{avg_time:.2f}s")
+    c5.metric("Satisfaction", f"{satisfaction:.0f}%")
 
-    col_s1, col_s2 = st.columns(2)
-    with col_s1:
-        if st.button("📁 Projects", use_container_width=True):
-            st.session_state.show_dashboard = not st.session_state.show_dashboard
-            st.session_state.show_kb = False
-            st.rerun()
-    with col_s2:
-        if st.button("📚 Artifacts", use_container_width=True):
-            st.session_state.show_kb = not st.session_state.show_kb
-            st.session_state.show_dashboard = False
-            st.rerun()
+    st.markdown("### Performance")
+    p1, p2, p3 = st.columns(3)
+    p1.metric("Unknown responses", unknown)
+    p2.metric("Positive feedback", positive)
+    p3.metric("Negative feedback", negative)
 
-    if st.button("⚙️ Settings Modal", use_container_width=True):
-        st.session_state.show_settings_modal = not st.session_state.show_settings_modal
+    st.markdown("### Recent conversations")
+    if chats:
+        rows = []
+        for chat in chats[:15]:
+            rows.append({
+                "Conversation": chat.get("title", "New Chat"),
+                "Messages": len(chat.get("messages", [])),
+                "Pinned": "Yes" if chat.get("pinned") else "No",
+                "Updated": chat.get("updated_at", ""),
+            })
+        st.dataframe(rows, use_container_width=True, hide_index=True)
+    else:
+        st.info("No conversation data yet.")
+
+    if st.button("← Back to chat", use_container_width=False):
+        st.session_state.show_dashboard = False
         st.rerun()
 
-    st.markdown('<div class="claude-section-title">Pinned</div>', unsafe_allow_html=True)
+
+# Sidebar
+with st.sidebar:
+    st.markdown('<div class="sidebar-brand">🤖 AI Customer Support</div>', unsafe_allow_html=True)
+    if st.button("＋ New Chat", use_container_width=True, type="primary"):
+        new_chat()
+
+    if st.button("📊 Dashboard", use_container_width=True):
+        st.session_state.show_dashboard = True
+        st.rerun()
+
+    st.markdown("---")
+    search = st.text_input("Search conversations", value=st.session_state.search_text, placeholder="Search chats...", label_visibility="collapsed")
+    st.session_state.search_text = search
+
+    st.markdown("### Conversations")
     visible = [c for c in search_chats(st.session_state.chats, search) if st.session_state.show_archived or not c.get("archived", False)]
     pinned = [c for c in visible if c.get("pinned")]
     regular = [c for c in visible if not c.get("pinned")]
 
     if pinned:
+        st.caption("PINNED")
         for chat in pinned:
             label = ("🟢 " if chat["id"] == current_chat_id else "📌 ") + chat.get("title", "New Chat")
             if st.button(label, key=f"chat_{chat['id']}", use_container_width=True):
                 st.session_state.current_chat_id = chat["id"]
                 st.session_state.show_dashboard = False
-                st.session_state.show_kb = False
                 st.rerun()
-    else:
-        st.caption("No pinned chats.")
 
-    st.markdown('<div class="claude-section-title">Recents</div>', unsafe_allow_html=True)
     if regular:
-        for chat in regular[:15]:
+        for chat in regular:
             label = ("🟢 " if chat["id"] == current_chat_id else "💬 ") + chat.get("title", "New Chat")
             if st.button(label, key=f"chat_{chat['id']}", use_container_width=True):
                 st.session_state.current_chat_id = chat["id"]
                 st.session_state.show_dashboard = False
-                st.session_state.show_kb = False
                 st.rerun()
-    else:
-        st.caption("No recent conversations.")
 
-    st.markdown(
-        """
-        <div class="claude-user-profile">
-            <div class="claude-avatar">A</div>
-            <div>
-                <div style="font-weight: 600; color: #ecebe6;">Aayan Shaikh</div>
-                <div style="font-size: 0.72rem; color: #78756e;">Free plan · Upgrade</div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    if not visible:
+        st.caption("No matching conversations.")
 
-# -----------------------------------------------------------------------------
-# Claude Precise Settings Dialog (Matches Screen 2)
-# -----------------------------------------------------------------------------
-if st.session_state.show_settings_modal:
-    with st.expander("⚙️ Claude Settings (General · Appearance · Voice · Capabilities)", expanded=True):
-        st.markdown("### Settings")
-        set_col1, set_col2 = st.columns([1, 2])
-        with set_col1:
-            st.markdown(
-                """
-                **Preferences**
-                - ⚙️ General
-                - 👤 Account
-                - 🛡️ Privacy
-                - 💳 Billing
-                - 💡 Capabilities
-                - 🧠 Memory
-                - 🪞 Reflect
-                - ⏱️ Time and focus
-                - `</>` Claude Code
-                """
-            )
-        with set_col2:
-            st.markdown("##### **Appearance**")
-            st.selectbox("Theme", ["System", "Dark", "Light"], index=1)
-            st.selectbox("Interface font", ["Default · Anthropic Sans", "Inter", "System Sans"], index=0)
-            st.selectbox("Response font", ["Anthropic Serif", "Plus Jakarta Sans", "JetBrains Mono"], index=0)
-            st.selectbox("Transcript text size", ["Small", "Medium", "Large"], index=1)
-            st.selectbox("Transcript width", ["Narrow", "Medium", "Wide"], index=0)
-            st.selectbox("Motion", ["System", "Reduced", "Full"], index=0)
+    st.checkbox("Show archived", key="show_archived")
+    st.markdown("---")
 
-            st.markdown("##### **Voice**")
-            st.selectbox("Language", ["English", "Hindi", "Spanish", "French"], index=0)
-            st.selectbox("Style", ["Buttery", "Clear", "Warm", "Direct"], index=0)
-            st.selectbox("Speed", ["Normal", "Fast", "Relaxed"], index=0)
+    with st.expander("⚙️ Response settings"):
+        st.caption(f"Model: `{LLM_CONFIG.get('model', 'Gemini')}`")
+        st.slider("Creativity", 0.0, 1.0, key="temperature", step=0.05, help="Lower values are more focused; higher values are more creative.")
+        st.caption("Retrieval and knowledge-source behavior remain controlled by the application configuration.")
 
-        if st.button("Close Settings", type="primary"):
-            st.session_state.show_settings_modal = False
-            st.rerun()
+    with st.expander("ℹ️ About"):
+        st.write("A RAG-powered AI customer support and document assistant using Gemini, LangChain, FAISS and conversation-scoped files.")
+        st.caption("Python · Streamlit · LangChain · Gemini · HuggingFace · FAISS · SQLite")
 
-# Navigation routing
 if st.session_state.show_dashboard:
-    from src.analytics import render_analytics
-    render_analytics()
-    if st.button("← Return to Claude Chat"):
-        st.session_state.show_dashboard = False
-        st.rerun()
+    dashboard()
     st.stop()
 
-if st.session_state.show_kb:
-    render_knowledge_base()
-    if st.button("← Return to Claude Chat"):
-        st.session_state.show_kb = False
-        st.rerun()
-    st.stop()
+# Header
+header_col, action_col = st.columns([8, 1])
+with header_col:
+    st.markdown(f'<div class="title">🤖 {current_chat.get("title", "New Chat")}</div>', unsafe_allow_html=True)
+    st.markdown('<div class="subtitle">Ask questions, attach documents, and work with your conversation context.</div>', unsafe_allow_html=True)
+with action_col:
+    with st.popover("⋯"):
+        new_title = st.text_input("Conversation name", value=current_chat.get("title", "New Chat"), key="header_rename")
+        if st.button("Rename", use_container_width=True):
+            rename_chat(current_chat, new_title)
+            refresh_chats()
+            st.rerun()
+        if current_chat.get("pinned"):
+            if st.button("Unpin", use_container_width=True):
+                set_chat_pinned(current_chat, False)
+                refresh_chats(); st.rerun()
+        else:
+            if st.button("Pin", use_container_width=True):
+                set_chat_pinned(current_chat, True)
+                refresh_chats(); st.rerun()
+        if current_chat.get("archived"):
+            if st.button("Unarchive", use_container_width=True):
+                set_chat_archived(current_chat, False)
+                refresh_chats(); st.rerun()
+        else:
+            if st.button("Archive", use_container_width=True):
+                set_chat_archived(current_chat, True)
+                refresh_chats(); st.rerun()
+        st.download_button("Export Markdown", export_markdown(current_chat), file_name=f"{current_chat.get('title','conversation').replace(' ','_')}.md", mime="text/markdown", use_container_width=True)
+        if st.button("Delete conversation", use_container_width=True):
+            handle_delete_chat()
 
-# -----------------------------------------------------------------------------
-# Main Chat Area: Claude Experience
-# -----------------------------------------------------------------------------
-
-# Top Banner Pill
-st.markdown(
-    """
-    <div class="claude-plan-badge">
-        <div class="claude-plan-pill">
-            <span>Free plan · </span>
-            <a href="#">Upgrade</a>
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
-# Empty State: "Hello, night owl" / "Good day"
-if not current_chat["messages"]:
-    hour = datetime.now().hour
-    time_greeting = "Hello, night owl" if (hour >= 21 or hour < 5) else ("Good morning" if hour < 12 else "Good afternoon")
-    st.markdown(
-        f"""
-        <div class="claude-hero-container">
-            <span class="claude-sunburst">✻</span>
-            <div class="claude-greeting">{time_greeting}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    # Claude Quick Starters
-    suggestion_items = SUGGESTED_QUESTIONS[:4]
-    cols = st.columns(2)
-    for i, item in enumerate(suggestion_items):
-        with cols[i % 2]:
-            if st.button(f"{item.get('emoji','💡')}  {item['text']}", key=f"suggest_{i}", use_container_width=True):
-                st.session_state.pending_question = item["text"]
-                st.rerun()
-
-# Attached Files Area
+# Attachments
 files = list_conversation_files(current_chat_id)
 if files:
-    with st.expander(f"📎 Attached files ({len(files)})", expanded=False):
+    with st.expander(f"📎 Attached files · {len(files)}", expanded=False):
         for record in files:
             file_id = record.get("id")
             name = record.get("file_name", "Attached file")
             size = record.get("size_bytes", record.get("size", 0))
+            chunks = record.get("chunk_count", 0)
             col1, col2 = st.columns([5, 1])
             with col1:
-                st.markdown(f"**📄 {name}** ({size / 1024:.1f} KB)")
+                st.markdown(f"**📄 {name}**")
+                quality = record.get("evidence_quality")
+                quality_text = f" · evidence quality {quality}" if quality is not None else ""
+                low_text = " · ⚠️ low quality" if record.get("low_quality") else ""
+                st.caption(f"{size / 1024:.1f} KB · {chunks} chunks{quality_text}{low_text}")
             with col2:
                 if st.button("Remove", key=f"remove_file_{file_id}"):
                     remove_conversation_file(current_chat_id, file_id)
                     st.rerun()
 
-# Conversation display
+if not current_chat["messages"]:
+    st.markdown(
+        '<div class="welcome"><div class="welcome-icon">💬</div><div class="welcome-title">How can I help you?</div><div class="welcome-text">Ask about available information or attach a PDF, DOCX, TXT or CSV and ask questions about it.</div></div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown("### 💡 Try asking")
+    suggestion_items = SUGGESTED_QUESTIONS[:4]
+    cols = st.columns(2)
+    for i, item in enumerate(suggestion_items):
+        with cols[i % 2]:
+            if st.button(f"{item.get('emoji','💡')} {item['text']}", key=f"suggest_{i}", use_container_width=True):
+                st.session_state.pending_question = item["text"]
+                st.rerun()
 
+# Conversation display
 for index, message in enumerate(current_chat.get("messages", [])):
     role = message.get("role", "assistant")
     content = message.get("content", "")
     with st.chat_message(role):
+        if role == "user" and st.session_state.editing_index == index:
+            edited = st.text_area("Edit your message", value=content, key=f"edit_text_{index}", height=120)
+            ec1, ec2 = st.columns(2)
+            with ec1:
+                if st.button("Save & regenerate", key=f"save_edit_{index}", type="primary"):
+                    edited = edited.strip()
+                    if edited:
+                        truncate_chat(current_chat, index)
+                        st.session_state.editing_index = None
+                        st.session_state.pending_question = edited
+                        st.rerun()
+            with ec2:
+                if st.button("Cancel", key=f"cancel_edit_{index}"):
+                    st.session_state.editing_index = None
+                    st.rerun()
+            continue
+
         st.markdown(content)
-        if role == "assistant":
-            col_a1, col_a2, col_a3 = st.columns([1, 1, 8])
-            with col_a1:
+        if role == "user":
+            a, b = st.columns([1, 1])
+            with a:
+                if st.button("Edit", key=f"edit_{index}"):
+                    st.session_state.editing_index = index
+                    st.rerun()
+            with b:
+                if st.button("Copy", key=f"copy_user_{index}"):
+                    st.session_state.copy_text = content
+                    st.toast("Message ready to copy")
+        else:
+            a, b, c, d, e = st.columns([1, 1, 1, 1, 5])
+            with a:
+                if st.button("Copy", key=f"copy_ai_{index}"):
+                    st.session_state.copy_text = content
+                    st.toast("Copied text is available in your clipboard helper")
+            with b:
+                if st.button("Regenerate", key=f"regen_{index}"):
+                    if index > 0 and current_chat["messages"][index - 1].get("role") == "user":
+                        remove_message(current_chat, index)
+                        st.session_state.pending_regenerate = current_chat["messages"][index - 1].get("content", "")
+                        st.rerun()
+            with c:
                 feedback = message.get("feedback")
                 if st.button("👍" if feedback != "positive" else "👍✓", key=f"up_{index}"):
                     update_message_feedback(current_chat, index, None if feedback == "positive" else "positive")
                     refresh_chats(); st.rerun()
-            with col_a2:
+            with d:
+                feedback = message.get("feedback")
                 if st.button("👎" if feedback != "negative" else "👎✓", key=f"down_{index}"):
                     update_message_feedback(current_chat, index, None if feedback == "negative" else "negative")
                     refresh_chats(); st.rerun()
             if message.get("sources"):
                 render_sources(message["sources"])
 
-# Claude Floating Attachment & Input Dock
-st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
-dock_c1, dock_c2, dock_c3 = st.columns([1.5, 6, 2.5])
-with dock_c1:
-    with st.popover("＋ Attach"):
-        st.markdown("##### **Attach Files**")
-        uploaded_files = st.file_uploader(
-            "Evidence / Docs",
-            type=["pdf", "docx", "txt", "csv", "png", "jpg", "jpeg", "webp"],
-            accept_multiple_files=True,
-            label_visibility="collapsed",
-        )
-with dock_c2:
-    st.markdown('<div class="claude-footer-meta"><span>Project: Customer Service KB</span> · <span class="claude-model-select">Claude 3.7 Sonnet</span></div>', unsafe_allow_html=True)
-with dock_c3:
-    if st.button("🗑️ Clear Context", use_container_width=True):
-        delete_conversation_files(current_chat_id)
-        st.rerun()
-
-if "uploaded_files" in locals() and uploaded_files:
-    signature = get_attachment_signature(uploaded_files)
-    key = f"processed_upload_{current_chat_id}"
-    if st.session_state.get(key) != signature:
-        st.session_state[key] = signature
-        payloads = [{"name": item.name, "original_name": item.name, "data": item.getvalue()} for item in uploaded_files]
-        with st.spinner("Processing evidence..."):
-            job = run_with_timeout(
-                add_conversation_file_payloads,
-                current_chat_id,
-                payloads,
-                timeout_seconds=int(TASK2_CONFIG.get("processing_timeout_seconds", 30)),
-                description="Evidence processing",
-            )
-        if job.get("status") == "completed":
-            st.success("Files attached successfully.")
+if st.session_state.get("copy_text"):
+    with st.popover("📋 Copy response", use_container_width=True):
+        st.text_area("", st.session_state.copy_text, height=150, label_visibility="collapsed")
+        if st.button("Close", use_container_width=True):
+            st.session_state.copy_text = None
             st.rerun()
+
+# File upload composer area
+with st.expander("＋ Attach files", expanded=False):
+    uploaded_files = st.file_uploader(
+        "PDF, DOCX, TXT, CSV, PNG, JPG, JPEG or WEBP",
+        type=["pdf", "docx", "txt", "csv", "png", "jpg", "jpeg", "webp"],
+        accept_multiple_files=True,
+        label_visibility="collapsed",
+        help="Attach documents, screenshots, invoices or product images. Evidence is processed and scoped to this conversation.",
+    )
+    if uploaded_files:
+        signature = get_attachment_signature(uploaded_files)
+        key = f"processed_upload_{current_chat_id}"
+        if st.session_state.get(key) != signature:
+            st.session_state[key] = signature
+            payloads = []
+            for item in uploaded_files:
+                payloads.append({
+                    "name": item.name,
+                    "original_name": item.name,
+                    "data": item.getvalue(),
+                })
+            with st.spinner("Processing evidence..."):
+                job = run_with_timeout(
+                    add_conversation_file_payloads,
+                    current_chat_id,
+                    payloads,
+                    timeout_seconds=int(TASK2_CONFIG.get("processing_timeout_seconds", 30)),
+                    description="Customer evidence processing",
+                )
+            if job.get("status") == "queued":
+                if job.get("id") not in st.session_state.task2_jobs:
+                    st.session_state.task2_jobs.append(job.get("id"))
+                st.info("⏳ Processing is taking longer than 30 seconds. Your files have been moved to the background queue and will continue automatically.")
+                st.caption(f"Background job: `{job.get('id', '')}`")
+            elif job.get("status") == "completed":
+                result = job.get("result") or {}
+                for record in result.get("added", []):
+                    quality = record.get("evidence_quality", 1.0)
+                    suffix = " · ⚠️ low image quality" if record.get("low_quality") else ""
+                    st.success(f"📎 {record['file_name']} is ready · evidence quality {quality}{suffix}")
+                for record in result.get("skipped", []):
+                    st.info(f"📎 {record['name']} is already attached.")
+                for item in result.get("security_rejected", []):
+                    st.error(f"🛡️ {item.get('file_name', 'File')}: {item.get('reason', 'Security policy rejected this file.')}")
+                for error in result.get("errors", []):
+                    st.error(error)
+                if result.get("added"):
+                    st.rerun()
+            else:
+                st.error(f"Evidence processing failed: {job.get('error', 'Unknown error')}")
+
 
 def process_question(question, save_user=True):
     question = str(question or "").strip()
@@ -879,34 +537,56 @@ def process_question(question, save_user=True):
     start = time.perf_counter()
     try:
         with st.chat_message("assistant"):
-            stream, sources = get_qa_stream(
-                question,
-                chat_history=current_chat["messages"][:-1] if save_user else current_chat["messages"],
-                chat_id=current_chat_id,
-                temperature=st.session_state.temperature,
-            )
-            answer = st.write_stream(stream)
-            answer = str(answer or "").strip()
-            if sources:
-                render_sources(sources)
+            evidence_context = compare_uploaded_evidence_with_message(current_chat_id, question)
+            clarification = None
+            if evidence_context.get("has_conflict"):
+                clarification = (
+                    "I found conflicting information between your message and the uploaded evidence. "
+                    "Please confirm the correct order ID, date, amount, product, or error code."
+                )
+            elif evidence_context.get("has_low_quality"):
+                clarification = (
+                    "The uploaded evidence appears too unclear to verify reliably. "
+                    "Please upload a clearer image or a higher-quality copy."
+                )
+
+            if clarification:
+                answer = clarification
+                sources = []
+            else:
+                stream, sources = get_qa_stream(
+                    question,
+                    chat_history=current_chat["messages"][:-1] if save_user else current_chat["messages"],
+                    chat_id=current_chat_id,
+                    temperature=st.session_state.temperature,
+                )
+                answer = st.write_stream(stream)
+                answer = str(answer or "").strip()
+                if sources:
+                    render_sources(sources)
 
             elapsed = time.perf_counter() - start
-            st.markdown(
-                f'<div style="margin-top: 6px; display: flex; align-items: center; gap: 8px;">'
-                f'<span style="font-family: \'JetBrains Mono\'; font-size: 0.74rem; color: #8c8577; background: #2b2a27; padding: 2px 8px; border-radius: 4px;">⚡ {elapsed:.2f}s</span>'
-                f'<span style="font-size: 0.74rem; color: #8c8577; background: #2b2a27; padding: 2px 8px; border-radius: 4px;">Claude 3.7 Sonnet · Verified Grounding</span>'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
+            st.caption(f"Processed in {elapsed:.2f}s")
 
         add_message(current_chat, "assistant", answer, sources=sources, response_time=elapsed)
         refresh_chats()
     except Exception as error:
         elapsed = time.perf_counter() - start
-        answer = "⚠️ **Something went wrong while processing your request.** Please try again."
+        text = str(error)
+        if "429" in text or "RESOURCE_EXHAUSTED" in text:
+            answer = "⚠️ **AI service temporarily unavailable**\n\nThe Gemini API usage limit has been reached. Please try again later."
+        else:
+            answer = "⚠️ **Something went wrong while processing your request.**\n\nPlease try again."
         add_message(current_chat, "assistant", answer, response_time=elapsed)
         st.error(answer)
         refresh_chats()
+
+# Pending operations are intentionally handled after the current history is rendered.
+if st.session_state.pending_regenerate:
+    question = st.session_state.pending_regenerate
+    st.session_state.pending_regenerate = None
+    process_question(question, save_user=False)
+    st.rerun()
 
 if st.session_state.pending_question:
     question = st.session_state.pending_question
@@ -914,7 +594,7 @@ if st.session_state.pending_question:
     process_question(question, save_user=True)
     st.rerun()
 
-user_question = st.chat_input("How can I help you today?")
+user_question = st.chat_input("Message AI Customer Support...")
 if user_question:
     process_question(user_question, save_user=True)
     st.rerun()
