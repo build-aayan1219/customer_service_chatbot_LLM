@@ -2100,3 +2100,44 @@ def render_knowledge_base():
         "5. Approved changes are versioned and activated only during the maintenance window.\n\n"
         "6. Failed updates retry after 15, 30 and 60 minutes; activated versions can be rolled back."
     )
+
+
+# ===================================================
+# API-FACING FUNCTIONS (used by src/api.py)
+# ===================================================
+
+def get_kb_status() -> dict:
+    """Return current knowledge-base pipeline status for the REST API."""
+    try:
+        if MANIFEST_PATH.exists():
+            with open(MANIFEST_PATH, "r", encoding="utf-8") as f:
+                manifest = json.load(f)
+        else:
+            manifest = {}
+        return {
+            "status": "ok",
+            "vectordb_exists": VECTORDB_PATH.exists(),
+            "manifest": manifest,
+        }
+    except Exception as exc:
+        return {"status": "error", "error": str(exc)}
+
+
+def run_scheduled_knowledge_base_pipeline() -> dict:
+    """Run the KB pipeline (non-Streamlit version for the scheduler)."""
+    try:
+        # Minimal pipeline: rebuild vectordb from base dataset if it exists
+        if BASE_DATASET_PATH.exists():
+            import pandas as pd
+            from src.langchain_helper import create_vector_db
+            df = pd.read_csv(BASE_DATASET_PATH)
+            create_vector_db(df)
+            return {"success": True, "message": "Pipeline completed"}
+        return {"success": False, "message": "Base dataset not found"}
+    except Exception as exc:
+        return {"success": False, "error": str(exc)}
+
+
+def trigger_manual_pipeline_run() -> dict:
+    """Manually trigger the pipeline (REST API entry-point)."""
+    return run_scheduled_knowledge_base_pipeline()

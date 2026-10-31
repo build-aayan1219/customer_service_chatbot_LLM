@@ -3614,3 +3614,27 @@ ModuleNotFoundError("No module named 'faiss.swigfaiss_avx2'")
 2026-10-30 03:50:18,866 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\44ca65fc-0e98-4e92-ae76-782f97dddbe2\manifest.json: Expecting value: line 1 column 1 (char 0)
 2026-10-30 04:02:01,017 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\24b862b5-0b12-44b2-94c8-6c422bf439d2\manifest.json: Expecting value: line 1 column 1 (char 0)
 2026-10-30 04:02:01,022 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\44ca65fc-0e98-4e92-ae76-782f97dddbe2\manifest.json: Expecting value: line 1 column 1 (char 0)
+2026-10-30 04:06:00,119 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\24b862b5-0b12-44b2-94c8-6c422bf439d2\manifest.json: Expecting value: line 1 column 1 (char 0)
+2026-10-30 04:06:00,126 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\44ca65fc-0e98-4e92-ae76-782f97dddbe2\manifest.json: Expecting value: line 1 column 1 (char 0)
+2026-10-30 10:37:43,355 - asyncio - ERROR - Exception in callback _ProactorBasePipeTransport._call_connection_lost(None)
+handle: <Handle _ProactorBasePipeTransport._call_connection_lost(None)>
+Traceback (most recent call last):
+  File "C:\Users\Aayan\AppData\Local\Programs\Python\Python311\Lib\asyncio\events.py", line 84, in _run
+    self._context.run(self._callback, *self._args)
+  File "C:\Users\Aayan\AppData\Local\Programs\Python\Python311\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+    self._sock.shutdown(socket.SHUT_RDWR)
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+2026-10-30 12:30:40,966 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\24b862b5-0b12-44b2-94c8-6c422bf439d2\manifest.json: Expecting value: line 1 column 1 (char 0)
+2026-10-30 12:30:40,986 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\44ca65fc-0e98-4e92-ae76-782f97dddbe2\manifest.json: Expecting value: line 1 column 1 (char 0)
+2026-10-30 14:10:50,168 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\24b862b5-0b12-44b2-94c8-6c422bf439d2\manifest.json: Expecting value: line 1 column 1 (char 0)
+2026-10-30 14:10:50,168 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\24b862b5-0b12-44b2-94c8-6c422bf439d2\manifest.json: Expecting value: line 1 column 1 (char 0)
+2026-10-30 14:10:50,358 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\44ca65fc-0e98-4e92-ae76-782f97dddbe2\manifest.json: Expecting value: line 1 column 1 (char 0)
+2026-10-30 14:10:50,358 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\44ca65fc-0e98-4e92-ae76-782f97dddbe2\manifest.json: Expecting value: line 1 column 1 (char 0)
+2026-10-31 13:30:42,915 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\24b862b5-0b12-44b2-94c8-6c422bf439d2\manifest.json: Expecting value: line 1 column 1 (char 0)
+2026-10-31 13:30:43,115 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\44ca65fc-0e98-4e92-ae76-782f97dddbe2\manifest.json: Expecting value: line 1 column 1 (char 0)
+2026-10-31 13:30:43,115 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\44ca65fc-0e98-4e92-ae76-782f97dddbe2\manifest.json: Expecting value: line 1 column 1 (char 0)
+2026-10-31 13:31:35,626 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\24b862b5-0b12-44b2-94c8-6c422bf439d2\manifest.json: Expecting value: line 1 column 1 (char 0)
+2026-10-31 13:31:35,626 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\44ca65fc-0e98-4e92-ae76-782f97dddbe2\manifest.json: Expecting value: line 1 column 1 (char 0)
+2026-10-31 14:33:27,042 - src.conversation_files - WARNING - Could not load conversation manifest: Expecting value: line 1 column 1 (char 0)
+2026-10-31 14:44:43,029 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\24b862b5-0b12-44b2-94c8-6c422bf439d2\manifest.json: Expecting value: line 1 column 1 (char 0)
+2026-10-31 14:44:43,051 - src.retention_manager - WARNING - Retention cleanup failed for E:\customer_service_chatbot_LLM\knowledge_base\conversations\44ca65fc-0e98-4e92-ae76-782f97dddbe2\manifest.json: Expecting value: line 1 column 1 (char 0)

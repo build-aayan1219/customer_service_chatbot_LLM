@@ -128,3 +128,16 @@ def safe_log(logger_obj, level: str, message: str, *args):
 
 def file_sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def sanitize_user_input(text: str) -> tuple[str, bool]:
+    """
+    Sanitizes text by masking sensitive PII/payment data and detecting prompt injections.
+    Returns (sanitized_text, was_quarantined).
+    """
+    injections = detect_prompt_injection(text)
+    if injections:
+        sanitized = mask_sensitive_data(text)
+        return f"[QUARANTINED CONTENT: potential prompt injection detected]", True
+    return mask_sensitive_data(text), False
+
